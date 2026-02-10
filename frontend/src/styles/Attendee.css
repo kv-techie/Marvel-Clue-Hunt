@@ -1,0 +1,128 @@
+.attendee-container {
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.attendee-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 25px;
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.2));
+  border-radius: 15px;
+  border: 2px solid rgba(231, 76, 60, 0.4);
+}
+
+.attendee-header h1 {
+  margin: 0;
+  font-size: 36px;
+  text-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+}
+
+.attendee-header p {
+  margin: 5px 0 0 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 25px;
+}
+
+.status-banner {
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.2));
+  border: 2px solid rgba(52, 152, 219, 0.4);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.dialogue-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 25px;
+}
+
+.dialogue-section h2 {
+  margin-top: 0;
+  color: #e74c3c;
+}
+
+.dialogue-content {
+  margin: 20px 0;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.answer-section {
+  margin: 20px 0;
+}
+
+.answer-section input {
+  margin-bottom: 15px;
+}
+
+.hint-section {
+  background: rgba(241, 196, 15, 0.1);
+  border: 1px solid rgba(241, 196, 15, 0.3);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.hint-text {
+  background: rgba(241, 196, 15, 0.2);
+  padding: 15px;
+  border-radius: 5px;
+  margin: 10px 0;
+  border-left: 4px solid #f1c40f;
+}
+
+.progress-indicator {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+}
+
+.progress-step {
+  flex: 1;
+  text-align: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  margin: 0 5px;
+}
+
+.progress-step.completed {
+  background: rgba(46, 204, 113, 0.2);
+  border: 1px solid #2ecc71;
+}
+
+.progress-step.active {
+  background: rgba(52, 152, 219, 0.2);
+  border: 1px solid #3498db;
+}
+
+.success-message {
+  background: rgba(46, 204, 113, 0.2);
+  border: 1px solid #2ecc71;
+  color: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.error-message {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid #e74c3c;
+  color: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 10px 0;
+  text-align: center;
+}
