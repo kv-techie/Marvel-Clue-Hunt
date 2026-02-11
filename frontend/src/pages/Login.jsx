@@ -23,10 +23,12 @@ const Login = () => {
       const data = response.data
 
       if (data.success) {
-        loginUser(data.name, data.is_admin, data.team)
+        loginUser(data.name, data.is_admin, data.team, data.is_volunteer)
         
         if (data.is_admin) {
           navigate('/admin')
+        } else if (data.is_volunteer) {
+          navigate('/volunteer')
         } else {
           navigate('/attendee')
         }
@@ -64,7 +66,7 @@ const Login = () => {
                 checked={isAdminLogin}
                 onChange={(e) => setIsAdminLogin(e.target.checked)}
               />
-              <span>Admin/Volunteer Login</span>
+              <span>Admin/Volunteer Login (Authorized Users Only)</span>
             </label>
           </div>
 

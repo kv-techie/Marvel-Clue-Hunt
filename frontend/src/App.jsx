@@ -6,6 +6,7 @@ import { TimerProvider } from './context/TimerContext'
 import Login from './pages/Login'
 import Admin from './pages/Admin'
 import Attendee from './pages/Attendee'
+import Volunteer from './pages/Volunteer'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -21,6 +22,14 @@ function App() {
                 element={
                   <ProtectedRoute requireAdmin>
                     <Admin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/volunteer"
+                element={
+                  <ProtectedRoute requireVolunteer>
+                    <Volunteer />
                   </ProtectedRoute>
                 }
               />

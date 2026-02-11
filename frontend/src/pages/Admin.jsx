@@ -4,6 +4,9 @@ import AdminDashboard from '../admin/AdminDashboard'
 import TeamDistribution from '../admin/TeamDistribution'
 import GlobalTimerControl from '../admin/GlobalTimerControl'
 import Leaderboard from '../admin/Leaderboard'
+import AdminManagement from '../admin/AdminManagement'
+import VolunteerManagement from '../admin/VolunteerManagement'
+import AuditLog from '../admin/AuditLog'
 import '../styles/Admin.css'
 
 const Admin = () => {
@@ -21,6 +24,14 @@ const Admin = () => {
 
       <div className="admin-content">
         <section className="admin-section">
+          <AdminManagement />
+        </section>
+
+        <section className="admin-section">
+          <VolunteerManagement />
+        </section>
+
+        <section className="admin-section">
           <AdminDashboard />
         </section>
 
@@ -34,6 +45,10 @@ const Admin = () => {
 
         <section className="admin-section">
           <Leaderboard />
+        </section>
+
+        <section className="admin-section">
+          <AuditLog />
         </section>
       </div>
     </div>

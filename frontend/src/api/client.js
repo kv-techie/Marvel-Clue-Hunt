@@ -28,10 +28,27 @@ export const startGame = () => api.post('/admin/start-game')
 
 export const getLeaderboard = () => api.get('/admin/leaderboard')
 
-export const awardEnactmentBonus = (teamName) =>
-  api.post(`/admin/award-enactment-bonus/${teamName}`)
+export const awardEnactmentBonus = (teamName, bonusAmount) =>
+  api.post(`/admin/award-enactment-bonus/${teamName}`, { bonus_amount: bonusAmount })
 
 export const getGameStatus = () => api.get('/admin/game-status')
+
+export const getAdminList = () => api.get('/admin/admins')
+
+export const addAdmin = (name) => api.post(`/admin/admins/${name}`)
+
+export const removeAdmin = (name) => api.delete(`/admin/admins/${name}`)
+
+export const adjustPoints = (teamName, adjustedBy, request) =>
+  api.post(`/admin/adjust-points/${teamName}`, request, { params: { adjusted_by: adjustedBy } })
+
+export const getAdjustmentsLog = () => api.get('/admin/adjustments-log')
+
+export const getVolunteerList = () => api.get('/admin/volunteers')
+
+export const addVolunteer = (name) => api.post(`/admin/volunteers/${name}`)
+
+export const removeVolunteer = (name) => api.delete(`/admin/volunteers/${name}`)
 
 // Attendee APIs
 export const startTeamTimer = (teamName) =>
@@ -53,5 +70,8 @@ export const submitDialogue = (teamName, dialogueNumber, answer, timeTaken) =>
 
 export const getCurrentDialogue = (teamName) =>
   api.get(`/attendee/current-dialogue/${teamName}`)
+
+export const stopGame = () => api.post('/admin/stop-game')
+
 
 export default api

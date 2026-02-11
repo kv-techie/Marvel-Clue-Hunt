@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { setStartTime, startGame } from '../api/client'
+import { setStartTime, startGame, stopGame } from '../api/client'
 
 const GlobalTimerControl = () => {
   const [scheduledTime, setScheduledTime] = useState('')
@@ -28,6 +28,15 @@ const GlobalTimerControl = () => {
     }
   }
 
+  const handleStopGame = async () => {
+    try {
+      const response = await stopGame()
+      setMessage('Game stopped successfully!')
+    } catch (err) {
+      setMessage(`Error: ${err.response?.data?.detail || 'Failed to stop game'}`)
+    }
+  }
+
   return (
     <div>
       <h2>⏱️ Global Timer Control</h2>
@@ -50,6 +59,21 @@ const GlobalTimerControl = () => {
           <h3>Start Immediately</h3>
           <button onClick={handleStartNow} className="btn btn-primary" style={{ marginTop: '10px' }}>
             Start Game Now
+          </button>
+        </div>
+
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          <h3>Stop Game</h3>
+          <button 
+            onClick={handleStopGame} 
+            className="btn" 
+            style={{ 
+              marginTop: '10px',
+              background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
+              color: 'white'
+            }}
+          >
+            🛑 Stop Game
           </button>
         </div>
       </div>

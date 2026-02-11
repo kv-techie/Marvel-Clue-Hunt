@@ -23,10 +23,20 @@ const Leaderboard = () => {
   }, [])
 
   const handleAwardBonus = async (teamName) => {
+    const bonusAmount = prompt(`Enter bonus amount for ${teamName}:`, '10')
+    if (bonusAmount === null) return // User cancelled
+    
+    const bonus = parseInt(bonusAmount, 10)
+    if (isNaN(bonus) || bonus <= 0) {
+      alert('Please enter a valid positive number')
+      return
+    }
+
     try {
-      await awardEnactmentBonus(teamName)
-      alert(`Enactment bonus awarded to ${teamName}!`)
-      fetchLeaderboard()
+      const response = await awardEnactmentBonus(teamName, bonus)
+      alert(`Enactment bonus of ${bonus} awarded to ${teamName}!\nNew Score: ${response.data.new_score}`)
+      // Immediately refresh leaderboard
+      await fetchLeaderboard()
     } catch (err) {
       alert(`Error: ${err.response?.data?.detail || 'Failed to award bonus'}`)
     }

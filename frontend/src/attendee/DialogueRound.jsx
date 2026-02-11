@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { submitDialogue } from '../api/client'
 
 const DIALOGUE_PROMPTS = {
@@ -24,6 +24,14 @@ const DialogueRound = ({ teamName, dialogueNumber, elapsedTime, onComplete }) =>
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [isCorrect, setIsCorrect] = useState(false)
+
+  // Reset state when dialogue number changes
+  useEffect(() => {
+    setAnswer('')
+    setMessage('')
+    setIsCorrect(false)
+    setSubmitting(false)
+  }, [dialogueNumber])
 
   const dialogue = DIALOGUE_PROMPTS[dialogueNumber]
 
@@ -79,6 +87,7 @@ const DialogueRound = ({ teamName, dialogueNumber, elapsedTime, onComplete }) =>
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Enter your answer..."
           disabled={submitting || isCorrect}
+          autoFocus
         />
         
         <button 
