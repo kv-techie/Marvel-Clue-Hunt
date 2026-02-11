@@ -73,5 +73,14 @@ export const getCurrentDialogue = (teamName) =>
 
 export const stopGame = () => api.post('/admin/stop-game')
 
+export const deleteParticipantData = () => api.post('/admin/delete-participant-data')
+
+export const getDisqualificationCandidates = () => api.get('/admin/disqualification-candidates')
+
+export const confirmDisqualification = (teamName, confirmedBy) =>
+  api.post(`/admin/confirm-disqualification/${teamName}`, {}, { params: { confirmed_by: confirmedBy } })
+
+export const teamAcknowledgeDisqualification = (teamName) =>
+  api.post(`/admin/team-acknowledge-disqualification/${teamName}`)
 
 export default api

@@ -3,19 +3,16 @@ import { submitDialogue } from '../api/client'
 
 const DIALOGUE_PROMPTS = {
   1: {
-    title: '🦸 Dialogue 1: The Genius Billionaire',
-    description: 'A hero in red and gold armor stands before you. His arc reactor glows bright. He speaks of his journey from weapons maker to world protector.',
-    question: 'Who is this armored Avenger?'
+    title: '🦸 Dialogue 1',
+    question: 'What is the answer?'
   },
   2: {
-    title: '💜 Dialogue 2: The Mad Titan',
-    description: 'A purple giant sits on his throne, speaking of balance and destiny. He wields stones of infinite power, seeking to reshape reality itself.',
-    question: 'What is the name of this universal threat?'
+    title: '💜 Dialogue 2',
+    question: 'What is the answer?'
   },
   3: {
-    title: '⚡ Dialogue 3: Earth\'s Mightiest',
-    description: 'A team assembled by Nick Fury stands united. Iron Man, Captain America, Thor, Hulk, Black Widow, and Hawkeye fight side by side against impossible odds.',
-    question: 'What is this legendary team called?'
+    title: '⚡ Dialogue 3',
+    question: 'What is the answer?'
   }
 }
 
@@ -74,7 +71,6 @@ const DialogueRound = ({ teamName, dialogueNumber, elapsedTime, onComplete }) =>
       <h2>{dialogue.title}</h2>
       
       <div className="dialogue-content">
-        <p>{dialogue.description}</p>
         <p style={{ marginTop: '20px', fontSize: '20px', fontWeight: 'bold', color: '#f39c12' }}>
           {dialogue.question}
         </p>

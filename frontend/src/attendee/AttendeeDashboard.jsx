@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTimer } from '../context/TimerContext'
-import { getTeamStatus, startTeamTimer, getCurrentDialogue } from '../api/client'
+import { getTeamStatus, startTeamTimer, getCurrentDialogue, teamAcknowledgeDisqualification } from '../api/client'
 import TeamTimer from './TeamTimer'
 import HintPanel from './HintPanel'
 import DialogueRound from './DialogueRound'
@@ -13,6 +13,8 @@ const AttendeeDashboard = () => {
   const [teamStatus, setTeamStatus] = useState(null)
   const [currentDialogue, setCurrentDialogue] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [acknowledging, setAcknowledging] = useState(false)
+  const [ackMessage, setAckMessage] = useState('')
 
   const fetchTeamStatus = async () => {
     try {
@@ -53,18 +55,38 @@ const AttendeeDashboard = () => {
 
     initializeTeam()
     
-    // Refresh status every 5 seconds
+    // Refresh status every 2 seconds for instant updates
     const interval = setInterval(() => {
       fetchTeamStatus()
       fetchCurrentDialogue()
-    }, 5000)
+    }, 2000)
 
     return () => clearInterval(interval)
   }, [team])
 
   const handleDialogueComplete = () => {
-    fetchTeamStatus()
-    fetchCurrentDialogue()
+    // Immediately refresh on completion
+    setTimeout(() => {
+      fetchTeamStatus()
+      fetchCurrentDialogue()
+    }, 500)
+  }
+
+  const handleAcknowledgeDisqualification = async () => {
+    setAcknowledging(true)
+    setAckMessage('')
+
+    try {
+      await teamAcknowledgeDisqualification(team)
+      setAckMessage('✅ Disqualification acknowledged. Please see the admin panel.')
+      setTimeout(() => {
+        fetchTeamStatus()
+      }, 1500)
+    } catch (err) {
+      setAckMessage(`Error: ${err.response?.data?.detail || 'Failed to acknowledge'}`)
+    } finally {
+      setAcknowledging(false)
+    }
   }
 
   if (loading) {
@@ -80,6 +102,62 @@ const AttendeeDashboard = () => {
   return (
     <div className="dashboard-grid">
       <StatusBanner teamStatus={teamStatus} />
+
+      {teamStatus?.disqualified && (
+        <div style={{
+          padding: '20px',
+          borderRadius: '8px',
+          backgroundColor: 'rgba(231, 76, 60, 0.15)',
+          border: '2px solid #e74c3c',
+          marginBottom: '20px',
+          gridColumn: '1 / -1'
+        }}>
+          <h2 style={{ color: '#e74c3c', margin: '0 0 10px 0' }}>⚠️ DISQUALIFICATION NOTICE</h2>
+          <p style={{ margin: '10px 0', fontSize: '16px' }}>
+            Your team has been flagged for disqualification.
+          </p>
+          <p style={{ margin: '10px 0', fontSize: '14px', color: '#bbb' }}>
+            <strong>Reason:</strong> {teamStatus.disqualification_reason}
+          </p>
+          {teamStatus.disqualification_confirmed && !teamStatus.disqualification_acknowledged && (
+            <div style={{ marginTop: '15px' }}>
+              <p style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>
+                The admin has confirmed your disqualification. Please acknowledge below:
+              </p>
+              <button
+                onClick={handleAcknowledgeDisqualification}
+                disabled={acknowledging}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  opacity: acknowledging ? 0.6 : 1
+                }}
+              >
+                {acknowledging ? 'Acknowledging...' : '✓ Acknowledge Disqualification'}
+              </button>
+              {ackMessage && (
+                <p style={{
+                  marginTop: '10px',
+                  color: ackMessage.startsWith('Error') ? '#e74c3c' : '#2ecc71',
+                  fontSize: '14px'
+                }}>
+                  {ackMessage}
+                </p>
+              )}
+            </div>
+          )}
+          {teamStatus.disqualification_acknowledged && (
+            <p style={{ color: '#2ecc71', fontWeight: 'bold', marginTop: '10px' }}>
+              ✅ Disqualification acknowledged
+            </p>
+          )}
+        </div>
+      )}
       
       <TeamTimer />
 
@@ -133,7 +211,7 @@ const AttendeeDashboard = () => {
           )}
           <br />
           <br />
-          <strong>Final Score: {teamStatus?.current_score}</strong>
+          <strong style={{ color: teamStatus?.current_score < 0 ? '#e74c3c' : '#2ecc71' }}>Final Score: {teamStatus?.current_score}</strong>
         </div>
       )}
     </div>

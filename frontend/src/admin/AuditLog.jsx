@@ -19,7 +19,7 @@ const AuditLog = () => {
 
   useEffect(() => {
     fetchAdjustments()
-    const interval = setInterval(fetchAdjustments, 10000)
+    const interval = setInterval(fetchAdjustments, 2000) // Refresh every 2 seconds for instant feedback
     return () => clearInterval(interval)
   }, [])
 

@@ -18,7 +18,8 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchStatus()
-    const interval = setInterval(fetchStatus, 5000) // Refresh every 5 seconds
+    // Poll every 1 second for instant status updates
+    const interval = setInterval(fetchStatus, 1000)
     return () => clearInterval(interval)
   }, [])
 

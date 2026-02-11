@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 
+from app.config import settings
 from app.models import (
     BonusRequest,
     GameState,
@@ -9,7 +10,12 @@ from app.models import (
     PointsAdjustmentRequest,
     Team,
 )
-from app.scoring import calculate_final_score, get_leaderboard
+from app.scoring import (
+    calculate_final_score,
+    calculate_total_deductions,
+    check_auto_disqualification,
+    get_leaderboard,
+)
 from app.team_allocator import allocate_teams
 from app.timer_manager import timer_manager
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -186,6 +192,34 @@ async def stop_game():
     return {"message": "Game stopped", "game_active": False}
 
 
+@router.post("/delete-participant-data")
+async def delete_participant_data():
+    """Delete all participant data and reset game state after game ends"""
+
+    if game_state.game_active:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete data while game is active. Stop the game first.",
+        )
+
+    # Reset game state
+    game_state.teams = {}
+    game_state.global_start_time = None
+    game_state.game_active = False
+    save_game_state()
+
+    # Delete/reset data files
+    attendance_file = ATTENDANCE_FILE
+    if os.path.exists(attendance_file):
+        os.remove(attendance_file)
+
+    return {
+        "message": "All participant data has been deleted successfully",
+        "teams_cleared": True,
+        "game_state_reset": True,
+    }
+
+
 @router.get("/leaderboard")
 async def get_admin_leaderboard():
     """Get full leaderboard with all team details"""
@@ -318,11 +352,24 @@ async def adjust_points(
     )
 
     team.manual_adjustments.append(adjustment)
+
+    # Check if team should be auto-disqualified
+    if not team.disqualified and check_auto_disqualification(team):
+        team.disqualified = True
+        team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
+        team.disqualification_timestamp = datetime.now()
+
     save_game_state()
 
     return {
         "message": f"{request.adjustment_type.capitalize()} of {request.amount} points applied to {team_name}",
         "new_score": calculate_final_score(team),
+        "auto_disqualified": team.disqualified
+        and team.disqualification_reason
+        and "Automatic" in team.disqualification_reason,
+        "disqualification_reason": team.disqualification_reason
+        if team.disqualified
+        else None,
         "adjustment": {
             "adjusted_by": adjusted_by,
             "amount": request.amount,
@@ -412,6 +459,88 @@ async def remove_volunteer(name: str):
     return {
         "message": f"{name} has been removed from volunteers",
         "volunteers": volunteers,
+    }
+
+
+@router.get("/disqualification-candidates")
+async def get_disqualification_candidates():
+    """Get list of teams eligible for auto-disqualification based on deductions"""
+    from app.scoring import calculate_total_deductions, check_auto_disqualification
+
+    if not game_state.teams:
+        raise HTTPException(status_code=404, detail="No teams found")
+
+    candidates = []
+    for team_name, team in game_state.teams.items():
+        if check_auto_disqualification(team) and not team.disqualified:
+            candidates.append(
+                {
+                    "team_name": team_name,
+                    "members": team.members,
+                    "total_deductions": calculate_total_deductions(team),
+                    "threshold": settings.disqualification_deduction_threshold,
+                    "reason": f"Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})",
+                }
+            )
+
+    return {"candidates": candidates, "total": len(candidates)}
+
+
+@router.post("/confirm-disqualification/{team_name}")
+async def confirm_disqualification(team_name: str, confirmed_by: str):
+    """Admin confirms disqualification for a team"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    if team.disqualified and team.disqualification_confirmed_by_admin:
+        raise HTTPException(
+            status_code=400, detail="Team already disqualified and confirmed"
+        )
+
+    from app.scoring import calculate_total_deductions
+
+    team.disqualified = True
+    team.disqualification_confirmed_by_admin = True
+    team.disqualification_timestamp = datetime.now()
+    team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
+    save_game_state()
+
+    return {
+        "message": f"{team_name} has been disqualified",
+        "team_name": team_name,
+        "disqualified": True,
+        "reason": team.disqualification_reason,
+        "confirmed_by": confirmed_by,
+        "timestamp": team.disqualification_timestamp.isoformat(),
+    }
+
+
+@router.post("/team-acknowledge-disqualification/{team_name}")
+async def team_acknowledge_disqualification(team_name: str):
+    """Team acknowledges their disqualification status"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    if not team.disqualified:
+        raise HTTPException(status_code=400, detail="Team is not disqualified")
+
+    if team.disqualification_acknowledged_by_team:
+        raise HTTPException(
+            status_code=400, detail="Team already acknowledged disqualification"
+        )
+
+    team.disqualification_acknowledged_by_team = True
+    save_game_state()
+
+    return {
+        "message": f"{team_name} has acknowledged disqualification",
+        "acknowledged": True,
     }
 
 

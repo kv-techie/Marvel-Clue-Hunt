@@ -99,7 +99,7 @@ const TeamDistribution = () => {
                 </div>
                 <div className="stat-row">
                   <span>Score:</span>
-                  <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>{teamData.current_score}</span>
+                  <span style={{ color: teamData.current_score < 0 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>{teamData.current_score}</span>
                 </div>
               </div>
             </div>

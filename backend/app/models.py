@@ -33,6 +33,11 @@ class Team(BaseModel):
     enactment_bonus_amount: int = 0
     manual_adjustments: List[PointAdjustment] = []
     final_score: Optional[int] = None
+    disqualified: bool = False
+    disqualification_reason: Optional[str] = None
+    disqualification_timestamp: Optional[datetime] = None
+    disqualification_confirmed_by_admin: bool = False
+    disqualification_acknowledged_by_team: bool = False
 
 
 class DialogueSubmission(BaseModel):

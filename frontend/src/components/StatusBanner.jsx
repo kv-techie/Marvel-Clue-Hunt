@@ -8,7 +8,7 @@ const StatusBanner = ({ teamStatus }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px', textAlign: 'center' }}>
         <div>
           <h3>Current Score</h3>
-          <p style={{ fontSize: '32px', color: '#2ecc71', fontWeight: 'bold' }}>
+          <p style={{ fontSize: '32px', color: teamStatus.current_score < 0 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>
             {teamStatus.current_score}
           </p>
         </div>

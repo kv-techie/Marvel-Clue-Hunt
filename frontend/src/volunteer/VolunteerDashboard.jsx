@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react'
 import { getLeaderboard, adjustPoints } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
+// Predefined point deduction categories
+const PENALTY_CATEGORIES = {
+  reward: [
+    { label: '➕ Bonus (Generic)', value: 'Bonus (Generic)', points: 25 },
+    { label: '⭐ Excellent Performance', value: 'Excellent Performance', points: 50 },
+    { label: '🏆 Outstanding Achievement', value: 'Outstanding Achievement', points: 100 }
+  ],
+  deduct: [
+    { label: '📱 Phone Usage - Warning 1', value: 'Phone Usage - Warning 1', points: 25 },
+    { label: '📱 Phone Usage - Warning 2', value: 'Phone Usage - Warning 2', points: 50 },
+    { label: '📱 Phone Usage - Violation', value: 'Phone Usage - Violation', points: 100 },
+    { label: '🗣️ Unauthorized Discussion - Minor', value: 'Unauthorized Discussion - Minor', points: 20 },
+    { label: '🗣️ Unauthorized Discussion - Major', value: 'Unauthorized Discussion - Major', points: 75 },
+    { label: '❌ Rule Violation (General)', value: 'Rule Violation (General)', points: 30 },
+    { label: '⚠️ Unsportsmanlike Conduct', value: 'Unsportsmanlike Conduct', points: 50 },
+    { label: '🚫 Disqualification Offense', value: 'Disqualification Offense', points: 200 }
+  ]
+}
+
 const VolunteerDashboard = () => {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
@@ -11,6 +30,8 @@ const VolunteerDashboard = () => {
     reason: '',
     adjustment_type: 'reward',
   })
+  const [customReason, setCustomReason] = useState('')
+  const [useCustomReason, setUseCustomReason] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   
@@ -30,9 +51,19 @@ const VolunteerDashboard = () => {
 
   useEffect(() => {
     fetchLeaderboard()
-    const interval = setInterval(fetchLeaderboard, 10000)
+    // Poll every 2 seconds for instant feedback
+    const interval = setInterval(fetchLeaderboard, 2000)
     return () => clearInterval(interval)
   }, [])
+
+  const handleCategorySelect = (category) => {
+    setAdjustmentForm({
+      amount: category.points,
+      reason: category.value,
+      adjustment_type: adjustmentForm.adjustment_type,
+    })
+    setUseCustomReason(false)
+  }
 
   const handleAdjustPoints = async (e) => {
     e.preventDefault()
@@ -49,15 +80,17 @@ const VolunteerDashboard = () => {
       return
     }
 
-    if (!adjustmentForm.reason.trim()) {
-      setError('Please provide a reason')
+    const finalReason = useCustomReason ? customReason.trim() : adjustmentForm.reason.trim()
+    
+    if (!finalReason) {
+      setError('Please provide or select a reason')
       return
     }
 
     try {
       const response = await adjustPoints(selectedTeam, user, {
         amount: parseInt(adjustmentForm.amount, 10),
-        reason: adjustmentForm.reason.trim(),
+        reason: finalReason,
         adjustment_type: adjustmentForm.adjustment_type,
       })
 
@@ -65,9 +98,16 @@ const VolunteerDashboard = () => {
         `${adjustmentForm.adjustment_type === 'reward' ? 'Reward' : 'Deduction'} of ${adjustmentForm.amount} points applied!\nNew Score: ${response.data.new_score}`
       )
 
+      // Immediately refresh leaderboard
+      setTimeout(() => fetchLeaderboard(), 300)
+      
       setAdjustmentForm({ amount: '', reason: '', adjustment_type: 'reward' })
+      setCustomReason('')
+      setUseCustomReason(false)
       setSelectedTeam(null)
-      await fetchLeaderboard()
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to adjust points')
     }
@@ -141,7 +181,7 @@ const VolunteerDashboard = () => {
                   <td>
                     <strong>{team.team_name}</strong>
                   </td>
-                  <td style={{ fontSize: '18px', fontWeight: 'bold', color: '#2ecc71' }}>
+                  <td style={{ fontSize: '18px', fontWeight: 'bold', color: team.score < 0 ? '#e74c3c' : '#2ecc71' }}>
                     {team.score}
                   </td>
                 </tr>
@@ -198,6 +238,49 @@ const VolunteerDashboard = () => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Quick Categories
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', marginBottom: '10px' }}>
+                {PENALTY_CATEGORIES[adjustmentForm.adjustment_type].map((category) => (
+                  <button
+                    key={category.value}
+                    type="button"
+                    onClick={() => handleCategorySelect(category)}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '4px',
+                      border: adjustmentForm.reason === category.value ? '2px solid #2ecc71' : '1px solid #444',
+                      backgroundColor: adjustmentForm.reason === category.value ? 'rgba(46, 204, 113, 0.2)' : '#222',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      textAlign: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {category.label}
+                    <br/>
+                    <strong style={{ color: adjustmentForm.adjustment_type === 'reward' ? '#2ecc71' : '#e74c3c' }}>
+                      {category.points}pts
+                    </strong>
+                  </button>
+                ))}
+              </div>
+              <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #444' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
+                  <input
+                    type="checkbox"
+                    checked={useCustomReason}
+                    onChange={(e) => setUseCustomReason(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  Use Custom Reason
+                </label>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px' }}>
                 Amount
               </label>
@@ -222,26 +305,41 @@ const VolunteerDashboard = () => {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px' }}>
-                Reason (Required)
+                Reason {useCustomReason && '(Custom)'}
               </label>
-              <textarea
-                value={adjustmentForm.reason}
-                onChange={(e) =>
-                  setAdjustmentForm({ ...adjustmentForm, reason: e.target.value })
-                }
-                placeholder="e.g., Outstanding performance, Rule violation, Bonus task"
-                rows="3"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #444',
-                  backgroundColor: '#222',
-                  color: '#fff',
-                  fontFamily: 'monospace',
-                  resize: 'vertical',
-                }}
-              />
+              {useCustomReason ? (
+                <textarea
+                  value={customReason}
+                  onChange={(e) => setCustomReason(e.target.value)}
+                  placeholder="Enter custom reason"
+                  rows="3"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #444',
+                    backgroundColor: '#222',
+                    color: '#fff',
+                    fontFamily: 'monospace',
+                    resize: 'vertical',
+                  }}
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={adjustmentForm.reason}
+                  disabled
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #444',
+                    backgroundColor: '#111',
+                    color: '#666',
+                  }}
+                  placeholder="Select a category above or enable custom reason"
+                />
+              )}
             </div>
 
             <button

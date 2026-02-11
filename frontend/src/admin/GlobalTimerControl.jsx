@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { setStartTime, startGame, stopGame } from '../api/client'
+import { setStartTime, startGame, stopGame, deleteParticipantData } from '../api/client'
 
 const GlobalTimerControl = () => {
   const [scheduledTime, setScheduledTime] = useState('')
@@ -13,27 +13,48 @@ const GlobalTimerControl = () => {
 
     try {
       const response = await setStartTime(scheduledTime)
-      setMessage(`Game scheduled to start at ${new Date(scheduledTime).toLocaleString()}`)
+      setMessage(`✅ Game scheduled to start at ${new Date(scheduledTime).toLocaleString()}`)
+      setTimeout(() => setMessage(''), 2000)
     } catch (err) {
       setMessage(`Error: ${err.response?.data?.detail || 'Failed to schedule'}`)
+      setTimeout(() => setMessage(''), 3000)
     }
   }
 
   const handleStartNow = async () => {
     try {
       const response = await startGame()
-      setMessage('Game started immediately!')
+      setMessage('🎮 Game started immediately!')
+      setTimeout(() => setMessage(''), 2000)
     } catch (err) {
       setMessage(`Error: ${err.response?.data?.detail || 'Failed to start game'}`)
+      setTimeout(() => setMessage(''), 3000)
     }
   }
 
   const handleStopGame = async () => {
     try {
       const response = await stopGame()
-      setMessage('Game stopped successfully!')
+      setMessage('✅ Game stopped successfully!')
+      setTimeout(() => setMessage(''), 2000)
     } catch (err) {
       setMessage(`Error: ${err.response?.data?.detail || 'Failed to stop game'}`)
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
+  const handleDeleteData = async () => {
+    if (!window.confirm('⚠️ Are you sure you want to delete all participant data? This cannot be undone!')) {
+      return
+    }
+
+    try {
+      const response = await deleteParticipantData()
+      setMessage('✅ All participant data has been deleted successfully! Teams and game state reset.')
+      setTimeout(() => setMessage(''), 3000)
+    } catch (err) {
+      setMessage(`Error: ${err.response?.data?.detail || 'Failed to delete data'}`)
+      setTimeout(() => setMessage(''), 3000)
     }
   }
 
@@ -74,6 +95,21 @@ const GlobalTimerControl = () => {
             }}
           >
             🛑 Stop Game
+          </button>
+        </div>
+
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          <h3>Delete Data</h3>
+          <button 
+            onClick={handleDeleteData} 
+            className="btn" 
+            style={{ 
+              marginTop: '10px',
+              background: 'linear-gradient(135deg, #8e44ad, #6c3483)',
+              color: 'white'
+            }}
+          >
+            🗑️ Delete All Participant Data
           </button>
         </div>
       </div>

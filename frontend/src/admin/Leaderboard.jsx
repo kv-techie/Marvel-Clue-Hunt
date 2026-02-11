@@ -18,7 +18,7 @@ const Leaderboard = () => {
 
   useEffect(() => {
     fetchLeaderboard()
-    const interval = setInterval(fetchLeaderboard, 10000) // Refresh every 10 seconds
+    const interval = setInterval(fetchLeaderboard, 2000) // Refresh every 2 seconds for instant updates
     return () => clearInterval(interval)
   }, [])
 
@@ -75,7 +75,7 @@ const Leaderboard = () => {
                   {team.members.join(', ')}
                 </small>
               </td>
-              <td style={{ fontSize: '20px', fontWeight: 'bold', color: '#2ecc71' }}>
+              <td style={{ fontSize: '20px', fontWeight: 'bold', color: team.score < 0 ? '#e74c3c' : '#2ecc71' }}>
                 {team.score}
               </td>
               <td>{team.dialogues_completed}/3</td>

@@ -7,6 +7,7 @@ import Leaderboard from '../admin/Leaderboard'
 import AdminManagement from '../admin/AdminManagement'
 import VolunteerManagement from '../admin/VolunteerManagement'
 import AuditLog from '../admin/AuditLog'
+import DisqualificationManager from '../admin/DisqualificationManager'
 import '../styles/Admin.css'
 
 const Admin = () => {
@@ -49,6 +50,10 @@ const Admin = () => {
 
         <section className="admin-section">
           <AuditLog />
+        </section>
+
+        <section className="admin-section">
+          <DisqualificationManager />
         </section>
       </div>
     </div>
