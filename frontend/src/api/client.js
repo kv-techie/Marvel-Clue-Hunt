@@ -10,8 +10,10 @@ const api = axios.create({
 })
 
 // Auth
-export const login = (name, isAdmin = false) => 
-  api.post('/login', { name, is_admin: isAdmin })
+// login payloads:
+// - Admin/Volunteer: { name, pin, is_admin: true }
+// - Attendee: { team_name, device_id }
+export const login = (payload) => api.post('/login', payload)
 
 // Admin APIs
 export const uploadAttendance = (formData) =>
@@ -49,6 +51,19 @@ export const getVolunteerList = () => api.get('/admin/volunteers')
 export const addVolunteer = (name) => api.post(`/admin/volunteers/${name}`)
 
 export const removeVolunteer = (name) => api.delete(`/admin/volunteers/${name}`)
+
+// PIN management
+export const setPin = (role, name, pin) =>
+  api.post(`/admin/set-pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`, null, { params: { pin } })
+
+export const getPins = () => api.get('/admin/pins')
+
+export const deletePin = (role, name) => api.delete(`/admin/pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`)
+
+// Device management
+export const getDevices = (teamName) => api.get(`/admin/devices/${encodeURIComponent(teamName)}`)
+
+export const removeDevice = (teamName, deviceId) => api.delete(`/admin/devices/${encodeURIComponent(teamName)}/${encodeURIComponent(deviceId)}`)
 
 // Attendee APIs
 export const startTeamTimer = (teamName) =>

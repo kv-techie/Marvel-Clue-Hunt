@@ -6,6 +6,8 @@ import '../styles/Login.css'
 
 const Login = () => {
   const [name, setName] = useState('')
+  const [pin, setPin] = useState('')
+  const [teamName, setTeamName] = useState('')
   const [isAdminLogin, setIsAdminLogin] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,12 +21,26 @@ const Login = () => {
     setLoading(true)
 
     try {
-      const response = await login(name, isAdminLogin)
+      let payload
+
+      if (isAdminLogin) {
+        payload = { name: name.trim(), pin: pin.trim(), is_admin: true }
+      } else {
+        // attendee: use team name and device id
+        const storedDevice = localStorage.getItem('device_id')
+        const deviceId = storedDevice || `${Date.now()}-${Math.random().toString(36).slice(2,10)}`
+        localStorage.setItem('device_id', deviceId)
+        payload = { team_name: teamName.trim(), device_id: deviceId }
+      }
+
+      const response = await login(payload)
       const data = response.data
 
       if (data.success) {
-        loginUser(data.name, data.is_admin, data.team, data.is_volunteer)
-        
+        // Ensure `user` is non-empty so ProtectedRoute allows attendee access.
+        const userForContext = data.name || data.team || teamName
+        loginUser(userForContext, data.is_admin, data.team, data.is_volunteer)
+
         if (data.is_admin) {
           navigate('/admin')
         } else if (data.is_volunteer) {
@@ -47,18 +63,6 @@ const Login = () => {
         <p className="login-subtitle">Assemble your team and solve the mystery!</p>
         
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="name">Enter Your Name</label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Tony Stark"
-              required
-            />
-          </div>
-
           <div className="checkbox-group">
             <label>
               <input
@@ -69,6 +73,47 @@ const Login = () => {
               <span>Admin/Volunteer Login (Authorized Users Only)</span>
             </label>
           </div>
+
+          {!isAdminLogin && (
+            <div className="form-group">
+              <label htmlFor="team">Enter Your Team Name</label>
+              <input
+                id="team"
+                type="text"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="Team A"
+                required
+              />
+            </div>
+          )}
+
+          {isAdminLogin && (
+            <>
+              <div className="form-group">
+                <label htmlFor="name">Enter Your Name</label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Kedhar Vinod"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="pin">Enter PIN</label>
+                <input
+                  id="pin"
+                  type="password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  placeholder="1234"
+                  required
+                />
+              </div>
+            </>
+          )}
 
           {error && <div className="error-message">{error}</div>}
 

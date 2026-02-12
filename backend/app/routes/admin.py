@@ -39,6 +39,20 @@ def load_game_state():
         with open(GAME_STATE_FILE, "r") as f:
             data = json.load(f)
             game_state = GameState(**data)
+            # Restore in-memory timers from persisted state (if present)
+            try:
+                from app.timer_manager import timer_manager
+
+                timer_manager.restore_from_game_state(data)
+            except Exception:
+                pass
+            # Restore in-memory timers from persisted state (if present)
+            try:
+                from app.timer_manager import timer_manager
+
+                timer_manager.restore_from_game_state(data)
+            except Exception:
+                pass
 
 
 def save_game_state():
@@ -276,6 +290,141 @@ async def get_admin_list():
     """Get list of authorized admins"""
     admins = load_admin_whitelist()
     return {"admins": admins}
+
+
+@router.post("/set-pin/{role}/{name}")
+async def set_pin(role: str, name: str, pin: str):
+    """Set PIN for an admin or volunteer. role should be 'admin' or 'volunteer'."""
+
+    role = role.strip().lower()
+    name = name.strip()
+
+    if role not in ["admin", "volunteer"]:
+        raise HTTPException(
+            status_code=400, detail="Role must be 'admin' or 'volunteer'"
+        )
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Name cannot be empty")
+
+    # Load game state file directly
+    if os.path.exists(GAME_STATE_FILE):
+        with open(GAME_STATE_FILE, "r") as f:
+            gs = json.load(f)
+    else:
+        gs = {}
+
+    key = "admin_users" if role == "admin" else "volunteer_users"
+    users = gs.get(key, {})
+
+    users[name.lower()] = {
+        "username": name,
+        "pin": str(pin),
+        "role": role,
+        "created_at": datetime.now().isoformat(),
+    }
+
+    gs[key] = users
+
+    os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
+    with open(GAME_STATE_FILE, "w") as f:
+        json.dump(gs, f, indent=2)
+
+    return {"message": f"PIN set for {name} ({role})"}
+
+
+@router.get("/pins")
+async def list_pins():
+    """List admin and volunteer users with PINs (from game_state.json)"""
+    if os.path.exists(GAME_STATE_FILE):
+        with open(GAME_STATE_FILE, "r") as f:
+            gs = json.load(f)
+    else:
+        gs = {}
+
+    admin_users = gs.get("admin_users", {})
+    volunteer_users = gs.get("volunteer_users", {})
+
+    # normalize to readable lists
+    admins = [v for k, v in admin_users.items()]
+    volunteers = [v for k, v in volunteer_users.items()]
+
+    return {"admin_users": admins, "volunteer_users": volunteers}
+
+
+@router.delete("/pin/{role}/{name}")
+async def delete_pin(role: str, name: str):
+    """Remove PIN entry for admin or volunteer from game_state.json"""
+    role = role.strip().lower()
+    name = name.strip()
+
+    if role not in ["admin", "volunteer"]:
+        raise HTTPException(
+            status_code=400, detail="Role must be 'admin' or 'volunteer'"
+        )
+
+    if os.path.exists(GAME_STATE_FILE):
+        with open(GAME_STATE_FILE, "r") as f:
+            gs = json.load(f)
+    else:
+        gs = {}
+
+    key = "admin_users" if role == "admin" else "volunteer_users"
+    users = gs.get(key, {})
+
+    removed = False
+    lookup = name.lower()
+    if lookup in users:
+        users.pop(lookup)
+        removed = True
+
+    gs[key] = users
+    os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
+    with open(GAME_STATE_FILE, "w") as f:
+        json.dump(gs, f, indent=2)
+
+    if not removed:
+        raise HTTPException(status_code=404, detail=f"{name} not found in {role} users")
+
+    return {"message": f"Removed {name} from {role} users"}
+
+
+@router.get("/devices/{team_name}")
+async def list_devices(team_name: str):
+    """List registered device IDs for a team"""
+    DEVICES_FILE = "app/data/devices.json"
+    if os.path.exists(DEVICES_FILE):
+        with open(DEVICES_FILE, "r") as f:
+            devices = json.load(f)
+    else:
+        devices = {}
+
+    team_devices = devices.get(team_name, [])
+    return {"team": team_name, "devices": team_devices}
+
+
+@router.delete("/devices/{team_name}/{device_id}")
+async def remove_device(team_name: str, device_id: str):
+    """Remove a specific device id from a team's registered devices"""
+    DEVICES_FILE = "app/data/devices.json"
+    if os.path.exists(DEVICES_FILE):
+        with open(DEVICES_FILE, "r") as f:
+            devices = json.load(f)
+    else:
+        devices = {}
+
+    team_devices = devices.get(team_name, [])
+    if device_id not in team_devices:
+        raise HTTPException(status_code=404, detail="Device not found for team")
+
+    team_devices = [d for d in team_devices if d != device_id]
+    devices[team_name] = team_devices
+
+    os.makedirs(os.path.dirname(DEVICES_FILE), exist_ok=True)
+    with open(DEVICES_FILE, "w") as f:
+        json.dump(devices, f, indent=2)
+
+    return {"message": f"Device removed from {team_name}", "devices": team_devices}
 
 
 @router.post("/admins/{name}")

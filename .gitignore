@@ -41,3 +41,5 @@ sample_data/
 
 # Logs
 *.log
+
+test_*.py

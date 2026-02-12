@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from app.config import settings
 from app.models import DialogueSubmission, HintRequest
 from app.routes.admin import game_state, save_game_state
@@ -62,7 +64,19 @@ async def get_team_status(team_name: str):
         raise HTTPException(status_code=404, detail="Team not found")
 
     team = game_state.teams[team_name]
+    # Prefer in-memory timer for accuracy; fall back to persisted team.timer_started
     elapsed_time = timer_manager.get_team_elapsed_time(team_name)
+    if elapsed_time == 0 and team.timer_started:
+        # team.timer_started may be a datetime or ISO string depending on load/save
+        start = team.timer_started
+        if isinstance(start, str):
+            try:
+                start = datetime.fromisoformat(start)
+            except Exception:
+                start = None
+
+        if isinstance(start, datetime):
+            elapsed_time = int((datetime.now() - start).total_seconds())
     is_auto_disqualified = check_auto_disqualification(team)
 
     return {
