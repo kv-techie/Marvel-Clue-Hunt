@@ -27,6 +27,8 @@ ATTENDANCE_FILE = "app/data/attendance.csv"
 GAME_STATE_FILE = "app/data/game_state.json"
 ADMIN_WHITELIST_FILE = "app/data/admin_whitelist.json"
 VOLUNTEER_WHITELIST_FILE = "app/data/volunteer_whitelist.json"
+ADMIN_CREDENTIALS_FILE = "app/data/admin_credentials.json"
+VOLUNTEER_CREDENTIALS_FILE = "app/data/volunteer_credentials.json"
 
 # In-memory game state
 game_state: GameState = GameState()
@@ -39,13 +41,16 @@ def load_game_state():
         with open(GAME_STATE_FILE, "r") as f:
             data = json.load(f)
             game_state = GameState(**data)
+            print(f"✅ Loaded game state: {len(data.get('teams', {}))} teams")
             # Restore in-memory timers from persisted state (if present)
             try:
                 from app.timer_manager import timer_manager
 
                 timer_manager.restore_from_game_state(data)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️  Timer restoration error: {e}")
+    else:
+        print(f"⚠️  Game state file not found at: {os.path.abspath(GAME_STATE_FILE)}")
 
 
 def save_game_state():
@@ -53,6 +58,7 @@ def save_game_state():
     os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
     with open(GAME_STATE_FILE, "w") as f:
         json.dump(game_state.dict(), f, default=str, indent=2)
+    print(f"💾 Saved game state to: {os.path.abspath(GAME_STATE_FILE)}")
 
 
 def load_admin_whitelist():
@@ -83,6 +89,38 @@ def save_volunteer_whitelist(volunteers: list):
     os.makedirs(os.path.dirname(VOLUNTEER_WHITELIST_FILE), exist_ok=True)
     with open(VOLUNTEER_WHITELIST_FILE, "w") as f:
         json.dump({"volunteers": volunteers}, f, indent=2)
+
+
+def load_admin_credentials():
+    """Load admin credentials from dedicated file"""
+    if os.path.exists(ADMIN_CREDENTIALS_FILE):
+        with open(ADMIN_CREDENTIALS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def save_admin_credentials(credentials: dict):
+    """Save admin credentials to dedicated file"""
+    os.makedirs(os.path.dirname(ADMIN_CREDENTIALS_FILE), exist_ok=True)
+    with open(ADMIN_CREDENTIALS_FILE, "w") as f:
+        json.dump(credentials, f, indent=2)
+    print(f"💾 Saved {len(credentials)} admin credentials")
+
+
+def load_volunteer_credentials():
+    """Load volunteer credentials from dedicated file"""
+    if os.path.exists(VOLUNTEER_CREDENTIALS_FILE):
+        with open(VOLUNTEER_CREDENTIALS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def save_volunteer_credentials(credentials: dict):
+    """Save volunteer credentials to dedicated file"""
+    os.makedirs(os.path.dirname(VOLUNTEER_CREDENTIALS_FILE), exist_ok=True)
+    with open(VOLUNTEER_CREDENTIALS_FILE, "w") as f:
+        json.dump(credentials, f, indent=2)
+    print(f"💾 Saved {len(credentials)} volunteer credentials")
 
 
 @router.post("/upload-attendance")
@@ -117,6 +155,95 @@ async def upload_attendance(file: UploadFile = File(...)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload-teams-and-attendees")
+async def upload_teams_and_attendees(
+    team_names_file: UploadFile = File(...), attendees_file: UploadFile = File(...)
+):
+    """Upload team names and attendees files to allocate teams"""
+
+    try:
+        # Read team names file
+        team_names_content = await team_names_file.read()
+        team_names_text = team_names_content.decode("utf-8")
+
+        # Parse team names (handle both CSV and TXT)
+        team_names = []
+        for line in team_names_text.splitlines():
+            line = line.strip()
+            if line:
+                # Handle CSV format (take first column)
+                if "," in line:
+                    team_names.append(line.split(",")[0].strip())
+                else:
+                    team_names.append(line)
+
+        # Read attendees file
+        attendees_content = await attendees_file.read()
+        attendees_text = attendees_content.decode("utf-8")
+
+        # Parse attendees (handle both CSV and TXT)
+        attendees = []
+        for line in attendees_text.splitlines():
+            line = line.strip()
+            if line:
+                # Handle CSV format (take first column, typically the name)
+                if "," in line:
+                    attendees.append(line.split(",")[0].strip())
+                else:
+                    attendees.append(line)
+
+        # Validation
+        if not team_names:
+            raise HTTPException(status_code=400, detail="No team names found in file")
+
+        if not attendees:
+            raise HTTPException(status_code=400, detail="No attendees found in file")
+
+        if len(attendees) < len(team_names):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough attendees ({len(attendees)}) for the number of teams ({len(team_names)})",
+            )
+
+        # Allocate attendees to teams evenly
+        teams = {}
+        attendees_per_team = len(attendees) // len(team_names)
+        remainder = len(attendees) % len(team_names)
+
+        attendee_index = 0
+        for i, team_name in enumerate(team_names):
+            # Distribute remainder across first teams
+            team_size = attendees_per_team + (1 if i < remainder else 0)
+            teams[team_name] = attendees[attendee_index : attendee_index + team_size]
+            attendee_index += team_size
+
+        # Initialize game state with teams
+        game_state.teams = {
+            name: Team(name=name, members=members) for name, members in teams.items()
+        }
+        save_game_state()
+
+        # Calculate team size stats
+        team_sizes = [len(members) for members in teams.values()]
+
+        return {
+            "message": "Teams allocated successfully",
+            "teams": teams,
+            "total_teams": len(teams),
+            "total_attendees": len(attendees),
+            "min_team_size": min(team_sizes),
+            "max_team_size": max(team_sizes),
+        }
+
+    except UnicodeDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="File encoding error. Please ensure files are UTF-8 encoded",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing files: {str(e)}")
 
 
 @router.get("/teams")
@@ -185,7 +312,10 @@ async def stop_game():
 
 @router.post("/delete-participant-data")
 async def delete_participant_data():
-    """Delete all participant data and reset game state after game ends"""
+    """Delete all participant data and reset game state after game ends
+
+    Admin and volunteer credentials are stored separately and are NOT affected.
+    """
 
     if game_state.game_active:
         raise HTTPException(
@@ -193,7 +323,7 @@ async def delete_participant_data():
             detail="Cannot delete data while game is active. Stop the game first.",
         )
 
-    # Reset game state
+    # Simply reset game state - credentials are in separate files!
     game_state.teams = {}
     game_state.global_start_time = None
     game_state.game_active = False
@@ -204,8 +334,10 @@ async def delete_participant_data():
     if os.path.exists(attendance_file):
         os.remove(attendance_file)
 
+    print("🗑️  Deleted all participant data. Admin/volunteer credentials preserved.")
+
     return {
-        "message": "All participant data has been deleted successfully",
+        "message": "All participant data has been deleted successfully. Admin/volunteer credentials preserved.",
         "teams_cleared": True,
         "game_state_reset": True,
     }
@@ -284,37 +416,18 @@ async def set_pin(role: str, name: str, pin: str):
     if not name:
         raise HTTPException(status_code=400, detail="Name cannot be empty")
 
-    # Load ENTIRE game state file
-    if os.path.exists(GAME_STATE_FILE):
-        with open(GAME_STATE_FILE, "r") as f:
-            gs = json.load(f)
+    # Load credentials from dedicated file
+    if role == "admin":
+        credentials = load_admin_credentials()
     else:
-        # Initialize with proper structure if file doesn't exist
-        gs = {
-            "teams": {},
-            "admin_users": {},
-            "volunteer_users": {},
-            "global_start_time": None,
-            "game_active": False,
-        }
-
-    # Ensure all keys exist to prevent data loss
-    if "admin_users" not in gs:
-        gs["admin_users"] = {}
-    if "volunteer_users" not in gs:
-        gs["volunteer_users"] = {}
-    if "teams" not in gs:
-        gs["teams"] = {}
-
-    key = "admin_users" if role == "admin" else "volunteer_users"
-    users = gs.get(key, {})
+        credentials = load_volunteer_credentials()
 
     # Check if user exists (updating) or new (creating)
     user_key = name.lower()
-    existing_user = users.get(user_key, {})
+    existing_user = credentials.get(user_key, {})
 
     # Update or create user - preserve created_at if updating
-    users[user_key] = {
+    credentials[user_key] = {
         "username": name,
         "pin": str(pin),
         "role": role,
@@ -322,39 +435,33 @@ async def set_pin(role: str, name: str, pin: str):
         "updated_at": datetime.now().isoformat(),
     }
 
-    gs[key] = users
-
-    # Save ENTIRE state back (preserving teams and all other data)
-    os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
-    with open(GAME_STATE_FILE, "w") as f:
-        json.dump(gs, f, indent=2)
+    # Save to dedicated credentials file
+    if role == "admin":
+        save_admin_credentials(credentials)
+    else:
+        save_volunteer_credentials(credentials)
 
     action = "updated" if existing_user else "created"
+    print(f"📝 PIN {action} for {name} ({role})")
     return {"message": f"PIN {action} for {name} ({role})"}
 
 
 @router.get("/pins")
 async def list_pins():
-    """List admin and volunteer users with PINs (from game_state.json)"""
-    if os.path.exists(GAME_STATE_FILE):
-        with open(GAME_STATE_FILE, "r") as f:
-            gs = json.load(f)
-    else:
-        gs = {}
+    """List admin and volunteer users with PINs"""
+    admin_credentials = load_admin_credentials()
+    volunteer_credentials = load_volunteer_credentials()
 
-    admin_users = gs.get("admin_users", {})
-    volunteer_users = gs.get("volunteer_users", {})
-
-    # normalize to readable lists
-    admins = [v for k, v in admin_users.items()]
-    volunteers = [v for k, v in volunteer_users.items()]
+    # Normalize to readable lists
+    admins = [v for k, v in admin_credentials.items()]
+    volunteers = [v for k, v in volunteer_credentials.items()]
 
     return {"admin_users": admins, "volunteer_users": volunteers}
 
 
 @router.delete("/pin/{role}/{name}")
 async def delete_pin(role: str, name: str):
-    """Remove PIN entry for admin or volunteer from game_state.json"""
+    """Remove PIN entry for admin or volunteer"""
     role = role.strip().lower()
     name = name.strip()
 
@@ -363,31 +470,28 @@ async def delete_pin(role: str, name: str):
             status_code=400, detail="Role must be 'admin' or 'volunteer'"
         )
 
-    if os.path.exists(GAME_STATE_FILE):
-        with open(GAME_STATE_FILE, "r") as f:
-            gs = json.load(f)
+    # Load credentials from dedicated file
+    if role == "admin":
+        credentials = load_admin_credentials()
     else:
-        gs = {}
-
-    key = "admin_users" if role == "admin" else "volunteer_users"
-    users = gs.get(key, {})
+        credentials = load_volunteer_credentials()
 
     removed = False
     lookup = name.lower()
-    if lookup in users:
-        users.pop(lookup)
+    if lookup in credentials:
+        credentials.pop(lookup)
         removed = True
 
-    gs[key] = users
-
-    # Save ENTIRE state back (preserving teams and other data)
-    os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
-    with open(GAME_STATE_FILE, "w") as f:
-        json.dump(gs, f, indent=2)
+    # Save back to dedicated credentials file
+    if role == "admin":
+        save_admin_credentials(credentials)
+    else:
+        save_volunteer_credentials(credentials)
 
     if not removed:
         raise HTTPException(status_code=404, detail=f"{name} not found in {role} users")
 
+    print(f"🗑️  Removed {name} from {role} users")
     return {"message": f"Removed {name} from {role} users"}
 
 
@@ -416,17 +520,35 @@ async def remove_device(team_name: str, device_id: str):
         devices = {}
 
     team_devices = devices.get(team_name, [])
-    if device_id not in team_devices:
+
+    # Find device by checking device_id field in each device object
+    device_found = False
+    updated_devices = []
+
+    for device in team_devices:
+        # Handle both old format (string) and new format (dict)
+        if isinstance(device, str):
+            if device != device_id:
+                updated_devices.append(device)
+            else:
+                device_found = True
+        elif isinstance(device, dict):
+            if device.get("device_id") != device_id:
+                updated_devices.append(device)
+            else:
+                device_found = True
+
+    if not device_found:
         raise HTTPException(status_code=404, detail="Device not found for team")
 
-    team_devices = [d for d in team_devices if d != device_id]
-    devices[team_name] = team_devices
+    devices[team_name] = updated_devices
 
     os.makedirs(os.path.dirname(DEVICES_FILE), exist_ok=True)
     with open(DEVICES_FILE, "w") as f:
         json.dump(devices, f, indent=2)
 
-    return {"message": f"Device removed from {team_name}", "devices": team_devices}
+    print(f"🗑️  Removed device {device_id} from {team_name}")
+    return {"message": f"Device removed from {team_name}", "devices": updated_devices}
 
 
 @router.post("/admins/{name}")

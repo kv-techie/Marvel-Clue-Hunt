@@ -5,7 +5,7 @@ import TeamDistribution from '../admin/TeamDistribution'
 import GlobalTimerControl from '../admin/GlobalTimerControl'
 import Leaderboard from '../admin/Leaderboard'
 import AdminManagement from '../admin/AdminManagement'
-import VolunteerManagement from '../admin/VolunteerManagement'
+// REMOVE THIS LINE: import VolunteerManagement from '../admin/VolunteerManagement'
 import AuditLog from '../admin/AuditLog'
 import DisqualificationManager from '../admin/DisqualificationManager'
 import '../styles/Admin.css'
@@ -28,9 +28,11 @@ const Admin = () => {
           <AdminManagement />
         </section>
 
+        {/* REMOVE THIS SECTION - AdminManagement already includes volunteer management
         <section className="admin-section">
           <VolunteerManagement />
         </section>
+        */}
 
         <section className="admin-section">
           <AdminDashboard />

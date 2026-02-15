@@ -12,6 +12,24 @@ ADMIN_WHITELIST_FILE = "app/data/admin_whitelist.json"
 VOLUNTEER_WHITELIST_FILE = "app/data/volunteer_whitelist.json"
 DEVICES_FILE = "app/data/devices.json"
 GAME_STATE_FILE = "app/data/game_state.json"
+ADMIN_CREDENTIALS_FILE = "app/data/admin_credentials.json"
+VOLUNTEER_CREDENTIALS_FILE = "app/data/volunteer_credentials.json"
+
+
+def load_admin_credentials():
+    """Load admin credentials from dedicated file"""
+    if os.path.exists(ADMIN_CREDENTIALS_FILE):
+        with open(ADMIN_CREDENTIALS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def load_volunteer_credentials():
+    """Load volunteer credentials from dedicated file"""
+    if os.path.exists(VOLUNTEER_CREDENTIALS_FILE):
+        with open(VOLUNTEER_CREDENTIALS_FILE, "r") as f:
+            return json.load(f)
+    return {}
 
 
 def load_admin_whitelist():
@@ -266,16 +284,19 @@ async def login(request: LoginRequest):
 
         name = request.name.strip()
 
-        gs = _load_game_state_json()
-        admin_users = {k.lower(): v for k, v in gs.get("admin_users", {}).items()}
-        volunteer_users = {
-            k.lower(): v for k, v in gs.get("volunteer_users", {}).items()
-        }
+        # PRIORITY 1: Check dedicated credential files (NEW SYSTEM)
+        admin_credentials = load_admin_credentials()
+        volunteer_credentials = load_volunteer_credentials()
 
-        # Check admin users
-        if name.lower() in admin_users:
-            stored_pin = str(admin_users[name.lower()].get("pin", ""))
+        # Normalize keys to lowercase for case-insensitive lookup
+        admin_creds_lower = {k.lower(): v for k, v in admin_credentials.items()}
+        volunteer_creds_lower = {k.lower(): v for k, v in volunteer_credentials.items()}
+
+        # Check admin credentials file
+        if name.lower() in admin_creds_lower:
+            stored_pin = str(admin_creds_lower[name.lower()].get("pin", ""))
             if str(request.pin) == stored_pin:
+                print(f"✅ Admin login successful: {name} (from credentials file)")
                 return LoginResponse(
                     success=True,
                     name=name,
@@ -287,10 +308,11 @@ async def login(request: LoginRequest):
             else:
                 raise HTTPException(status_code=403, detail="Invalid PIN")
 
-        # Check volunteer users
-        if name.lower() in volunteer_users:
-            stored_pin = str(volunteer_users[name.lower()].get("pin", ""))
+        # Check volunteer credentials file
+        if name.lower() in volunteer_creds_lower:
+            stored_pin = str(volunteer_creds_lower[name.lower()].get("pin", ""))
             if str(request.pin) == stored_pin:
+                print(f"✅ Volunteer login successful: {name} (from credentials file)")
                 return LoginResponse(
                     success=True,
                     name=name,
@@ -302,11 +324,55 @@ async def login(request: LoginRequest):
             else:
                 raise HTTPException(status_code=403, detail="Invalid PIN")
 
-        # Fallback to whitelist names (legacy without pins)
+        # PRIORITY 2: Fallback to game_state.json (LEGACY SUPPORT)
+        gs = _load_game_state_json()
+        admin_users = {k.lower(): v for k, v in gs.get("admin_users", {}).items()}
+        volunteer_users = {
+            k.lower(): v for k, v in gs.get("volunteer_users", {}).items()
+        }
+
+        # Check admin users in game_state.json
+        if name.lower() in admin_users:
+            stored_pin = str(admin_users[name.lower()].get("pin", ""))
+            if str(request.pin) == stored_pin:
+                print(
+                    f"✅ Admin login successful: {name} (from game_state.json - LEGACY)"
+                )
+                return LoginResponse(
+                    success=True,
+                    name=name,
+                    team=None,
+                    is_admin=True,
+                    is_volunteer=False,
+                    message="Admin login successful",
+                )
+            else:
+                raise HTTPException(status_code=403, detail="Invalid PIN")
+
+        # Check volunteer users in game_state.json
+        if name.lower() in volunteer_users:
+            stored_pin = str(volunteer_users[name.lower()].get("pin", ""))
+            if str(request.pin) == stored_pin:
+                print(
+                    f"✅ Volunteer login successful: {name} (from game_state.json - LEGACY)"
+                )
+                return LoginResponse(
+                    success=True,
+                    name=name,
+                    team=None,
+                    is_admin=False,
+                    is_volunteer=True,
+                    message="Volunteer login successful",
+                )
+            else:
+                raise HTTPException(status_code=403, detail="Invalid PIN")
+
+        # PRIORITY 3: Fallback to whitelist names (legacy without pins)
         admin_whitelist = load_admin_whitelist()
         volunteer_whitelist = load_volunteer_whitelist()
 
         if name.lower() in admin_whitelist:
+            print(f"✅ Admin login successful: {name} (from whitelist - LEGACY)")
             return LoginResponse(
                 success=True,
                 name=name,
@@ -316,6 +382,7 @@ async def login(request: LoginRequest):
                 message="Admin login (legacy) successful",
             )
         if name.lower() in volunteer_whitelist:
+            print(f"✅ Volunteer login successful: {name} (from whitelist - LEGACY)")
             return LoginResponse(
                 success=True,
                 name=name,
@@ -325,6 +392,7 @@ async def login(request: LoginRequest):
                 message="Volunteer login (legacy) successful",
             )
 
+        print(f"❌ Login failed: {name} not found in any credential source")
         raise HTTPException(
             status_code=403,
             detail="You are not authorized to access the admin panel. Contact the organizer.",
