@@ -16,7 +16,7 @@ from app.scoring import (
     check_auto_disqualification,
     get_leaderboard,
 )
-from app.team_allocator import allocate_teams
+from app.team_allocator import allocate_teams_from_files as allocate_teams
 from app.timer_manager import timer_manager
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
@@ -39,13 +39,6 @@ def load_game_state():
         with open(GAME_STATE_FILE, "r") as f:
             data = json.load(f)
             game_state = GameState(**data)
-            # Restore in-memory timers from persisted state (if present)
-            try:
-                from app.timer_manager import timer_manager
-
-                timer_manager.restore_from_game_state(data)
-            except Exception:
-                pass
             # Restore in-memory timers from persisted state (if present)
             try:
                 from app.timer_manager import timer_manager
@@ -90,22 +83,6 @@ def save_volunteer_whitelist(volunteers: list):
     os.makedirs(os.path.dirname(VOLUNTEER_WHITELIST_FILE), exist_ok=True)
     with open(VOLUNTEER_WHITELIST_FILE, "w") as f:
         json.dump({"volunteers": volunteers}, f, indent=2)
-
-
-def load_game_state():
-    """Load game state from file"""
-    global game_state
-    if os.path.exists(GAME_STATE_FILE):
-        with open(GAME_STATE_FILE, "r") as f:
-            data = json.load(f)
-            game_state = GameState(**data)
-
-
-def save_game_state():
-    """Save game state to file"""
-    os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
-    with open(GAME_STATE_FILE, "w") as f:
-        json.dump(game_state.dict(), f, default=str, indent=2)
 
 
 @router.post("/upload-attendance")
@@ -307,30 +284,53 @@ async def set_pin(role: str, name: str, pin: str):
     if not name:
         raise HTTPException(status_code=400, detail="Name cannot be empty")
 
-    # Load game state file directly
+    # Load ENTIRE game state file
     if os.path.exists(GAME_STATE_FILE):
         with open(GAME_STATE_FILE, "r") as f:
             gs = json.load(f)
     else:
-        gs = {}
+        # Initialize with proper structure if file doesn't exist
+        gs = {
+            "teams": {},
+            "admin_users": {},
+            "volunteer_users": {},
+            "global_start_time": None,
+            "game_active": False,
+        }
+
+    # Ensure all keys exist to prevent data loss
+    if "admin_users" not in gs:
+        gs["admin_users"] = {}
+    if "volunteer_users" not in gs:
+        gs["volunteer_users"] = {}
+    if "teams" not in gs:
+        gs["teams"] = {}
 
     key = "admin_users" if role == "admin" else "volunteer_users"
     users = gs.get(key, {})
 
-    users[name.lower()] = {
+    # Check if user exists (updating) or new (creating)
+    user_key = name.lower()
+    existing_user = users.get(user_key, {})
+
+    # Update or create user - preserve created_at if updating
+    users[user_key] = {
         "username": name,
         "pin": str(pin),
         "role": role,
-        "created_at": datetime.now().isoformat(),
+        "created_at": existing_user.get("created_at", datetime.now().isoformat()),
+        "updated_at": datetime.now().isoformat(),
     }
 
     gs[key] = users
 
+    # Save ENTIRE state back (preserving teams and all other data)
     os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
     with open(GAME_STATE_FILE, "w") as f:
         json.dump(gs, f, indent=2)
 
-    return {"message": f"PIN set for {name} ({role})"}
+    action = "updated" if existing_user else "created"
+    return {"message": f"PIN {action} for {name} ({role})"}
 
 
 @router.get("/pins")
@@ -379,6 +379,8 @@ async def delete_pin(role: str, name: str):
         removed = True
 
     gs[key] = users
+
+    # Save ENTIRE state back (preserving teams and other data)
     os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
     with open(GAME_STATE_FILE, "w") as f:
         json.dump(gs, f, indent=2)

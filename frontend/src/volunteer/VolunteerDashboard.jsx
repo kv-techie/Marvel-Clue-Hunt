@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getLeaderboard, adjustPoints } from '../api/client'
+import { getLeaderboard, adjustPoints, setPin } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
 // Predefined point deduction categories
@@ -34,6 +34,12 @@ const VolunteerDashboard = () => {
   const [useCustomReason, setUseCustomReason] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  
+  // PIN change state
+  const [showPinChange, setShowPinChange] = useState(false)
+  const [newPin, setNewPin] = useState('')
+  const [confirmPin, setConfirmPin] = useState('')
+  const [pinMessage, setPinMessage] = useState('')
   
   const { user } = useAuth()
 
@@ -113,13 +119,176 @@ const VolunteerDashboard = () => {
     }
   }
 
+  // Change PIN functionality
+  const handleChangePin = async () => {
+    if (!newPin.trim()) {
+      setPinMessage('❌ Please enter a new PIN')
+      return
+    }
+
+    if (newPin !== confirmPin) {
+      setPinMessage('❌ PINs do not match')
+      return
+    }
+
+    if (newPin.length < 4) {
+      setPinMessage('❌ PIN must be at least 4 characters')
+      return
+    }
+
+    try {
+      await setPin('volunteer', user, newPin.trim())
+      setPinMessage('✅ PIN changed successfully! Use your new PIN for next login.')
+      setNewPin('')
+      setConfirmPin('')
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        setShowPinChange(false)
+        setPinMessage('')
+      }, 3000)
+    } catch (err) {
+      setPinMessage(`❌ Error: ${err.response?.data?.detail || 'Failed to change PIN'}`)
+    }
+  }
+
   if (loading) {
     return <div>Loading leaderboard...</div>
   }
 
   return (
     <div>
-      <h2>📋 Volunteer Panel</h2>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '20px'
+      }}>
+        <h2>📋 Volunteer Panel</h2>
+        
+        {/* Change PIN Button */}
+        <button
+          onClick={() => {
+            setShowPinChange(!showPinChange)
+            setPinMessage('')
+            setNewPin('')
+            setConfirmPin('')
+          }}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#f39c12',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          🔐 Change My PIN
+        </button>
+      </div>
+
+      {/* Change PIN Section */}
+      {showPinChange && (
+        <div style={{
+          marginBottom: '20px',
+          padding: '20px',
+          backgroundColor: 'rgba(243, 156, 18, 0.1)',
+          borderRadius: '8px',
+          border: '1px solid rgba(243, 156, 18, 0.3)'
+        }}>
+          <h3 style={{ marginTop: 0, color: '#f39c12' }}>🔐 Change My PIN</h3>
+          <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '15px' }}>
+            Enter your new PIN below. You'll need to use this PIN for your next login.
+          </p>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+            <input
+              type="password"
+              placeholder="Enter new PIN"
+              value={newPin}
+              onChange={(e) => setNewPin(e.target.value)}
+              style={{
+                padding: '10px',
+                borderRadius: '4px',
+                border: '1px solid #444',
+                backgroundColor: '#222',
+                color: '#fff',
+                fontSize: '16px'
+              }}
+            />
+            <input
+              type="password"
+              placeholder="Confirm new PIN"
+              value={confirmPin}
+              onChange={(e) => setConfirmPin(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleChangePin()}
+              style={{
+                padding: '10px',
+                borderRadius: '4px',
+                border: '1px solid #444',
+                backgroundColor: '#222',
+                color: '#fff',
+                fontSize: '16px'
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleChangePin}
+              style={{
+                flex: 1,
+                padding: '10px',
+                backgroundColor: '#2ecc71',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Save New PIN
+            </button>
+            <button
+              onClick={() => {
+                setShowPinChange(false)
+                setPinMessage('')
+                setNewPin('')
+                setConfirmPin('')
+              }}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: 'transparent',
+                color: '#888',
+                border: '1px solid #888',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+
+          {pinMessage && (
+            <div style={{
+              marginTop: '15px',
+              padding: '10px',
+              borderRadius: '4px',
+              backgroundColor: pinMessage.includes('✅') 
+                ? 'rgba(46, 204, 113, 0.2)' 
+                : 'rgba(231, 76, 60, 0.2)',
+              color: pinMessage.includes('✅') ? '#2ecc71' : '#e74c3c',
+              border: `1px solid ${pinMessage.includes('✅') ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`
+            }}>
+              {pinMessage}
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
         <div

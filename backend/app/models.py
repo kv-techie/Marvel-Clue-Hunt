@@ -60,11 +60,15 @@ class GameState(BaseModel):
 
 class LoginRequest(BaseModel):
     # For admin/volunteer login: provide `name` and `pin` and set `is_admin` True
-    # For attendee login: provide `team_name` and `device_id`
+    # For attendee login: provide `team_name`, `device_id`, and optionally `device_name` and `device_info`
     name: Optional[str] = None
     pin: Optional[str] = None
     team_name: Optional[str] = None
     device_id: Optional[str] = None
+    device_name: Optional[str] = None  # NEW - friendly device name
+    device_info: Optional[dict] = (
+        None  # NEW - full device metadata (browser, os, screen, etc.)
+    )
     is_admin: bool = False
 
 

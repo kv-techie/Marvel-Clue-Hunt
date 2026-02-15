@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isVolunteer, setIsVolunteer] = useState(false)
   const [team, setTeam] = useState(null)
+  const [loading, setLoading] = useState(true) // Add loading state
 
   useEffect(() => {
     // Load from localStorage on mount
@@ -21,6 +22,8 @@ export const AuthProvider = ({ children }) => {
       setIsVolunteer(savedIsVolunteer)
       setTeam(savedTeam)
     }
+    
+    setLoading(false) // Done loading
   }, [])
 
   const loginUser = (name, isAdminFlag, teamName, isVolunteerFlag = false) => {
@@ -47,7 +50,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAdmin, isVolunteer, team, loginUser, logout }}
+      value={{ user, isAdmin, isVolunteer, team, loading, loginUser, logout }}
     >
       {children}
     </AuthContext.Provider>

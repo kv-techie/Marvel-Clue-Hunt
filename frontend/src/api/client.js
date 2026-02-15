@@ -12,14 +12,21 @@ const api = axios.create({
 // Auth
 // login payloads:
 // - Admin/Volunteer: { name, pin, is_admin: true }
-// - Attendee: { team_name, device_id }
+// - Attendee: { team_name, device_id, device_name, device_info }
 export const login = (payload) => api.post('/login', payload)
 
-// Admin APIs
-export const uploadAttendance = (formData) =>
-  api.post('/admin/upload-attendance', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+// Admin APIs - Team Allocation
+export const uploadTeamsAndAttendees = (teamNamesFile, attendeesFile) => {
+  const formData = new FormData()
+  formData.append('team_names_file', teamNamesFile)
+  formData.append('attendees_file', attendeesFile)
+  
+  return api.post('/admin/upload-teams-and-attendees', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
   })
+}
 
 export const getAllTeams = () => api.get('/admin/teams')
 

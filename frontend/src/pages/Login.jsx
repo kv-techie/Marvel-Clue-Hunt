@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { login } from '../api/client'
+import { getDeviceInfo } from '../utils/deviceInfo'
 import '../styles/Login.css'
 
 const Login = () => {
@@ -24,23 +25,33 @@ const Login = () => {
       let payload
 
       if (isAdminLogin) {
-        payload = { name: name.trim(), pin: pin.trim(), is_admin: true }
+        // Admin/Volunteer login with PIN
+        payload = { 
+          name: name.trim(), 
+          pin: pin.trim(), 
+          is_admin: true 
+        }
       } else {
-        // attendee: use team name and device id
-        const storedDevice = localStorage.getItem('device_id')
-        const deviceId = storedDevice || `${Date.now()}-${Math.random().toString(36).slice(2,10)}`
-        localStorage.setItem('device_id', deviceId)
-        payload = { team_name: teamName.trim(), device_id: deviceId }
+        // Attendee login: use team name and device info
+        const deviceInfo = getDeviceInfo()
+        
+        payload = { 
+          team_name: teamName.trim(), 
+          device_id: deviceInfo.device_id,
+          device_name: deviceInfo.device_name,
+          device_info: deviceInfo
+        }
       }
 
       const response = await login(payload)
       const data = response.data
 
       if (data.success) {
-        // Ensure `user` is non-empty so ProtectedRoute allows attendee access.
+        // Ensure `user` is non-empty so ProtectedRoute allows attendee access
         const userForContext = data.name || data.team || teamName
         loginUser(userForContext, data.is_admin, data.team, data.is_volunteer)
 
+        // Navigate based on role
         if (data.is_admin) {
           navigate('/admin')
         } else if (data.is_volunteer) {
@@ -50,7 +61,13 @@ const Login = () => {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Please try again.')
+      const errorMessage = err.response?.data?.detail || 'Login failed. Please try again.'
+      setError(errorMessage)
+      
+      // Special handling for device limit error
+      if (errorMessage.includes('Maximum devices')) {
+        setError('⚠️ Device limit reached for this team. Maximum 3 devices allowed. Contact admin to remove a device.')
+      }
     } finally {
       setLoading(false)
     }
@@ -82,9 +99,12 @@ const Login = () => {
                 type="text"
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
-                placeholder="Team A"
+                placeholder="Team Avengers"
                 required
               />
+              <small className="form-hint">
+                💡 Your device will be registered automatically (max 3 devices per team)
+              </small>
             </div>
           )}
 
@@ -108,7 +128,7 @@ const Login = () => {
                   type="password"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  placeholder="1234"
+                  placeholder="Enter your PIN"
                   required
                 />
               </div>
@@ -121,6 +141,17 @@ const Login = () => {
             {loading ? 'Logging in...' : 'Enter'}
           </button>
         </form>
+
+        {!isAdminLogin && (
+          <div className="device-info-note">
+            <p><strong>Device Registration:</strong></p>
+            <ul>
+              <li>Your device is automatically registered on first login</li>
+              <li>Each team can use up to 3 different devices</li>
+              <li>You can login from the same device multiple times</li>
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   )
