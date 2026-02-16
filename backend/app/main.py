@@ -12,6 +12,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://172.20.249.85:3000",  # Your network IP
         "http://172.20.249.85:5173",
+        "http://10.97.89.114:3000",
+        "http://10.97.89.114:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],

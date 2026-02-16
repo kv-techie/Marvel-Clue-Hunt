@@ -225,6 +225,12 @@ async def upload_teams_and_attendees(
         }
         save_game_state()
 
+        # Save teams to teams.json file
+        os.makedirs(os.path.dirname(TEAMS_FILE), exist_ok=True)
+        with open(TEAMS_FILE, "w") as f:
+            json.dump(teams, f, indent=2)
+        print(f"💾 Saved teams to: {os.path.abspath(TEAMS_FILE)}")
+
         # Calculate team size stats
         team_sizes = [len(members) for members in teams.values()]
 
@@ -333,6 +339,11 @@ async def delete_participant_data():
     attendance_file = ATTENDANCE_FILE
     if os.path.exists(attendance_file):
         os.remove(attendance_file)
+
+    # Clear teams.json
+    if os.path.exists(TEAMS_FILE):
+        os.remove(TEAMS_FILE)
+        print(f"🗑️  Deleted: {os.path.abspath(TEAMS_FILE)}")
 
     print("🗑️  Deleted all participant data. Admin/volunteer credentials preserved.")
 
