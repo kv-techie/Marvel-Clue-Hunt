@@ -1,13 +1,15 @@
 import axios from 'axios'
 
-const API_BASE_URL = 'http://localhost:8000/api'
+// Use environment variable, fallback to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,  // Add /api to the base URL
   headers: {
     'Content-Type': 'application/json',
   },
 })
+
 
 // Auth
 // login payloads:
