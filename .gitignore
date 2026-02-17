@@ -38,6 +38,7 @@ backend/app/data/game_state.json
 
 # Sample data (don't push to repo)
 sample_data/
+Game Data CSV/
 
 # Logs
 *.log

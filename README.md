@@ -61,6 +61,13 @@ Marvel-Clue-Hunt is a full-stack, event-grade application designed to manage int
 - **Linked Components**: Both Leaderboard and DisqualificationManager support team reinstatement
 - **Real-time Updates**: Leaderboard auto-refreshes after reinstatement action
 
+#### ✨ Data Export Capabilities
+- **Leaderboard CSV Export**: Admins can download complete leaderboard data (all teams, scores, status, qualifications) as CSV file
+- **Audit Log CSV Export**: Admins can download points adjustment audit log with timestamp, team, adjusted by, type, amount, and reason
+- **Filter-Aware Export**: Audit log export respects active filters (All, Rewards, Deductions)
+- **Timestamped Filenames**: Exported files automatically include export date for easy organization
+- **Full Data Backup**: Enables easy data backup, reporting, and external analysis
+
 #### ✨ Credential Management Overhaul
 - **Separate Credential Storage**: Admin and volunteer credentials now stored in dedicated files (`admin_credentials.json`, `volunteer_credentials.json`)
 - **Persistent Across Game Resets**: Deleting participant data no longer affects admin/volunteer access
@@ -920,6 +927,7 @@ Follow conventional commits:
 - Added reinstatement functionality for disqualified teams
 - Enhanced leaderboard with tabbed navigation
 - Improved disqualification workflows
+- **NEW:** CSV export functionality for leaderboard and audit logs
 
 **UI/UX Improvements:**
 - Separate tabs for active and disqualified teams in leaderboard
@@ -927,9 +935,20 @@ Follow conventional commits:
 - One-click reinstatement with confirmation dialog
 - Loading states and success/error messaging
 - Auto-refresh after reinstatement
+- **NEW:** CSV download buttons in Leaderboard and AuditLog components
+- **NEW:** Filter-aware audit log exports (All, Rewards, Deductions)
+- **NEW:** Timestamped filenames for exported CSV files
+
+**CSV Export Features:**
+- Leaderboard export includes: Team Name, Members, Score, Dialogues Completed, Hints Used, Qualified Status, Current Status, Disqualification Reason
+- Audit Log export includes: Timestamp, Team, Adjusted By, Type, Amount, Reason
+- Export respects current filters in the UI (especially for audit log deductions/rewards filtering)
+- Files automatically include export date in filename for easy organization
+- Full data backup and external analysis support
 
 **Files Modified:**
-- `frontend/src/admin/Leaderboard.jsx` - Added tab navigation and reinstate feature
+- `frontend/src/admin/Leaderboard.jsx` - Added tab navigation, reinstate feature, and CSV export function
+- `frontend/src/admin/AuditLog.jsx` - Added CSV export function with filter-aware export
 - `frontend/src/admin/DisqualificationManager.jsx` - Already supported reinstatement
 - `frontend/src/api/client.js` - Uses existing reverseDisqualification API
 - `README.md` - Comprehensive documentation of new features

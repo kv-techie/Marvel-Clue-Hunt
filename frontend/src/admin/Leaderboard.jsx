@@ -2,6 +2,53 @@ import React, { useState, useEffect } from 'react'
 import { getLeaderboard, awardEnactmentBonus, reverseDisqualification } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
+// Utility function to convert data to CSV format
+const downloadCSV = (data, filename) => {
+  if (!data || data.length === 0) {
+    alert('No data to export')
+    return
+  }
+
+  // Get headers from first object
+  const headers = Object.keys(data[0])
+  
+  // Create CSV content
+  let csv = headers.join(',') + '\n'
+  
+  // Add rows
+  data.forEach(row => {
+    const values = headers.map(header => {
+      let value = row[header]
+      // Handle arrays (like members)
+      if (Array.isArray(value)) {
+        value = '"' + value.join('; ') + '"'
+      }
+      // Handle null/undefined
+      if (value === null || value === undefined) {
+        value = ''
+      }
+      // Escape quotes in values
+      if (typeof value === 'string' && value.includes('"')) {
+        value = '"' + value.replace(/"/g, '""') + '"'
+      }
+      return value
+    })
+    csv += values.join(',') + '\n'
+  })
+
+  // Create blob and trigger download
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  
+  link.setAttribute('href', url)
+  link.setAttribute('download', filename)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 const Leaderboard = () => {
   const { user } = useAuth()
   const [leaderboard, setLeaderboard] = useState([])
@@ -69,6 +116,22 @@ const Leaderboard = () => {
     }
   }
 
+  const handleExportLeaderboard = () => {
+    const exportData = leaderboard.map(team => ({
+      'Team Name': team.team_name,
+      'Members': team.members.join('; '),
+      'Score': team.score,
+      'Dialogues Completed': team.dialogues_completed,
+      'Hints Used': team.hints_used,
+      'Qualified': team.qualified ? 'Yes' : 'No',
+      'Status': team.disqualified ? 'Disqualified' : 'Active',
+      'Disqualification Reason': team.disqualification_reason || 'N/A'
+    }))
+
+    const timestamp = new Date().toISOString().split('T')[0]
+    downloadCSV(exportData, `leaderboard_${timestamp}.csv`)
+  }
+
   const handleReinstate = async (teamName) => {
     if (!window.confirm(`🔄 Are you sure you want to REINSTATE ${teamName}?\n\nThis will allow the team to play again.`)) {
       return
@@ -114,6 +177,25 @@ const Leaderboard = () => {
           {message}
         </div>
       )}
+      
+      {/* Export Button */}
+      <div style={{ marginBottom: '15px' }}>
+        <button
+          onClick={handleExportLeaderboard}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#27ae60',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '14px'
+          }}
+        >
+          📥 Download as CSV
+        </button>
+      </div>
       
       {/* Tab Navigation */}
       <div className="tab-navigation" style={{ marginBottom: '20px', borderBottom: '2px solid #444' }}>
