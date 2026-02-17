@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from app.config import settings
-from app.models import DialogueSubmission, HintRequest
+from app.dialogue_manager import dialogue_manager
+from app.models import DialogueSubmission, HintRequest, TabSwitchLog
 from app.routes.admin import game_state, save_game_state
 from app.scoring import (
     calculate_final_score,
@@ -13,27 +14,6 @@ from app.timer_manager import timer_manager
 from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
-
-# Correct answers for dialogues (customize these)
-CORRECT_ANSWERS = {1: "iron man", 2: "thanos", 3: "avengers"}
-
-HINTS = {
-    1: [
-        "This hero wears a red and gold suit",
-        "He's a genius billionaire philanthropist",
-        "His real name is Tony Stark",
-    ],
-    2: [
-        "The Mad Titan seeking balance",
-        "He snapped his fingers",
-        "Infinity Gauntlet wielder",
-    ],
-    3: [
-        "Earth's Mightiest Heroes",
-        "A team assembled by Nick Fury",
-        "They fought in Endgame",
-    ],
-}
 
 
 @router.post("/start-timer/{team_name}")
@@ -108,6 +88,9 @@ async def request_hint(request: HintRequest):
 
     team = game_state.teams[request.team_name]
 
+    if not team.character:
+        raise HTTPException(status_code=400, detail="Team character not assigned")
+
     if team.hints_used >= settings.max_hints:
         raise HTTPException(status_code=400, detail="Maximum hints already used")
 
@@ -123,9 +106,17 @@ async def request_hint(request: HintRequest):
     team.hints_used += 1
     save_game_state()
 
-    # Get hint based on how many hints have been used
-    hint_index = team.hints_used - 1
-    hint_text = HINTS[request.dialogue_number][hint_index]
+    # Get hint based on how many hints have been used (1-indexed)
+    hint_number = team.hints_used
+    if hint_number > 3:
+        hint_number = 3  # Cap at 3 hints
+
+    hint_text = dialogue_manager.get_hint(
+        team.character, request.dialogue_number, hint_number
+    )
+
+    if not hint_text:
+        raise HTTPException(status_code=400, detail="Hint not available")
 
     return {
         "hint": hint_text,
@@ -143,6 +134,9 @@ async def submit_dialogue(submission: DialogueSubmission):
         raise HTTPException(status_code=404, detail="Team not found")
 
     team = game_state.teams[submission.team_name]
+
+    if not team.character:
+        raise HTTPException(status_code=400, detail="Team character not assigned")
 
     # Validate dialogue number
     if submission.dialogue_number not in [1, 2, 3]:
@@ -162,9 +156,10 @@ async def submit_dialogue(submission: DialogueSubmission):
     if submission.dialogue_number == 3 and not team.dialogue_2_completed:
         raise HTTPException(status_code=400, detail="Complete Dialogue 2 first")
 
-    # Validate answer
-    correct_answer = CORRECT_ANSWERS[submission.dialogue_number]
-    is_correct = submission.answer.strip().lower() == correct_answer.lower()
+    # Validate answer using dialogue manager
+    is_correct = dialogue_manager.validate_answer(
+        team.character, submission.dialogue_number, submission.answer
+    )
 
     if not is_correct:
         return {"correct": False, "message": "Incorrect answer. Try again!"}
@@ -211,3 +206,123 @@ async def get_current_dialogue(team_name: str):
         return {"current_dialogue": 3, "message": "Work on Dialogue 3"}
     else:
         return {"current_dialogue": 0, "message": "All dialogues completed!"}
+
+
+@router.get("/dialogue/{team_name}/{dialogue_number}")
+async def get_dialogue(team_name: str, dialogue_number: int):
+    """Get the clue for a specific dialogue for a team's character"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    if not team.character:
+        raise HTTPException(status_code=400, detail="Team character not assigned")
+
+    if dialogue_number not in [1, 2, 3]:
+        raise HTTPException(status_code=400, detail="Invalid dialogue number")
+
+    clue = dialogue_manager.get_clue(team.character, dialogue_number)
+
+    if not clue:
+        raise HTTPException(status_code=404, detail="Dialogue not found")
+
+    return {
+        "dialogue_number": dialogue_number,
+        "character": team.character,
+        "clue": clue,
+    }
+
+
+@router.get("/team-character/{team_name}")
+async def get_team_character(team_name: str):
+    """Get the character assigned to a team"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    return {
+        "team_name": team_name,
+        "character": team.character,
+    }
+
+
+@router.get("/available-characters")
+async def get_available_characters():
+    """Get list of all available characters"""
+    characters = dialogue_manager.get_all_characters()
+    return {
+        "characters": sorted(characters),
+        "count": len(characters),
+    }
+
+
+@router.post("/log-tab-switch")
+async def log_tab_switch(request: TabSwitchLog):
+    """Log when a team switches tabs or returns to the game
+
+    Rules:
+    - First 3 switches: Warning only, no deductions
+    - 4th switch and beyond: -50 points per switch
+    """
+
+    if request.team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[request.team_name]
+
+    # Initialize tab_switch_logs if not present
+    if not hasattr(team, "tab_switch_logs") or team.tab_switch_logs is None:
+        team.tab_switch_logs = []
+
+    # Only count "tab_left" as switches for deduction purposes
+    if request.event_type == "tab_left":
+        total_switches = (
+            len([e for e in team.tab_switch_logs if e["event_type"] == "tab_left"]) + 1
+        )
+
+        # Apply deduction if beyond 3 switches
+        deduction = 0
+        if total_switches > 3:
+            deduction = 50
+            # Create a point adjustment for this switch
+            adjustment = {
+                "timestamp": request.timestamp.isoformat(),
+                "adjusted_by": "SYSTEM",
+                "amount": -deduction,
+                "reason": f"Tab switch violation #{total_switches}",
+                "adjustment_type": "deduct",
+            }
+            team.manual_adjustments.append(adjustment)
+
+    # Log the tab switch event
+    log_entry = {
+        "timestamp": request.timestamp.isoformat(),
+        "event_type": request.event_type,
+    }
+
+    team.tab_switch_logs.append(log_entry)
+    save_game_state()
+
+    total_left_switches = len(
+        [e for e in team.tab_switch_logs if e["event_type"] == "tab_left"]
+    )
+    switches_remaining = max(0, 3 - total_left_switches)
+    total_deductions = sum(
+        adj["amount"]
+        for adj in team.manual_adjustments
+        if "Tab switch violation" in adj.get("reason", "")
+    )
+
+    return {
+        "message": f"Tab switch event logged: {request.event_type}",
+        "total_tab_left": total_left_switches,
+        "switches_allowed_before_penalty": 3,
+        "switches_remaining": switches_remaining,
+        "penalty_per_overuse": 50,
+        "total_deductions_from_switches": total_deductions,
+        "is_penalized": total_left_switches > 3,
+    }

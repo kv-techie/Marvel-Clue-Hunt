@@ -53,6 +53,14 @@ Marvel-Clue-Hunt is a full-stack, event-grade application designed to manage int
 
 ### Latest Updates (February 2026)
 
+#### ✨ Team Separation & Reinstatement System
+- **Separated Active/Disqualified Teams**: Leaderboard now displays active and disqualified teams in separate tabs for clarity
+- **Enhanced Disqualified Teams View**: Card-based layout showing team name, score, disqualification reason, and members
+- **Admin Reinstatement Feature**: Admins can now reinstate disqualified teams with one-click action
+- **Safe Reinstatement Process**: Confirmation dialog with loading state during reinstatement
+- **Linked Components**: Both Leaderboard and DisqualificationManager support team reinstatement
+- **Real-time Updates**: Leaderboard auto-refreshes after reinstatement action
+
 #### ✨ Credential Management Overhaul
 - **Separate Credential Storage**: Admin and volunteer credentials now stored in dedicated files (`admin_credentials.json`, `volunteer_credentials.json`)
 - **Persistent Across Game Resets**: Deleting participant data no longer affects admin/volunteer access
@@ -134,11 +142,17 @@ backend/app/data/
 - **Workflow Management**: Multi-step confirmation process (Identify → Review → Confirm → Acknowledge)
 - **Audit Trail**: Complete disqualification history with timestamps and reasons
 - **Threshold Configuration**: Configurable limits for automatic disqualification triggers
+- **Reinstatement System**: Admins can reinstate disqualified teams with one-click action
+- **Separated Views**: Active and disqualified teams displayed in separate leaderboard tabs for clear visibility
+- **Safe Reinstatement**: Confirmation dialog with loading state and auto-refresh after reinstatement
 
 ### 📈 Real-Time Leaderboard
 - **Live Updates**: Instant score recalculation and ranking adjustments
 - **Detailed Statistics**: Shows dialogues completed, hints used, deductions, and qualification status
 - **Disqualification Display**: Clear indication of disqualified teams with reasons
+- **Separated Team Views**: Active teams in primary tab with rankings; disqualified teams in secondary tab
+- **Reinstatement Controls**: Admin buttons to reinstate disqualified teams directly from leaderboard
+- **Card-Based Disqualified View**: Enhanced layout for disqualified teams showing name, score, reason, and members
 - **Role-Based Views**: Different visibility levels for admins, volunteers, and attendees
 
 ### 🔧 Device Management
@@ -193,10 +207,11 @@ frontend/
 │   │   ├── VolunteerDashboard.jsx   # Volunteer dashboard (UPDATED - PIN change)
 │   │   └── AttendeeDashboard.jsx    # Attendee dashboard
 │   ├── admin/                       # Admin-specific components
-│   │   ├── TeamManagement.jsx       # Team allocation and management
+│   │   ├── Leaderboard.jsx          # Real-time leaderboard with separate active/disqualified tabs (UPDATED)
+│   │   ├── TeamDistribution.jsx     # Team allocation and management
 │   │   ├── ScoreAdjustment.jsx      # Manual point adjustments
-│   │   ├── DisqualificationPanel.jsx # Disqualification workflow
-│   │   ├── UserManagement.jsx       # Admin/volunteer management (UPDATED)
+│   │   ├── DisqualificationManager.jsx # Disqualification workflow (UPDATED)
+│   │   ├── AdminManagement.jsx      # Admin/volunteer management
 │   │   └── DeviceManagement.jsx     # Device tracking and removal
 │   ├── volunteer/                   # Volunteer components
 │   │   ├── DialogueValidator.jsx    # Validate team submissions
@@ -628,6 +643,94 @@ Response:
 
 For complete API documentation, visit: `http://localhost:8000/docs`
 
+### 🆕 Leaderboard & Team Management (Enhanced)
+
+#### Get Leaderboard (Enhanced Response)
+```http
+GET /api/admin/leaderboard
+
+Response:
+{
+  "leaderboard": [
+    {
+      "team_name": "Team Avengers",
+      "members": ["Alice", "Bob", "Charlie"],
+      "score": 450,
+      "dialogues_completed": 3,
+      "hints_used": 1,
+      "qualified": true,
+      "disqualified": false,
+      "disqualification_reason": null,
+      "disqualification_acknowledged": false,
+      "disqualification_confirmed": false
+    },
+    {
+      "team_name": "Team Villains",
+      "members": ["David", "Emma"],
+      "score": -50,
+      "dialogues_completed": 1,
+      "hints_used": 3,
+      "qualified": false,
+      "disqualified": true,
+      "disqualification_reason": "Automatic: Total deductions (250) exceed threshold (200)",
+      "disqualification_acknowledged": true,
+      "disqualification_confirmed": true
+    }
+  ],
+  "game_active": true
+}
+
+# Leaderboard is automatically sorted by score (highest first)
+# Teams are separated in frontend:
+# - Active Teams Tab: All teams where disqualified == false
+# - Disqualified Teams Tab: All teams where disqualified == true
+```
+
+#### 🆕 Reverse Disqualification (Admin Action)
+```http
+POST /api/admin/reverse-disqualification/{team_name}?reversed_by={admin_name}
+
+Example:
+POST /api/admin/reverse-disqualification/Team%20Villains?reversed_by=JohnDoe
+
+Response:
+{
+  "message": "Disqualification reversed for Team Villains",
+  "team_name": "Team Villains",
+  "disqualified": false,
+  "reversed_by": "JohnDoe",
+  "timestamp": "2026-02-15T15:45:30.123456"
+}
+
+# What This Does:
+# ✓ Sets team.disqualified = false
+# ✓ Clears disqualification_reason
+# ✓ Resets disqualification timestamps
+# ✓ Allows team to participate again
+# ✓ Updates score in leaderboard immediately
+# ✓ Audit logged with admin name and timestamp
+```
+
+#### Frontend Workflow for Disqualified Teams
+
+**In Leaderboard Component (`Leaderboard.jsx`):**
+1. Fetch leaderboard data
+2. Separate teams: `activeTeams = teams.filter(t => !t.disqualified)`
+3. Render two tabs:
+   - **Active Teams Tab**: Traditional table with rankings and bonus awards
+   - **Disqualified Teams Tab**: Card-based layout with reinstate buttons
+4. Click 🔄 Reinstate button:
+   - Shows confirmation: "Are you sure you want to REINSTATE {team}?"
+   - Calls `reverseDisqualification(teamName, user)`
+   - Shows loading state and success/error message
+   - Auto-refreshes leaderboard after 2 seconds
+
+**In DisqualificationManager Component:**
+1. Same reinstatement functionality available
+2. More detailed disqualification workflow
+3. Shows both auto-disqualification candidates and confirmed disqualifications
+4. Comprehensive audit trail
+
 ## 🔒 Security
 
 ### Enhanced Security Features
@@ -684,6 +787,63 @@ async def login(...):
 ## 🐛 Troubleshooting
 
 ### Common Issues & Solutions
+
+#### Disqualified Team Not Showing in Leaderboard
+
+**Problem:** Team appears disqualified but doesn't show in "Disqualified Teams" tab
+
+**Solution:** Ensure the team's `disqualified` flag is set to `true` in game state:
+
+```python
+# Check game_state.json
+{
+  "teams": {
+    "Team Name": {
+      "disqualified": true,
+      "disqualification_reason": "...",
+      "disqualification_timestamp": "2026-02-15T...",
+      ...
+    }
+  }
+}
+```
+
+Refresh the leaderboard to fetch latest data. The tab should filter properly.
+
+#### Reinstate Button Not Working
+
+**Problem:** Clicking reinstate does nothing or shows error
+
+**Solution:** Check the console for error messages. Common causes:
+
+```bash
+# 1. Backend not running
+curl http://localhost:8000/docs  # Should respond
+
+# 2. Team name URL encoding
+# Use encodeURIComponent() for team names with spaces
+# Example: "Team Avengers" → "Team%20Avengers"
+
+# 3. User not authenticated
+# Ensure AuthContext has user data before reinstatement
+# Check localStorage for 'user' key
+```
+
+#### Multiple Tabs Don't Update Simultaneously
+
+**Problem:** Changes in one component don't reflect in another
+
+**Solution:** Both components start polling on mount. If using different polling intervals:
+
+```javascript
+// Leaderboard polls every 2 seconds
+const interval = setInterval(fetchLeaderboard, 2000)
+
+// DisqualificationManager polls every 3 seconds
+const interval = setInterval(fetchData, 3000)
+
+// Make them the same for consistency, or use WebSockets for real-time updates
+```
 
 #### Admin Login Fails After Game Reset
 
@@ -752,6 +912,32 @@ Follow conventional commits:
 - `chore:` Build/config changes
 
 ## 📝 Recent Changes Log
+
+### v2.2.0 (February 2026)
+
+**Major Features:**
+- Implemented team separation system (active vs disqualified)
+- Added reinstatement functionality for disqualified teams
+- Enhanced leaderboard with tabbed navigation
+- Improved disqualification workflows
+
+**UI/UX Improvements:**
+- Separate tabs for active and disqualified teams in leaderboard
+- Card-based layout for disqualified teams
+- One-click reinstatement with confirmation dialog
+- Loading states and success/error messaging
+- Auto-refresh after reinstatement
+
+**Files Modified:**
+- `frontend/src/admin/Leaderboard.jsx` - Added tab navigation and reinstate feature
+- `frontend/src/admin/DisqualificationManager.jsx` - Already supported reinstatement
+- `frontend/src/api/client.js` - Uses existing reverseDisqualification API
+- `README.md` - Comprehensive documentation of new features
+
+**Backend (No Changes Required):**
+- `/api/admin/reverse-disqualification/{team_name}` endpoint already existed
+- Team model already had disqualified flag and tracking fields
+- API documentation updated for clarity
 
 ### v2.1.0 (February 2026)
 

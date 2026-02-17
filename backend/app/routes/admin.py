@@ -1,8 +1,10 @@
 import json
 import os
+import random
 from datetime import datetime
 
 from app.config import settings
+from app.dialogue_manager import dialogue_manager
 from app.models import (
     BonusRequest,
     GameState,
@@ -16,7 +18,13 @@ from app.scoring import (
     check_auto_disqualification,
     get_leaderboard,
 )
-from app.team_allocator import allocate_teams_from_files as allocate_teams
+from app.team_allocator import (
+    allocate_teams_from_files as allocate_teams,
+)
+from app.team_allocator import (
+    assign_character_to_team,
+    assign_characters_by_matching,
+)
 from app.timer_manager import timer_manager
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
@@ -141,15 +149,26 @@ async def upload_attendance(file: UploadFile = File(...)):
     try:
         teams = allocate_teams(ATTENDANCE_FILE, TEAMS_FILE)
 
+        # Auto-assign characters by matching team names with available characters
+        available_characters = dialogue_manager.get_all_characters()
+        character_assignments = assign_characters_by_matching(
+            TEAMS_FILE, available_characters
+        )
+
         # Initialize game state with teams
-        game_state.teams = {
-            name: Team(name=name, members=members) for name, members in teams.items()
-        }
+        game_state.teams = {}
+        for name, members in teams.items():
+            character = character_assignments.get(name)
+            game_state.teams[name] = Team(
+                name=name, members=members, character=character
+            )
+
         save_game_state()
 
         return {
             "message": "Teams allocated successfully",
             "teams": teams,
+            "character_assignments": character_assignments,
             "total_teams": len(teams),
             "total_attendees": sum(len(members) for members in teams.values()),
         }
@@ -207,6 +226,9 @@ async def upload_teams_and_attendees(
                 detail=f"Not enough attendees ({len(attendees)}) for the number of teams ({len(team_names)})",
             )
 
+        # Shuffle attendees for random distribution EVERY time
+        random.shuffle(attendees)
+
         # Allocate attendees to teams evenly
         teams = {}
         attendees_per_team = len(attendees) // len(team_names)
@@ -219,17 +241,27 @@ async def upload_teams_and_attendees(
             teams[team_name] = attendees[attendee_index : attendee_index + team_size]
             attendee_index += team_size
 
-        # Initialize game state with teams
-        game_state.teams = {
-            name: Team(name=name, members=members) for name, members in teams.items()
-        }
-        save_game_state()
-
         # Save teams to teams.json file
         os.makedirs(os.path.dirname(TEAMS_FILE), exist_ok=True)
         with open(TEAMS_FILE, "w") as f:
             json.dump(teams, f, indent=2)
         print(f"💾 Saved teams to: {os.path.abspath(TEAMS_FILE)}")
+
+        # Auto-assign characters by matching team names with available characters
+        available_characters = dialogue_manager.get_all_characters()
+        character_assignments = assign_characters_by_matching(
+            TEAMS_FILE, available_characters
+        )
+
+        # Initialize game state with teams
+        game_state.teams = {}
+        for name, members in teams.items():
+            character = character_assignments.get(name)
+            game_state.teams[name] = Team(
+                name=name, members=members, character=character
+            )
+
+        save_game_state()
 
         # Calculate team size stats
         team_sizes = [len(members) for members in teams.values()]
@@ -237,6 +269,7 @@ async def upload_teams_and_attendees(
         return {
             "message": "Teams allocated successfully",
             "teams": teams,
+            "character_assignments": character_assignments,
             "total_teams": len(teams),
             "total_attendees": len(attendees),
             "min_team_size": min(team_sizes),
@@ -262,6 +295,7 @@ async def get_all_teams():
     teams_with_status = {}
     for team_name, team in game_state.teams.items():
         teams_with_status[team_name] = {
+            "name": team_name,
             "members": team.members,
             "hints_used": team.hints_used,
             "dialogues_completed": sum(
@@ -273,9 +307,14 @@ async def get_all_teams():
             ),
             "qualified": team.qualified,
             "current_score": calculate_final_score(team),
+            "disqualified": team.disqualified,
+            "disqualification_reason": team.disqualification_reason,
+            "disqualification_timestamp": team.disqualification_timestamp.isoformat()
+            if team.disqualification_timestamp
+            else None,
         }
 
-    return teams_with_status
+    return {"teams": list(teams_with_status.values())}
 
 
 @router.post("/set-start-time")
@@ -304,6 +343,37 @@ async def start_game():
     save_game_state()
 
     return {"message": "Game started", "start_time": now.isoformat()}
+
+
+@router.get("/team-tab-switches/{team_name}")
+async def get_team_tab_switches(team_name: str):
+    """Get tab switch logs for a specific team
+
+    Rules:
+    - First 3 switches: Warning only, no deductions
+    - 4th switch and beyond: -50 points per switch
+    """
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+    tab_switches = getattr(team, "tab_switch_logs", []) or []
+
+    tab_left_count = len([e for e in tab_switches if e.get("event_type") == "tab_left"])
+    penalty_deductions = max(0, tab_left_count - 3) * 50
+    is_penalized = tab_left_count > 3
+
+    return {
+        "team_name": team_name,
+        "total_tab_left": tab_left_count,
+        "total_tab_switches": tab_left_count,  # Keep for backward compatibility
+        "switches_remaining": max(0, 3 - tab_left_count),
+        "is_penalized": is_penalized,
+        "penalty_per_overuse": 50,
+        "total_deductions_from_switches": penalty_deductions,
+        "events": tab_switches,
+    }
 
 
 @router.post("/stop-game")
@@ -396,7 +466,7 @@ async def get_game_status():
     """Get overall game status"""
 
     return {
-        "game_active": timer_manager.is_game_active(),
+        "game_active": game_state.game_active and timer_manager.is_game_active(),
         "global_start_time": game_state.global_start_time.isoformat()
         if game_state.global_start_time
         else None,
@@ -672,16 +742,29 @@ async def get_adjustments_log():
 
     for team_name, team in game_state.teams.items():
         for adjustment in team.manual_adjustments:
-            adjustments_log.append(
-                {
-                    "team_name": team_name,
-                    "adjusted_by": adjustment.adjusted_by,
-                    "amount": adjustment.amount,
-                    "reason": adjustment.reason,
-                    "adjustment_type": adjustment.adjustment_type,
-                    "timestamp": adjustment.timestamp.isoformat(),
-                }
-            )
+            # Handle both dict and object formats
+            if isinstance(adjustment, dict):
+                adjustments_log.append(
+                    {
+                        "team_name": team_name,
+                        "adjusted_by": adjustment.get("adjusted_by"),
+                        "amount": adjustment.get("amount"),
+                        "reason": adjustment.get("reason"),
+                        "adjustment_type": adjustment.get("adjustment_type"),
+                        "timestamp": adjustment.get("timestamp"),
+                    }
+                )
+            else:
+                adjustments_log.append(
+                    {
+                        "team_name": team_name,
+                        "adjusted_by": adjustment.adjusted_by,
+                        "amount": adjustment.amount,
+                        "reason": adjustment.reason,
+                        "adjustment_type": adjustment.adjustment_type,
+                        "timestamp": adjustment.timestamp.isoformat(),
+                    }
+                )
 
     # Sort by timestamp descending (latest first)
     adjustments_log.sort(key=lambda x: x["timestamp"], reverse=True)
@@ -825,6 +908,107 @@ async def team_acknowledge_disqualification(team_name: str):
     return {
         "message": f"{team_name} has acknowledged disqualification",
         "acknowledged": True,
+    }
+
+
+@router.post("/reverse-disqualification/{team_name}")
+async def reverse_disqualification(team_name: str, reversed_by: str):
+    """Admin reverses a disqualification for a team"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    if not team.disqualified:
+        raise HTTPException(status_code=400, detail="Team is not disqualified")
+
+    # Reverse the disqualification
+    team.disqualified = False
+    team.disqualification_confirmed_by_admin = False
+    team.disqualification_acknowledged_by_team = False
+    team.disqualification_reason = None
+    team.disqualification_timestamp = None
+    save_game_state()
+
+    return {
+        "message": f"Disqualification reversed for {team_name}",
+        "team_name": team_name,
+        "disqualified": False,
+        "reversed_by": reversed_by,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+# ==================== CHARACTER MANAGEMENT ====================
+
+
+@router.post("/assign-character/{team_name}/{character}")
+async def assign_character(team_name: str, character: str):
+    """Assign a character to a team"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    available_characters = dialogue_manager.get_all_characters()
+    if character not in available_characters:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid character. Available: {', '.join(available_characters)}",
+        )
+
+    team = game_state.teams[team_name]
+    team.character = character
+    save_game_state()
+
+    # Also update the teams file
+    assign_character_to_team(team_name, character, TEAMS_FILE)
+
+    return {
+        "message": f"Assigned {character} to {team_name}",
+        "team_name": team_name,
+        "character": character,
+    }
+
+
+@router.get("/team-characters")
+async def get_team_characters():
+    """Get character assignments for all teams"""
+
+    assignments = {}
+    for team_name, team in game_state.teams.items():
+        assignments[team_name] = team.character
+
+    return {
+        "assignments": assignments,
+        "total_teams": len(assignments),
+        "unassigned_teams": sum(1 for c in assignments.values() if not c),
+    }
+
+
+@router.post("/auto-assign-characters")
+async def auto_assign_characters():
+    """Automatically assign characters to teams by matching team names with available characters"""
+
+    available_characters = dialogue_manager.get_all_characters()
+
+    # Auto-assign using the matching logic
+    character_assignments = assign_characters_by_matching(
+        TEAMS_FILE, available_characters
+    )
+
+    # Update game state
+    for team_name, character in character_assignments.items():
+        if team_name in game_state.teams:
+            game_state.teams[team_name].character = character
+
+    save_game_state()
+
+    return {
+        "message": "Characters auto-assigned",
+        "assignments": character_assignments,
+        "total_assigned": sum(1 for c in character_assignments.values() if c),
+        "total_unassigned": sum(1 for c in character_assignments.values() if not c),
     }
 
 

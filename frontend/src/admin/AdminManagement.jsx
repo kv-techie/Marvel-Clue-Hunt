@@ -31,7 +31,21 @@ const AdminManagement = () => {
   const [devices, setDevices] = useState([])
   const [deviceMessage, setDeviceMessage] = useState('')
 
-  // Fetch admins and volunteers with PINs
+  // PIN visibility state - tracks which user PINs are visible
+  const [visiblePins, setVisiblePins] = useState({})
+
+  // Toggle PIN visibility
+  const togglePinVisibility = (username) => {
+    setVisiblePins(prev => ({
+      ...prev,
+      [username]: !prev[username]
+    }))
+  }
+
+  // Helper function to display PIN (masked or visible)
+  const getMaskedPin = (pin, username) => {
+    return visiblePins[username] ? pin : '•'.repeat(pin.length)
+  }
   const fetchUsersWithPins = async () => {
     try {
       const pinsResponse = await getPins()
@@ -375,8 +389,25 @@ const AdminManagement = () => {
                         <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#fff' }}>
                           👤 {admin.username}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
-                          PIN: {admin.pin} | Created: {new Date(admin.created_at).toLocaleString()}
+                        <div style={{ fontSize: '12px', color: '#888', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>PIN: {getMaskedPin(admin.pin, admin.username)}</span>
+                          <button
+                            onClick={() => togglePinVisibility(admin.username)}
+                            title={visiblePins[admin.username] ? 'Hide PIN' : 'Show PIN'}
+                            style={{
+                              padding: '4px 8px',
+                              backgroundColor: 'transparent',
+                              color: visiblePins[admin.username] ? '#2ecc71' : '#f39c12',
+                              border: `1px solid ${visiblePins[admin.username] ? '#2ecc71' : '#f39c12'}`,
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            {visiblePins[admin.username] ? '👁️ Hide' : '👁️ Show'}
+                          </button>
+                          <span style={{ marginLeft: '10px' }}>Created: {new Date(admin.created_at).toLocaleString()}</span>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
@@ -577,8 +608,25 @@ const AdminManagement = () => {
                         <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#fff' }}>
                           👥 {volunteer.username}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
-                          PIN: {volunteer.pin} | Created: {new Date(volunteer.created_at).toLocaleString()}
+                        <div style={{ fontSize: '12px', color: '#888', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>PIN: {getMaskedPin(volunteer.pin, volunteer.username)}</span>
+                          <button
+                            onClick={() => togglePinVisibility(volunteer.username)}
+                            title={visiblePins[volunteer.username] ? 'Hide PIN' : 'Show PIN'}
+                            style={{
+                              padding: '4px 8px',
+                              backgroundColor: 'transparent',
+                              color: visiblePins[volunteer.username] ? '#2ecc71' : '#f39c12',
+                              border: `1px solid ${visiblePins[volunteer.username] ? '#2ecc71' : '#f39c12'}`,
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            {visiblePins[volunteer.username] ? '👁️ Hide' : '👁️ Show'}
+                          </button>
+                          <span style={{ marginLeft: '10px' }}>Created: {new Date(volunteer.created_at).toLocaleString()}</span>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>

@@ -2,20 +2,152 @@ import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTimer } from '../context/TimerContext'
 import { getTeamStatus, startTeamTimer, getCurrentDialogue, teamAcknowledgeDisqualification } from '../api/client'
+import { useTabFocusTracking } from '../hooks/useTabFocusTracking'
 import TeamTimer from './TeamTimer'
 import HintPanel from './HintPanel'
 import DialogueRound from './DialogueRound'
 import StatusBanner from '../components/StatusBanner'
 
+// Tab Switch Warning Component
+const TabSwitchWarning = ({ focusWarning, isPenalized, switchesRemaining, onDismiss }) => {
+  if (!focusWarning) return null
+
+  return (
+    <div className={`tab-warning ${isPenalized ? 'penalized' : 'warned'}`}>
+      <div className="tab-warning-content">
+        <span className="tab-warning-icon">
+          {isPenalized ? '🚨' : '⚠️'}
+        </span>
+        <div className="tab-warning-text">
+          <h3 className="tab-warning-title">
+            {isPenalized ? 'Electronics Violation: -50 Points!' : 'Tab Switch Detected'}
+          </h3>
+          <p className="tab-warning-message">
+            {isPenalized ? (
+              <>You've exceeded the allowed tab switches. <strong>-50 points deducted</strong> for this violation.</>
+            ) : (
+              <>You switched away from the game. You have <strong>{switchesRemaining} more</strong> free switches before points are deducted.</>
+            )}
+          </p>
+          {!isPenalized && switchesRemaining === 1 && (
+            <p className="tab-warning-final">
+              ⚠️ Next switch will result in -50 point penalty!
+            </p>
+          )}
+        </div>
+        <button className="tab-warning-close" onClick={onDismiss}>
+          ✕
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Disqualification Notice Component
+const DisqualificationNotice = ({ teamStatus, onAcknowledge, acknowledging, ackMessage }) => {
+  if (!teamStatus?.disqualified) return null
+
+  return (
+    <div className="disqualification-notice">
+      <h2 className="disqualification-title">⚠️ DISQUALIFICATION NOTICE</h2>
+      <p className="disqualification-message">
+        Your team has been flagged for disqualification.
+      </p>
+      <p className="disqualification-reason">
+        <strong>Reason:</strong> {teamStatus.disqualification_reason}
+      </p>
+      
+      {teamStatus.disqualification_confirmed && !teamStatus.disqualification_acknowledged && (
+        <div className="disqualification-actions">
+          <p className="disqualification-action-text">
+            The admin has confirmed your disqualification. Please acknowledge below:
+          </p>
+          <button
+            className="disqualification-button"
+            onClick={onAcknowledge}
+            disabled={acknowledging}
+          >
+            {acknowledging ? 'Acknowledging...' : '✓ Acknowledge Disqualification'}
+          </button>
+          {ackMessage && (
+            <p className={`disqualification-ack-message ${ackMessage.startsWith('Error') ? 'error' : 'success'}`}>
+              {ackMessage}
+            </p>
+          )}
+        </div>
+      )}
+      
+      {teamStatus.disqualification_acknowledged && (
+        <p className="disqualification-acknowledged">
+          ✅ Disqualification acknowledged
+        </p>
+      )}
+    </div>
+  )
+}
+
+// Team Progress Component
+const TeamProgress = ({ teamStatus, currentDialogue }) => {
+  if (!teamStatus) return null
+
+  const getProgressStatus = (dialogueNum) => {
+    const completed = teamStatus[`dialogue_${dialogueNum}_completed`]
+    if (completed) return { status: 'completed', text: '✅ Complete' }
+    if (currentDialogue === dialogueNum) return { status: 'active', text: '⏳ Active' }
+    return { status: 'locked', text: '🔒 Locked' }
+  }
+
+  return (
+    <div className="card">
+      <h2>📊 Team Progress</h2>
+      <div className="progress-indicator">
+        {[1, 2, 3].map(num => {
+          const { status, text } = getProgressStatus(num)
+          return (
+            <div key={num} className={`progress-step ${status}`}>
+              <h3>Dialogue {num}</h3>
+              <p>{text}</p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Completion Message Component
+const CompletionMessage = ({ teamStatus }) => {
+  return (
+    <div className="completion-message">
+      <div className="completion-content">
+        <div className="completion-emoji">🎉</div>
+        <h2>Congratulations! All dialogues completed!</h2>
+        <div className="completion-status">
+          {teamStatus?.qualified ? (
+            <span className="qualified-badge">✅ Your team is QUALIFIED for the final round!</span>
+          ) : (
+            <span>You completed the hunt! Check the leaderboard for results.</span>
+          )}
+        </div>
+        <div className={`completion-score ${teamStatus?.current_score < 0 ? 'negative' : 'positive'}`}>
+          Final Score: {teamStatus?.current_score}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const AttendeeDashboard = () => {
   const { team } = useAuth()
   const { startTimer, elapsedTime } = useTimer()
+  const { focusWarning, total_tab_left, switches_remaining, is_penalized, setFocusWarning } = useTabFocusTracking(team)
   const [teamStatus, setTeamStatus] = useState(null)
   const [currentDialogue, setCurrentDialogue] = useState(1)
   const [loading, setLoading] = useState(true)
   const [acknowledging, setAcknowledging] = useState(false)
   const [ackMessage, setAckMessage] = useState('')
 
+  // Data fetching functions
   const fetchTeamStatus = async () => {
     try {
       const response = await getTeamStatus(team)
@@ -64,8 +196,8 @@ const AttendeeDashboard = () => {
     return () => clearInterval(interval)
   }, [team])
 
+  // Event handlers
   const handleDialogueComplete = () => {
-    // Immediately refresh on completion
     setTimeout(() => {
       fetchTeamStatus()
       fetchCurrentDialogue()
@@ -101,86 +233,30 @@ const AttendeeDashboard = () => {
 
   return (
     <div className="dashboard-grid">
+      {/* Status and Notifications */}
       <StatusBanner teamStatus={teamStatus} />
-
-      {teamStatus?.disqualified && (
-        <div style={{
-          padding: '20px',
-          borderRadius: '8px',
-          backgroundColor: 'rgba(231, 76, 60, 0.15)',
-          border: '2px solid #e74c3c',
-          marginBottom: '20px',
-          gridColumn: '1 / -1'
-        }}>
-          <h2 style={{ color: '#e74c3c', margin: '0 0 10px 0' }}>⚠️ DISQUALIFICATION NOTICE</h2>
-          <p style={{ margin: '10px 0', fontSize: '16px' }}>
-            Your team has been flagged for disqualification.
-          </p>
-          <p style={{ margin: '10px 0', fontSize: '14px', color: '#bbb' }}>
-            <strong>Reason:</strong> {teamStatus.disqualification_reason}
-          </p>
-          {teamStatus.disqualification_confirmed && !teamStatus.disqualification_acknowledged && (
-            <div style={{ marginTop: '15px' }}>
-              <p style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>
-                The admin has confirmed your disqualification. Please acknowledge below:
-              </p>
-              <button
-                onClick={handleAcknowledgeDisqualification}
-                disabled={acknowledging}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  opacity: acknowledging ? 0.6 : 1
-                }}
-              >
-                {acknowledging ? 'Acknowledging...' : '✓ Acknowledge Disqualification'}
-              </button>
-              {ackMessage && (
-                <p style={{
-                  marginTop: '10px',
-                  color: ackMessage.startsWith('Error') ? '#e74c3c' : '#2ecc71',
-                  fontSize: '14px'
-                }}>
-                  {ackMessage}
-                </p>
-              )}
-            </div>
-          )}
-          {teamStatus.disqualification_acknowledged && (
-            <p style={{ color: '#2ecc71', fontWeight: 'bold', marginTop: '10px' }}>
-              ✅ Disqualification acknowledged
-            </p>
-          )}
-        </div>
-      )}
       
+      <TabSwitchWarning
+        focusWarning={focusWarning}
+        isPenalized={is_penalized}
+        switchesRemaining={switches_remaining}
+        onDismiss={() => setFocusWarning(false)}
+      />
+      
+      <DisqualificationNotice
+        teamStatus={teamStatus}
+        onAcknowledge={handleAcknowledgeDisqualification}
+        acknowledging={acknowledging}
+        ackMessage={ackMessage}
+      />
+      
+      {/* Timer */}
       <TeamTimer />
 
-      {teamStatus && (
-        <div className="card">
-          <h2>📊 Team Progress</h2>
-          <div className="progress-indicator">
-            <div className={`progress-step ${teamStatus.dialogue_1_completed ? 'completed' : currentDialogue === 1 ? 'active' : ''}`}>
-              <h3>Dialogue 1</h3>
-              <p>{teamStatus.dialogue_1_completed ? '✅ Complete' : currentDialogue === 1 ? '⏳ Active' : '🔒 Locked'}</p>
-            </div>
-            <div className={`progress-step ${teamStatus.dialogue_2_completed ? 'completed' : currentDialogue === 2 ? 'active' : ''}`}>
-              <h3>Dialogue 2</h3>
-              <p>{teamStatus.dialogue_2_completed ? '✅ Complete' : currentDialogue === 2 ? '⏳ Active' : '🔒 Locked'}</p>
-            </div>
-            <div className={`progress-step ${teamStatus.dialogue_3_completed ? 'completed' : currentDialogue === 3 ? 'active' : ''}`}>
-              <h3>Dialogue 3</h3>
-              <p>{teamStatus.dialogue_3_completed ? '✅ Complete' : currentDialogue === 3 ? '⏳ Active' : '🔒 Locked'}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Progress Tracker */}
+      <TeamProgress teamStatus={teamStatus} currentDialogue={currentDialogue} />
 
+      {/* Active Dialogue Section */}
       {currentDialogue > 0 && currentDialogue <= 3 && (
         <>
           <HintPanel 
@@ -199,21 +275,8 @@ const AttendeeDashboard = () => {
         </>
       )}
 
-      {currentDialogue === 0 && (
-        <div className="success-message" style={{ fontSize: '24px', padding: '40px' }}>
-          🎉 Congratulations! All dialogues completed!
-          <br />
-          <br />
-          {teamStatus?.qualified ? (
-            <span>✅ Your team is QUALIFIED for the final round!</span>
-          ) : (
-            <span>You completed the hunt! Check the leaderboard for results.</span>
-          )}
-          <br />
-          <br />
-          <strong style={{ color: teamStatus?.current_score < 0 ? '#e74c3c' : '#2ecc71' }}>Final Score: {teamStatus?.current_score}</strong>
-        </div>
-      )}
+      {/* Completion Message */}
+      {currentDialogue === 0 && <CompletionMessage teamStatus={teamStatus} />}
     </div>
   )
 }

@@ -420,6 +420,19 @@ async def login(request: LoginRequest):
     if team_name not in teams:
         raise HTTPException(status_code=404, detail="Team not found. Check team name.")
 
+    # Check if team is disqualified
+    gs = _load_game_state_json()
+    team_data = gs.get("teams", {}).get(team_name, {})
+
+    if team_data.get("disqualified", False):
+        disqualification_reason = team_data.get(
+            "disqualification_reason", "Unknown reason"
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=f"Your team has been disqualified from the game. Reason: {disqualification_reason}",
+        )
+
     # Load all devices
     devices = _load_devices()
     team_devices = devices.get(team_name, [])

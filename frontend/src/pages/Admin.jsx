@@ -1,17 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import AdminDashboard from '../admin/AdminDashboard'
-import TeamDistribution from '../admin/TeamDistribution'
-import GlobalTimerControl from '../admin/GlobalTimerControl'
-import Leaderboard from '../admin/Leaderboard'
-import AdminManagement from '../admin/AdminManagement'
-// REMOVE THIS LINE: import VolunteerManagement from '../admin/VolunteerManagement'
-import AuditLog from '../admin/AuditLog'
-import DisqualificationManager from '../admin/DisqualificationManager'
+import AdminOperations from '../admin/AdminOperations'
+import GameOperations from '../admin/GameOperations'
+import LeaderboardPage from '../admin/LeaderboardPage'
+import ElectronicsMonitoring from '../admin/ElectronicsMonitoring'
 import '../styles/Admin.css'
 
 const Admin = () => {
   const { user, logout } = useAuth()
+  const [activePage, setActivePage] = useState('admin') // 'admin', 'game', 'leaderboard', 'electronics'
 
   return (
     <div className="admin-container">
@@ -23,40 +20,40 @@ const Admin = () => {
         </div>
       </header>
 
+      {/* Navigation Tabs */}
+      <nav className="admin-nav-tabs">
+        <button
+          className={`nav-tab ${activePage === 'admin' ? 'active' : ''}`}
+          onClick={() => setActivePage('admin')}
+        >
+          👤 Admin Operations
+        </button>
+        <button
+          className={`nav-tab ${activePage === 'game' ? 'active' : ''}`}
+          onClick={() => setActivePage('game')}
+        >
+          🎮 Game Operations
+        </button>
+        <button
+          className={`nav-tab ${activePage === 'electronics' ? 'active' : ''}`}
+          onClick={() => setActivePage('electronics')}
+        >
+          📱 Electronics Monitoring
+        </button>
+        <button
+          className={`nav-tab ${activePage === 'leaderboard' ? 'active' : ''}`}
+          onClick={() => setActivePage('leaderboard')}
+        >
+          🏆 Leaderboard
+        </button>
+      </nav>
+
+      {/* Content Sections */}
       <div className="admin-content">
-        <section className="admin-section">
-          <AdminManagement />
-        </section>
-
-        {/* REMOVE THIS SECTION - AdminManagement already includes volunteer management
-        <section className="admin-section">
-          <VolunteerManagement />
-        </section>
-        */}
-
-        <section className="admin-section">
-          <AdminDashboard />
-        </section>
-
-        <section className="admin-section">
-          <TeamDistribution />
-        </section>
-
-        <section className="admin-section">
-          <GlobalTimerControl />
-        </section>
-
-        <section className="admin-section">
-          <Leaderboard />
-        </section>
-
-        <section className="admin-section">
-          <AuditLog />
-        </section>
-
-        <section className="admin-section">
-          <DisqualificationManager />
-        </section>
+        {activePage === 'admin' && <AdminOperations />}
+        {activePage === 'game' && <GameOperations />}
+        {activePage === 'electronics' && <ElectronicsMonitoring />}
+        {activePage === 'leaderboard' && <LeaderboardPage />}
       </div>
     </div>
   )

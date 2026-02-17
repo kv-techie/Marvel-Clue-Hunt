@@ -1,6 +1,6 @@
 import json
 import random
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 def allocate_teams_from_files(
@@ -98,3 +98,124 @@ def get_team_for_attendee(name: str, teams_path: str) -> str:
             return team_name
 
     return None
+
+
+def assign_character_to_team(
+    team_name: str, character: str, teams_path: str, output_path: Optional[str] = None
+) -> bool:
+    """
+    Assign a character to a team and save back to file
+
+    Args:
+        team_name: Name of the team
+        character: Character to assign (e.g., "Iron Man", "Thor")
+        teams_path: Path to teams.json file
+        output_path: Path to save updated teams (defaults to teams_path)
+
+    Returns:
+        True if successful, False otherwise
+    """
+    if output_path is None:
+        output_path = teams_path
+
+    try:
+        with open(teams_path, "r", encoding="utf-8") as f:
+            teams_data = json.load(f)
+
+        # Update team with character - convert to Team objects with character field
+        updated_teams = {}
+        for name, members in teams_data.items():
+            if name == team_name:
+                updated_teams[name] = {"members": members, "character": character}
+            else:
+                # Preserve existing data
+                if isinstance(teams_data[name], dict) and "members" in teams_data[name]:
+                    updated_teams[name] = teams_data[name]
+                else:
+                    updated_teams[name] = {"members": members}
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(updated_teams, f, indent=2, ensure_ascii=False)
+
+        print(f"[ALLOCATION] Assigned {character} to team {team_name}")
+        return True
+    except Exception as e:
+        print(f"[ALLOCATION] Error assigning character: {e}")
+        return False
+
+
+def assign_characters_by_matching(
+    teams_path: str,
+    available_characters: List[str],
+    output_path: Optional[str] = None,
+) -> Dict[str, str]:
+    """
+    Automatically assign characters to teams by matching team names with character names.
+    This handles cases like "Team Thor" -> "Thor", "Iron Man Team" -> "Iron Man"
+
+    Args:
+        teams_path: Path to teams.json file
+        available_characters: List of available character names
+        output_path: Path to save updated teams
+
+    Returns:
+        Dictionary mapping team names to assigned characters
+    """
+    if output_path is None:
+        output_path = teams_path
+
+    try:
+        with open(teams_path, "r", encoding="utf-8") as f:
+            teams_data = json.load(f)
+
+        assignments = {}
+        updated_teams = {}
+
+        for team_name, members_or_data in teams_data.items():
+            # Handle both old format (list) and new format (dict with members)
+            if isinstance(members_or_data, list):
+                members = members_or_data
+                existing_character = None
+            else:
+                members = members_or_data.get("members", [])
+                existing_character = members_or_data.get("character")
+
+            # Try to match team name with available characters
+            assigned_character = existing_character
+
+            if not assigned_character:
+                # Try exact match first
+                for char in available_characters:
+                    if char.lower() == team_name.lower():
+                        assigned_character = char
+                        break
+
+                # Try partial match (team name contains character name)
+                if not assigned_character:
+                    team_lower = team_name.lower()
+                    for char in available_characters:
+                        if char.lower() in team_lower or team_lower in char.lower():
+                            assigned_character = char
+                            break
+
+            if assigned_character:
+                assignments[team_name] = assigned_character
+                updated_teams[team_name] = {
+                    "members": members,
+                    "character": assigned_character,
+                }
+                print(f"[ALLOCATION] {team_name} → {assigned_character}")
+            else:
+                assignments[team_name] = None
+                updated_teams[team_name] = {"members": members}
+                print(f"[ALLOCATION] {team_name} → (no character assigned)")
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(updated_teams, f, indent=2, ensure_ascii=False)
+
+        print(f"[ALLOCATION] Character assignments saved to {output_path}")
+        return assignments
+
+    except Exception as e:
+        print(f"[ALLOCATION] Error assigning characters: {e}")
+        return {}

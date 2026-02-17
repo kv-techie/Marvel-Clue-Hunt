@@ -58,10 +58,22 @@ def calculate_final_score(team: Team) -> int:
 
     # Add manual adjustments (rewards/deductions)
     for adjustment in team.manual_adjustments:
-        if adjustment.adjustment_type == "reward":
-            score += adjustment.amount
-        elif adjustment.adjustment_type == "deduct":
-            score -= adjustment.amount
+        # Handle both dict and object formats
+        adj_type = (
+            adjustment.get("adjustment_type")
+            if isinstance(adjustment, dict)
+            else adjustment.adjustment_type
+        )
+        adj_amount = (
+            adjustment.get("amount")
+            if isinstance(adjustment, dict)
+            else adjustment.amount
+        )
+
+        if adj_type == "reward":
+            score += adj_amount
+        elif adj_type == "deduct":
+            score -= abs(adj_amount)  # Ensure we subtract positive values
 
     return score  # Allow negative scores for heavy deductions
 
@@ -87,8 +99,20 @@ def calculate_total_deductions(team: Team) -> int:
 
     # Add manual deductions
     for adjustment in team.manual_adjustments:
-        if adjustment.adjustment_type == "deduct":
-            total_deductions += adjustment.amount
+        # Handle both dict and object formats
+        adj_type = (
+            adjustment.get("adjustment_type")
+            if isinstance(adjustment, dict)
+            else adjustment.adjustment_type
+        )
+        adj_amount = (
+            adjustment.get("amount")
+            if isinstance(adjustment, dict)
+            else adjustment.amount
+        )
+
+        if adj_type == "deduct":
+            total_deductions += abs(adj_amount)
 
     return total_deductions
 

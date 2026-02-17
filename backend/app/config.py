@@ -15,13 +15,13 @@ class Settings(BaseSettings):
         200  # Auto-disqualify if deductions exceed this
     )
 
-    # Scoring thresholds (in seconds)
-    dialogue_1_excellent: int = 300  # 5 min
-    dialogue_1_good: int = 480  # 8 min
-    dialogue_2_excellent: int = 420  # 7 min
-    dialogue_2_good: int = 600  # 10 min
-    dialogue_3_excellent: int = 480  # 8 min
-    dialogue_3_good: int = 720  # 12 min
+    # Scoring thresholds (in seconds) - 90 minute event duration
+    dialogue_1_excellent: int = 1080  # 18 min
+    dialogue_1_good: int = 1500  # 25 min
+    dialogue_2_excellent: int = 1200  # 20 min
+    dialogue_2_good: int = 1680  # 28 min
+    dialogue_3_excellent: int = 1320  # 22 min
+    dialogue_3_good: int = 1800  # 30 min
 
     # Bonus points
     enactment_bonus: int = 50

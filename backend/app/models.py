@@ -20,6 +20,9 @@ class PointAdjustment(BaseModel):
 class Team(BaseModel):
     name: str
     members: List[str]
+    character: Optional[str] = (
+        None  # Character this team is assigned (e.g., "Iron Man", "Thor")
+    )
     timer_started: Optional[datetime] = None
     hints_used: int = 0
     dialogue_1_completed: bool = False
@@ -31,13 +34,14 @@ class Team(BaseModel):
     qualified: bool = False
     enactment_bonus_awarded: bool = False
     enactment_bonus_amount: int = 0
-    manual_adjustments: List[PointAdjustment] = []
+    manual_adjustments: List[Dict] = []
     final_score: Optional[int] = None
     disqualified: bool = False
     disqualification_reason: Optional[str] = None
     disqualification_timestamp: Optional[datetime] = None
     disqualification_confirmed_by_admin: bool = False
     disqualification_acknowledged_by_team: bool = False
+    tab_switch_logs: List[Dict] = []  # Track tab focus changes
 
 
 class DialogueSubmission(BaseModel):
@@ -89,3 +93,9 @@ class PointsAdjustmentRequest(BaseModel):
     amount: int
     reason: str
     adjustment_type: str  # "reward" or "deduct"
+
+
+class TabSwitchLog(BaseModel):
+    team_name: str
+    event_type: str  # "tab_left" or "tab_returned"
+    timestamp: datetime

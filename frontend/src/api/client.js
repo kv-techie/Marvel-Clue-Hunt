@@ -74,6 +74,8 @@ export const getDevices = (teamName) => api.get(`/admin/devices/${encodeURICompo
 
 export const removeDevice = (teamName, deviceId) => api.delete(`/admin/devices/${encodeURIComponent(teamName)}/${encodeURIComponent(deviceId)}`)
 
+export const getTeamTabSwitches = (teamName) => api.get(`/admin/team-tab-switches/${encodeURIComponent(teamName)}`)
+
 // Attendee APIs
 export const startTeamTimer = (teamName) =>
   api.post(`/attendee/start-timer/${teamName}`)
@@ -95,6 +97,13 @@ export const submitDialogue = (teamName, dialogueNumber, answer, timeTaken) =>
 export const getCurrentDialogue = (teamName) =>
   api.get(`/attendee/current-dialogue/${teamName}`)
 
+export const logTabSwitch = (teamName, eventType) =>
+  api.post('/attendee/log-tab-switch', {
+    team_name: teamName,
+    event_type: eventType,
+    timestamp: new Date().toISOString(),
+  })
+
 export const stopGame = () => api.post('/admin/stop-game')
 
 export const deleteParticipantData = () => api.post('/admin/delete-participant-data')
@@ -104,7 +113,12 @@ export const getDisqualificationCandidates = () => api.get('/admin/disqualificat
 export const confirmDisqualification = (teamName, confirmedBy) =>
   api.post(`/admin/confirm-disqualification/${teamName}`, {}, { params: { confirmed_by: confirmedBy } })
 
+export const reverseDisqualification = (teamName, reversedBy) =>
+  api.post(`/admin/reverse-disqualification/${teamName}`, {}, { params: { reversed_by: reversedBy } })
+
 export const teamAcknowledgeDisqualification = (teamName) =>
   api.post(`/admin/team-acknowledge-disqualification/${teamName}`)
 
-export default api
+// Export api as both default and named export
+export const apiClient = api
+

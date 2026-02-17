@@ -12,6 +12,8 @@ const Login = () => {
   const [isAdminLogin, setIsAdminLogin] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isDisqualified, setIsDisqualified] = useState(false)
+  const [disqualificationReason, setDisqualificationReason] = useState('')
   
   const { loginUser } = useAuth()
   const navigate = useNavigate()
@@ -19,6 +21,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setIsDisqualified(false)
+    setDisqualificationReason('')
     setLoading(true)
 
     try {
@@ -62,11 +66,21 @@ const Login = () => {
       }
     } catch (err) {
       const errorMessage = err.response?.data?.detail || 'Login failed. Please try again.'
-      setError(errorMessage)
       
+      // Check if team is disqualified
+      if (errorMessage.includes('disqualified from the game')) {
+        setIsDisqualified(true)
+        const reasonMatch = errorMessage.match(/Reason: (.+)$/)
+        if (reasonMatch) {
+          setDisqualificationReason(reasonMatch[1])
+        }
+        setError(errorMessage)
+      }
       // Special handling for device limit error
-      if (errorMessage.includes('Maximum devices')) {
+      else if (errorMessage.includes('Maximum devices')) {
         setError('⚠️ Device limit reached for this team. Maximum 3 devices allowed. Contact admin to remove a device.')
+      } else {
+        setError(errorMessage)
       }
     } finally {
       setLoading(false)
@@ -79,68 +93,113 @@ const Login = () => {
         <h1 className="login-title">🦸 Marvel Clue Hunt</h1>
         <p className="login-subtitle">Assemble your team and solve the mystery!</p>
         
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="checkbox-group">
-            <label>
-              <input
-                type="checkbox"
-                checked={isAdminLogin}
-                onChange={(e) => setIsAdminLogin(e.target.checked)}
-              />
-              <span>Admin/Volunteer Login (Authorized Users Only)</span>
-            </label>
+        {isDisqualified ? (
+          // Disqualification message
+          <div style={{
+            padding: '30px',
+            backgroundColor: 'rgba(231, 76, 60, 0.15)',
+            border: '3px solid #e74c3c',
+            borderRadius: '8px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>⛔</div>
+            <h2 style={{ color: '#e74c3c', marginBottom: '15px', fontSize: '24px' }}>
+              Team Disqualified
+            </h2>
+            <p style={{ fontSize: '16px', marginBottom: '15px', color: '#ddd' }}>
+              Your team has been removed from the game.
+            </p>
+            <p style={{
+              fontSize: '18px',
+              color: '#e74c3c',
+              fontWeight: '600',
+              marginBottom: '20px',
+              padding: '15px',
+              backgroundColor: 'rgba(231, 76, 60, 0.25)',
+              borderRadius: '6px'
+            }}>
+              <strong>Reason:</strong> {disqualificationReason}
+            </p>
+            <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)' }}>
+              Please contact the game administrators for more information.
+            </p>
+            <button
+              onClick={() => {
+                setIsDisqualified(false)
+                setError('')
+                setTeamName('')
+              }}
+              className="btn btn-primary"
+              style={{ marginTop: '20px' }}
+            >
+              Try Another Team
+            </button>
           </div>
-
-          {!isAdminLogin && (
-            <div className="form-group">
-              <label htmlFor="team">Enter Your Team Name</label>
-              <input
-                id="team"
-                type="text"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                placeholder="Team Avengers"
-                required
-              />
-              <small className="form-hint">
-                💡 Your device will be registered automatically (max 3 devices per team)
-              </small>
+        ) : (
+          // Login form
+          <form onSubmit={handleSubmit} className="login-form">
+            <div className="checkbox-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={isAdminLogin}
+                  onChange={(e) => setIsAdminLogin(e.target.checked)}
+                />
+                <span>Admin/Volunteer Login (Authorized Users Only)</span>
+              </label>
             </div>
-          )}
 
-          {isAdminLogin && (
-            <>
+            {!isAdminLogin && (
               <div className="form-group">
-                <label htmlFor="name">Enter Your Name</label>
+                <label htmlFor="team">Enter Your Team Name</label>
                 <input
-                  id="name"
+                  id="team"
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Kedhar Vinod"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  placeholder="Team Avengers"
                   required
                 />
+                <small className="form-hint">
+                  💡 Your device will be registered automatically (max 3 devices per team)
+                </small>
               </div>
-              <div className="form-group">
-                <label htmlFor="pin">Enter PIN</label>
-                <input
-                  id="pin"
-                  type="password"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  placeholder="Enter your PIN"
-                  required
-                />
-              </div>
-            </>
-          )}
+            )}
 
-          {error && <div className="error-message">{error}</div>}
+            {isAdminLogin && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="name">Enter Your Name</label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Kedhar Vinod"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="pin">Enter PIN</label>
+                  <input
+                    id="pin"
+                    type="password"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    placeholder="Enter your PIN"
+                    required
+                  />
+                </div>
+              </>
+            )}
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Logging in...' : 'Enter'}
-          </button>
-        </form>
+            {error && <div className="error-message">{error}</div>}
+
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Logging in...' : 'Enter'}
+            </button>
+          </form>
+        )}
 
         {!isAdminLogin && (
           <div className="device-info-note">

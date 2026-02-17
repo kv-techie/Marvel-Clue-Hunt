@@ -402,7 +402,7 @@ Charlie Brown`}
       )}
 
       {/* Existing Teams Display */}
-      {teams && (
+      {teams && teams.teams && (
         <div style={{ marginTop: '40px' }}>
           <h3 style={{ color: '#fff' }}>📊 Current Teams Status</h3>
           <div className="teams-grid" style={{ 
@@ -411,14 +411,14 @@ Charlie Brown`}
             gap: '20px',
             marginTop: '20px'
           }}>
-            {Object.entries(teams).map(([teamName, teamData]) => (
-              <div key={teamName} className="team-card" style={{
+            {teams.teams.map((teamData) => (
+              <div key={teamData.name} className="team-card" style={{
                 padding: '20px',
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 borderRadius: '8px',
                 border: '1px solid rgba(255, 255, 255, 0.1)'
               }}>
-                <h3 style={{ marginTop: 0, color: '#fff' }}>{teamName}</h3>
+                <h3 style={{ marginTop: 0, color: '#fff' }}>{teamData.name}</h3>
                 <ul className="team-members" style={{
                   listStyle: 'none',
                   padding: 0,
@@ -437,6 +437,17 @@ Charlie Brown`}
                   paddingTop: '15px',
                   borderTop: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
+                  <div className="stat-row" style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '5px 0',
+                    fontSize: '14px'
+                  }}>
+                    <span style={{ color: '#aaa' }}>Character:</span>
+                    <span style={{ color: teamData.character ? '#2ecc71' : '#e74c3c', fontWeight: 'bold' }}>
+                      {teamData.character || 'Unassigned'}
+                    </span>
+                  </div>
                   <div className="stat-row" style={{
                     display: 'flex',
                     justifyContent: 'space-between',
