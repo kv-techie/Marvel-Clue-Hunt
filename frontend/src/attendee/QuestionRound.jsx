@@ -16,6 +16,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const [showHint, setShowHint] = useState(false);
   const [hintsRemaining, setHintsRemaining] = useState(3);
   const [powerupsAvailable, setPowerupsAvailable] = useState({});
+  const [teamPowerups, setTeamPowerups] = useState([]);
   const [activePowerup, setActivePowerup] = useState(null);
   const [certaintyFeedback, setCertaintyFeedback] = useState(null);
   const [stone, setStone] = useState(null);
@@ -33,6 +34,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
     setShowHint(false);
     setCertaintyFeedback(null);
     setShowClue2(false);
+    setActivePowerup(null);
 
     try {
       console.log(`[QuestionRound] Loading question for team: ${teamName}`);
@@ -53,6 +55,9 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       const stoneData = await client.getTeamStone(teamName);
       console.log("[QuestionRound] Stone data:", stoneData);
       setStone(stoneData.stone);
+
+      const powerupData = await client.getTeamPowerups(teamName);
+      setTeamPowerups(powerupData.powerups || []);
     } catch (err) {
       console.error("[QuestionRound] Error loading question:", err);
       setError("Failed to load question: " + err.message);
@@ -86,6 +91,9 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
           loadCurrentQuestion();
         } else {
           setQuestion({ completed: true, message: "All questions completed!" });
+        }
+        if (response.powerups_available) {
+          setPowerupsAvailable(response.powerups_available);
         }
         if (onQuestionComplete) onQuestionComplete(response);
       } else {
@@ -145,18 +153,14 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
     }
   };
 
-  const handleUsePowerup = (powerupName) => {
-    if (!powerupsAvailable[powerupName]) {
+  const handleUsePowerup = (powerupId) => {
+    if (!powerupsAvailable[powerupId]) {
       setError("This powerup is not available or already used");
       return;
     }
 
-    if (powerupName === "Certainty Check") {
-      handleCertaintyCheck();
-    } else {
-      setActivePowerup(powerupName);
-      setError(null);
-    }
+    setActivePowerup(powerupId);
+    setError(null);
   };
 
   if (loading) return <div className="question-loading">Loading question...</div>;
@@ -178,18 +182,6 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   if (!question || !question.difficulty) {
     return <div className="question-error">Failed to load question - missing data</div>;
   }
-
-  // Get stone-specific powerup names
-  const stonePowerups = {
-    "Mind Stone": ["Clear Thought", "Mental Clarity", "Eureka Moment"],
-    "Power Stone": ["Power Surge", "Double Jeopardy", "Power Multiplier"],
-    "Time Stone": ["Time Freeze", "Rewind", "Stop Time"],
-    "Space Stone": ["Teleport", "Spatial Rift", "Blink"],
-    "Reality Stone": ["Reality Check", "Truth Serum", "Certainty Check"],
-    "Soul Stone": ["Soul Shield", "Life Force", "Sacrifice Play"],
-  };
-
-  const availablePowerups = stonePowerups[stone] || [];
 
   return (
     <div className="question-round-container">
@@ -291,19 +283,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
           </button>
         </div>
 
-        <div className="actions-right">
-          <button
-            className="powerup-btn"
-            onClick={() => handleUsePowerup("Certainty Check")}
-            disabled={
-              !powerupsAvailable["Certainty Check"] ||
-              !availablePowerups.includes("Certainty Check")
-            }
-            title="Reality Stone: Check answer confidence"
-          >
-            ✨ Certainty
-          </button>
-        </div>
+        <div className="actions-right" />
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -311,21 +291,21 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       <div className="powerup-bar">
         <div className="powerups-label">⚡ PowerUps ({stone}):</div>
         <div className="powerups-list">
-          {availablePowerups.map((powerup) => (
+          {teamPowerups.map((powerup) => (
             <button
-              key={powerup}
+              key={powerup.id}
               className={`powerup-button ${
-                powerupsAvailable[powerup] ? "available" : "used"
-              } ${activePowerup === powerup ? "active" : ""}`}
+                powerupsAvailable[powerup.id] ? "available" : "used"
+              } ${activePowerup === powerup.id ? "active" : ""}`}
               onClick={() =>
-                powerupsAvailable[powerup] && handleUsePowerup(powerup)
+                powerupsAvailable[powerup.id] && handleUsePowerup(powerup.id)
               }
-              disabled={!powerupsAvailable[powerup]}
-              title={`${powerup}${
-                !powerupsAvailable[powerup] ? " (used)" : ""
+              disabled={!powerupsAvailable[powerup.id]}
+              title={`${powerup.name}${
+                !powerupsAvailable[powerup.id] ? " (locked/used)" : ""
               }`}
             >
-              {powerup}
+              {powerup.name}
             </button>
           ))}
         </div>

@@ -184,6 +184,9 @@ export const getTeamStone = (teamName) =>
 export const getAvailableStones = () =>
   api.get('/attendee/available-stones')
 
+export const getTeamPowerups = (teamName) =>
+  api.get(`/attendee/team-powerups/${encodeURIComponent(teamName)}`)
+
 // ===================== GAMIFICATION APIs =====================
 
 // Get team's badges and achievements
