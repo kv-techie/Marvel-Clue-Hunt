@@ -22,6 +22,15 @@ from app.timer_manager import timer_manager
 
 router = APIRouter()
 
+INFINITY_STONES = [
+    "Mind Stone",
+    "Power Stone",
+    "Time Stone",
+    "Space Stone",
+    "Reality Stone",
+    "Soul Stone",
+]
+
 
 @router.post("/start-timer/{team_name}")
 async def start_team_timer(team_name: str):
@@ -185,7 +194,12 @@ async def get_current_question(team_name: str):
     team = game_state.teams[team_name]
 
     if not team.stone:
-        raise HTTPException(status_code=400, detail="Team stone not assigned")
+        assigned_stone = team_name if team_name in INFINITY_STONES else None
+        if assigned_stone:
+            team.stone = assigned_stone
+            save_game_state()
+        else:
+            raise HTTPException(status_code=400, detail="Team stone not assigned")
 
     if team.current_question_index >= 10:
         return {

@@ -26,6 +26,15 @@ from app.timer_manager import timer_manager
 
 router = APIRouter()
 
+INFINITY_STONES = [
+    "Mind Stone",
+    "Power Stone",
+    "Time Stone",
+    "Space Stone",
+    "Reality Stone",
+    "Soul Stone",
+]
+
 # Get absolute path to data directory (works from any working directory)
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(APP_DIR, "data")
@@ -173,8 +182,9 @@ async def upload_attendance(file: UploadFile = File(...)):
 
         # Initialize game state with teams
         game_state.teams = {}
-        for name, members in teams.items():
-            game_state.teams[name] = Team(name=name, members=members)
+        for idx, (name, members) in enumerate(teams.items()):
+            assigned_stone = name if name in INFINITY_STONES else INFINITY_STONES[idx % len(INFINITY_STONES)]
+            game_state.teams[name] = Team(name=name, members=members, stone=assigned_stone)
 
         save_game_state()
 
@@ -191,15 +201,6 @@ async def upload_attendance(file: UploadFile = File(...)):
 @router.post("/allocate-teams-random")
 async def allocate_teams_random(file: UploadFile = File(...)):
     """Allocate attendees randomly into stone-named teams"""
-
-    INFINITY_STONES = [
-        "Mind Stone",
-        "Power Stone",
-        "Time Stone",
-        "Space Stone",
-        "Reality Stone",
-        "Soul Stone",
-    ]
 
     try:
         # Read attendees file
@@ -240,7 +241,7 @@ async def allocate_teams_random(file: UploadFile = File(...)):
             game_state.teams[team_name] = Team(
                 name=team_name,
                 members=members,
-                character=None,  # Characters will be assigned separately
+                stone=team_name,
             )
 
         save_game_state()
@@ -396,10 +397,12 @@ async def upload_teams_and_attendees(
 
         # Initialize game state with teams
         game_state.teams = {}
-        for team_name, members in final_teams.items():
+        for idx, (team_name, members) in enumerate(final_teams.items()):
             character = team_character_mapping[team_name]
             game_state.teams[team_name] = Team(
-                name=team_name, members=members, character=character
+                name=team_name,
+                members=members,
+                stone=INFINITY_STONES[idx % len(INFINITY_STONES)],
             )
 
         save_game_state()
