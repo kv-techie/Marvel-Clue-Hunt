@@ -9,7 +9,7 @@ services:
     name: marvel-frontend
     runtime: node
     buildCommand: cd frontend && npm install && npm run build
-    startCommand: npm run preview -- --host 0.0.0.0 --port $PORT
+    startCommand: cd frontend/dist && npx http-server -p $PORT -g
     envVars:
       - key: VITE_API_URL
         value: https://marvel-backend.onrender.com
