@@ -32,6 +32,9 @@ Thumbs.db
 # Data files (local testing)
 backend/app/data/*.csv
 backend/app/data/*.json
+!backend/app/data/questions.json
+!backend/app/data/powerups.json
+!backend/app/data/team_dialogues.json
 backend/app/data/attendance.csv
 backend/app/data/teams.json
 backend/app/data/game_state.json

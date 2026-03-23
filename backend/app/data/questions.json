@@ -1,0 +1,640 @@
+{
+  "stones": [
+    {
+      "stone": "Mind Stone",
+      "theme": "Knowledge and Intelligence",
+      "questions": [
+        {
+          "id": "mind_1",
+          "question_text": "What is the capital of France?",
+          "clue_1": "City of lights",
+          "clue_2": "Located on the Seine River",
+          "hint_text": "Paris",
+          "correct_answer": "Paris",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "mind_2",
+          "question_text": "Who wrote Romeo and Juliet?",
+          "clue_1": "English playwright",
+          "clue_2": "Wrote during the Renaissance",
+          "hint_text": "William Shakespeare",
+          "correct_answer": "Shakespeare",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "mind_3",
+          "question_text": "What is the smallest prime number?",
+          "clue_1": "Even number",
+          "clue_2": "Less than 5",
+          "hint_text": "2",
+          "correct_answer": "2",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "mind_4",
+          "question_text": "Which planet is closest to the Sun?",
+          "clue_1": "Named after a messenger god",
+          "clue_2": "Smallest planet in solar system",
+          "hint_text": "Mercury",
+          "correct_answer": "Mercury",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "mind_5",
+          "question_text": "What is the chemical symbol for Gold?",
+          "clue_1": "Precious metal",
+          "clue_2": "Two letters",
+          "hint_text": "Au",
+          "correct_answer": "Au",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "mind_6",
+          "question_text": "Who discovered penicillin?",
+          "clue_1": "Scottish scientist",
+          "clue_2": "Discovered by accident in 1928",
+          "hint_text": "Alexander Fleming",
+          "correct_answer": "Fleming",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "mind_7",
+          "question_text": "What is the largest ocean on Earth?",
+          "clue_1": "Connected to Asia",
+          "clue_2": "Contains the Mariana Trench",
+          "hint_text": "Pacific Ocean",
+          "correct_answer": "Pacific",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "mind_8",
+          "question_text": "In what year did the Titanic sink?",
+          "clue_1": "Early 20th century",
+          "clue_2": "Year when it hit an iceberg",
+          "hint_text": "1912",
+          "correct_answer": "1912",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "mind_9",
+          "question_text": "How many bones are in the adult human body?",
+          "clue_1": "More than 200",
+          "clue_2": "Less than 250",
+          "hint_text": "206",
+          "correct_answer": "206",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "mind_10",
+          "question_text": "What is the speed of light in vacuum?",
+          "clue_1": "Approximately 3 with 8 zeros meters per second",
+          "clue_2": "Einstein's famous constant",
+          "hint_text": "300000000 m/s or 3 x 10^8 m/s",
+          "correct_answer": "300000000",
+          "base_points": 150,
+          "difficulty": "hard"
+        }
+      ]
+    },
+    {
+      "stone": "Power Stone",
+      "theme": "Strength and Force",
+      "questions": [
+        {
+          "id": "power_1",
+          "question_text": "What is the strongest muscle in the human body?",
+          "clue_1": "Associated with biting",
+          "clue_2": "Located in the jaw",
+          "hint_text": "Masseter",
+          "correct_answer": "Masseter",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "power_2",
+          "question_text": "Who was the strongest man in ancient Greece?",
+          "clue_1": "Mythological figure with 12 labors",
+          "clue_2": "Son of Zeus",
+          "hint_text": "Hercules or Heracles",
+          "correct_answer": "Hercules",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "power_3",
+          "question_text": "What element has the highest tensile strength?",
+          "clue_1": "Transition metal",
+          "clue_2": "Used in construction and steel",
+          "hint_text": "Iron",
+          "correct_answer": "Iron",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "power_4",
+          "question_text": "Which animal has the strongest bite force?",
+          "clue_1": "Prehistoric creature",
+          "clue_2": "Extinction-era predator",
+          "hint_text": "T-Rex or Tyrannosaurus",
+          "correct_answer": "T-Rex",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "power_5",
+          "question_text": "What is the SI unit of force?",
+          "clue_1": "Named after a scientist",
+          "clue_2": "Symbol is N",
+          "hint_text": "Newton",
+          "correct_answer": "Newton",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "power_6",
+          "question_text": "How many arms does an octopus have?",
+          "clue_1": "Number is associated with 8-sided shapes",
+          "clue_2": "Latin prefix for eight",
+          "hint_text": "8",
+          "correct_answer": "8",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "power_7",
+          "question_text": "What is the strongest material known to science?",
+          "clue_1": "Form of carbon",
+          "clue_2": "Used in jewelry and cutting tools",
+          "hint_text": "Diamond",
+          "correct_answer": "Diamond",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "power_8",
+          "question_text": "Which animal is the fastest land animal?",
+          "clue_1": "African predator",
+          "clue_2": "Known for spots",
+          "hint_text": "Cheetah",
+          "correct_answer": "Cheetah",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "power_9",
+          "question_text": "What is the atomic number of Iron?",
+          "clue_1": "Symbol Fe",
+          "clue_2": "Between 20 and 30",
+          "hint_text": "26",
+          "correct_answer": "26",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "power_10",
+          "question_text": "How many kg can an elephant lift with its trunk?",
+          "clue_1": "More than 200, less than 400",
+          "clue_2": "Approximately 300",
+          "hint_text": "300",
+          "correct_answer": "300",
+          "base_points": 150,
+          "difficulty": "hard"
+        }
+      ]
+    },
+    {
+      "stone": "Time Stone",
+      "theme": "Time and Temporal Science",
+      "questions": [
+        {
+          "id": "time_1",
+          "question_text": "How many seconds are in a day?",
+          "clue_1": "24 hours × 3600",
+          "clue_2": "Starts with 86",
+          "hint_text": "86400",
+          "correct_answer": "86400",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "time_2",
+          "question_text": "Who developed the theory of relativity?",
+          "clue_1": "German physicist",
+          "clue_2": "E = mc²",
+          "hint_text": "Albert Einstein",
+          "correct_answer": "Einstein",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "time_3",
+          "question_text": "What is a leap year?",
+          "clue_1": "Occurs every 4 years",
+          "clue_2": "February has 29 days",
+          "hint_text": "Year divisible by 4 with 366 days",
+          "correct_answer": "366",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "time_4",
+          "question_text": "How many time zones does Earth have?",
+          "clue_1": "Based on 24-hour rotation",
+          "clue_2": "Number matches hours in a day",
+          "hint_text": "24",
+          "correct_answer": "24",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "time_5",
+          "question_text": "What is the smallest unit of time?",
+          "clue_1": "One-trillionth of a second",
+          "clue_2": "Used in nuclear physics",
+          "hint_text": "Picosecond",
+          "correct_answer": "Picosecond",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "time_6",
+          "question_text": "In what year did the Internet become public?",
+          "clue_1": "Early 1990s",
+          "clue_2": "World Wide Web invented",
+          "hint_text": "1991",
+          "correct_answer": "1991",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "time_7",
+          "question_text": "How long is a lunar month?",
+          "clue_1": "Approximately 29 days",
+          "clue_2": "Moon cycle duration",
+          "hint_text": "29.5 days",
+          "correct_answer": "29.5",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "time_8",
+          "question_text": "What is the oldest known calendar system?",
+          "clue_1": "Ancient civilization",
+          "clue_2": "Babylonian origin",
+          "hint_text": "Babylonian",
+          "correct_answer": "Babylonian",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "time_9",
+          "question_text": "How many minutes are in a week?",
+          "clue_1": "7 days × 24 hours × 60",
+          "clue_2": "More than 10000",
+          "hint_text": "10080",
+          "correct_answer": "10080",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "time_10",
+          "question_text": "What is a nanosecond?",
+          "clue_1": "One billionth of a second",
+          "clue_2": "Used in computing",
+          "hint_text": "10^-9 seconds",
+          "correct_answer": "billionth",
+          "base_points": 150,
+          "difficulty": "hard"
+        }
+      ]
+    },
+    {
+      "stone": "Space Stone",
+      "theme": "Space and Cosmos",
+      "questions": [
+        {
+          "id": "space_1",
+          "question_text": "How far is the Sun from Earth?",
+          "clue_1": "Measured in Astronomical Units",
+          "clue_2": "Approximately 150 million km",
+          "hint_text": "149.6 million km or 1 AU",
+          "correct_answer": "150",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "space_2",
+          "question_text": "What is a black hole?",
+          "clue_1": "Region of spacetime",
+          "clue_2": "Nothing escapes from it",
+          "hint_text": "Collapsed star with infinite density",
+          "correct_answer": "star",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "space_3",
+          "question_text": "How many moons does Mars have?",
+          "clue_1": "Small number",
+          "clue_2": "Named Phobos and Deimos",
+          "hint_text": "2",
+          "correct_answer": "2",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "space_4",
+          "question_text": "What is the name of our galaxy?",
+          "clue_1": "Greek word for milk",
+          "clue_2": "Contains billions of stars",
+          "hint_text": "Milky Way",
+          "correct_answer": "Milky",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "space_5",
+          "question_text": "What is the Big Bang?",
+          "clue_1": "Origin of universe theory",
+          "clue_2": "Expansion event",
+          "hint_text": "Start of space and time",
+          "correct_answer": "origin",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "space_6",
+          "question_text": "How many planets are in our solar system?",
+          "clue_1": "Pluto was reclassified",
+          "clue_2": "Less than 12",
+          "hint_text": "8",
+          "correct_answer": "8",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "space_7",
+          "question_text": "What is the largest planet in our solar system?",
+          "clue_1": "Gas giant",
+          "clue_2": "Named after king of gods",
+          "hint_text": "Jupiter",
+          "correct_answer": "Jupiter",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "space_8",
+          "question_text": "What is a nebula?",
+          "clue_1": "Interstellar cloud",
+          "clue_2": "Star formation region",
+          "hint_text": "Cloud of gas and dust",
+          "correct_answer": "cloud",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "space_9",
+          "question_text": "How many kilometers is a light-year?",
+          "clue_1": "Distance light travels in one year",
+          "clue_2": "Approximately 9.46 trillion km",
+          "hint_text": "9.46 trillion",
+          "correct_answer": "trillion",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "space_10",
+          "question_text": "What is the Oort Cloud?",
+          "clue_1": "Theoretical region",
+          "clue_2": "Contains icy bodies at edge of solar system",
+          "hint_text": "Shell of icy objects",
+          "correct_answer": "icy",
+          "base_points": 150,
+          "difficulty": "hard"
+        }
+      ]
+    },
+    {
+      "stone": "Reality Stone",
+      "theme": "Physics and Reality",
+      "questions": [
+        {
+          "id": "reality_1",
+          "question_text": "What is the speed of sound in air?",
+          "clue_1": "Approximately 340 m/s",
+          "clue_2": "Slower than light",
+          "hint_text": "340",
+          "correct_answer": "340",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "reality_2",
+          "question_text": "What is quantum mechanics?",
+          "clue_1": "Study of subatomic particles",
+          "clue_2": "Physics of very small things",
+          "hint_text": "Branch of physics dealing with atoms",
+          "correct_answer": "quantum",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "reality_3",
+          "question_text": "How many states of matter are there?",
+          "clue_1": "Solid, liquid, gas and...",
+          "clue_2": "Fourth is plasma",
+          "hint_text": "4",
+          "correct_answer": "4",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "reality_4",
+          "question_text": "What is the chemical formula for water?",
+          "clue_1": "Hydrogen and oxygen",
+          "clue_2": "Two hydrogens, one oxygen",
+          "hint_text": "H2O",
+          "correct_answer": "H2O",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "reality_5",
+          "question_text": "What is the Pauli Exclusion Principle?",
+          "clue_1": "No two electrons can have identical quantum numbers",
+          "clue_2": "Quantum mechanics concept",
+          "hint_text": "Unique quantum states",
+          "correct_answer": "electrons",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "reality_6",
+          "question_text": "What is gravity?",
+          "clue_1": "Force of attraction",
+          "clue_2": "Keeps us on Earth",
+          "hint_text": "Attractive force",
+          "correct_answer": "force",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "reality_7",
+          "question_text": "What is the Heisenberg Uncertainty Principle?",
+          "clue_1": "Cannot know position and momentum simultaneously",
+          "clue_2": "Quantum mechanics law",
+          "hint_text": "Position-momentum uncertainty",
+          "correct_answer": "uncertainty",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "reality_8",
+          "question_text": "How many dimensions does spacetime have?",
+          "clue_1": "3 space + 1 time",
+          "clue_2": "Einstein's concept",
+          "hint_text": "4",
+          "correct_answer": "4",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "reality_9",
+          "question_text": "What is the Doppler Effect?",
+          "clue_1": "Change in wave frequency",
+          "clue_2": "Due to relative motion",
+          "hint_text": "Shift in perceived frequency",
+          "correct_answer": "frequency",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "reality_10",
+          "question_text": "What is entropy in thermodynamics?",
+          "clue_1": "Measure of disorder",
+          "clue_2": "Cannot decrease in isolated system",
+          "hint_text": "Second law of thermodynamics",
+          "correct_answer": "disorder",
+          "base_points": 150,
+          "difficulty": "hard"
+        }
+      ]
+    },
+    {
+      "stone": "Soul Stone",
+      "theme": "Life, Philosophy, and Spirit",
+      "questions": [
+        {
+          "id": "soul_1",
+          "question_text": "What does photosynthesis produce?",
+          "clue_1": "Plants eat sunlight",
+          "clue_2": "We breathe this gas",
+          "hint_text": "Oxygen",
+          "correct_answer": "Oxygen",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "soul_2",
+          "question_text": "What is the mitochondria known as?",
+          "clue_1": "Produces energy in cells",
+          "clue_2": "Powerhouse of the cell",
+          "hint_text": "Powerhouse",
+          "correct_answer": "powerhouse",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "soul_3",
+          "question_text": "How many chambers does a human heart have?",
+          "clue_1": "Two ventricles and two atria",
+          "clue_2": "Number is even",
+          "hint_text": "4",
+          "correct_answer": "4",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "soul_4",
+          "question_text": "What is DNA?",
+          "clue_1": "Deoxyribonucleic acid",
+          "clue_2": "Carries genetic information",
+          "hint_text": "Double helix molecule",
+          "correct_answer": "acid",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "soul_5",
+          "question_text": "Who is the father of evolution?",
+          "clue_1": "British naturalist",
+          "clue_2": "Theory of natural selection",
+          "hint_text": "Charles Darwin",
+          "correct_answer": "Darwin",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "soul_6",
+          "question_text": "What is photosynthesis?",
+          "clue_1": "Converts light to chemical energy",
+          "clue_2": "Occurs in plant chloroplasts",
+          "hint_text": "Light-dependent process",
+          "correct_answer": "light",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "soul_7",
+          "question_text": "How many chromosomes does a human have?",
+          "clue_1": "Pairs of 23 each",
+          "clue_2": "Inherited from parents",
+          "hint_text": "46",
+          "correct_answer": "46",
+          "base_points": 100,
+          "difficulty": "medium"
+        },
+        {
+          "id": "soul_8",
+          "question_text": "What is ATP in biology?",
+          "clue_1": "Molecule that stores energy",
+          "clue_2": "Adenosine Triphosphate",
+          "hint_text": "Energy currency of cells",
+          "correct_answer": "energy",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "soul_9",
+          "question_text": "What is the human genome?",
+          "clue_1": "Complete set of DNA",
+          "clue_2": "Contains all genes",
+          "hint_text": "All genetic material",
+          "correct_answer": "DNA",
+          "base_points": 100,
+          "difficulty": "hard"
+        },
+        {
+          "id": "soul_10",
+          "question_text": "What is cellular respiration?",
+          "clue_1": "Breaks down glucose",
+          "clue_2": "Produces ATP for energy",
+          "hint_text": "Process of energy extraction",
+          "correct_answer": "respiration",
+          "base_points": 150,
+          "difficulty": "hard"
+        }
+      ]
+    }
+  ]
+}

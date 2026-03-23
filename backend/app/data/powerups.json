@@ -1,0 +1,142 @@
+{
+  "teams": [
+    {
+      "team_name": "Mind Stone",
+      "powerups": [
+        {
+          "id": "insight_surge",
+          "name": "Insight Surge",
+          "description": "Reveal an extra clue",
+          "effect": "extra_clue"
+        },
+        {
+          "id": "logic_lock",
+          "name": "Logic Lock",
+          "description": "Accept typos and spelling variations in answers",
+          "effect": "fuzzy_match_boost"
+        },
+        {
+          "id": "cerebral_fortress",
+          "name": "Cerebral Fortress",
+          "description": "Shield next wrong answer - prevents streak break",
+          "effect": "prevent_streak_break"
+        }
+      ]
+    },
+    {
+      "team_name": "Power Stone",
+      "powerups": [
+        {
+          "id": "power_surge",
+          "name": "Power Surge",
+          "description": "2x score multiplier on next correct answer",
+          "effect": "score_multiplier_2x"
+        },
+        {
+          "id": "force_amplifier",
+          "name": "Force Amplifier",
+          "description": "Permanently increase combo multiplier by +0.5x",
+          "effect": "combo_boost"
+        },
+        {
+          "id": "unstoppable",
+          "name": "Unstoppable",
+          "description": "Save combo counter from breaking on wrong answer",
+          "effect": "preserve_combo"
+        }
+      ]
+    },
+    {
+      "team_name": "Time Stone",
+      "powerups": [
+        {
+          "id": "time_rewind",
+          "name": "Time Rewind",
+          "description": "Add 30 extra seconds to current question timer",
+          "effect": "add_time"
+        },
+        {
+          "id": "chronosphere",
+          "name": "Chronosphere",
+          "description": "Slow down timer - time moves 50% slower",
+          "effect": "slow_timer"
+        },
+        {
+          "id": "temporal_shift",
+          "name": "Temporal Shift",
+          "description": "Skip current question without breaking streak",
+          "effect": "skip_question"
+        }
+      ]
+    },
+    {
+      "team_name": "Space Stone",
+      "powerups": [
+        {
+          "id": "spatial_expansion",
+          "name": "Spatial Expansion",
+          "description": "Unlock both hidden clues immediately",
+          "effect": "reveal_all_clues"
+        },
+        {
+          "id": "dimensional_rift",
+          "name": "Dimensional Rift",
+          "description": "Skip current question without penalty",
+          "effect": "skip_penalty_free"
+        },
+        {
+          "id": "cosmic_shield",
+          "name": "Cosmic Shield",
+          "description": "Prevent next wrong answer from breaking streak",
+          "effect": "prevent_streak_break"
+        }
+      ]
+    },
+    {
+      "team_name": "Reality Stone",
+      "powerups": [
+        {
+          "id": "reality_distortion",
+          "name": "Reality Distortion",
+          "description": "Reduce question difficulty for bonus points",
+          "effect": "difficulty_reduction"
+        },
+        {
+          "id": "probability_collapse",
+          "name": "Probability Collapse",
+          "description": "Reveal first letter of correct answer",
+          "effect": "reveal_first_letter"
+        },
+        {
+          "id": "truth_manifestation",
+          "name": "Truth Manifestation",
+          "description": "Double base points for next answer",
+          "effect": "points_multiplier_2x"
+        }
+      ]
+    },
+    {
+      "team_name": "Soul Stone",
+      "powerups": [
+        {
+          "id": "soul_bond",
+          "name": "Soul Bond",
+          "description": "Share 15% of earned points with all 5 other teams",
+          "effect": "global_point_share"
+        },
+        {
+          "id": "spirit_guide",
+          "name": "Spirit Guide",
+          "description": "Auto-correct minor typos in answer",
+          "effect": "typo_correction"
+        },
+        {
+          "id": "life_force",
+          "name": "Life Force",
+          "description": "Restore one used hint",
+          "effect": "restore_hint"
+        }
+      ]
+    }
+  ]
+}

@@ -2,21 +2,29 @@ import json
 import os
 from typing import Dict, List, Optional
 
-# Path to the dialogue data file - relative to this file's location
-# This file is at: backend/app/dialogue_manager.py
-# We want to access: sample_data/team_dialogues.json (at project root)
-DIALOGUE_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "sample_data",
-    "team_dialogues.json",
-)
+# Path candidates for dialogue data file
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.dirname(APP_DIR)
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
+
+DIALOGUE_FILE_CANDIDATES = [
+    os.path.join(APP_DIR, "data", "team_dialogues.json"),
+    os.path.join(PROJECT_ROOT, "sample_data", "team_dialogues.json"),
+]
 
 
 class DialogueManager:
     """Manages loading and retrieving character-specific dialogues with hints"""
 
-    def __init__(self, dialogue_path: str = DIALOGUE_FILE):
-        self.dialogue_path = dialogue_path
+    def __init__(self, dialogue_path: Optional[str] = None):
+        if dialogue_path:
+            self.dialogue_path = dialogue_path
+        else:
+            self.dialogue_path = DIALOGUE_FILE_CANDIDATES[0]
+            for candidate in DIALOGUE_FILE_CANDIDATES:
+                if os.path.exists(candidate):
+                    self.dialogue_path = candidate
+                    break
         self.dialogues: Dict = {}
         self.load_dialogues()
 

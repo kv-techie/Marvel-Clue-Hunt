@@ -1,0 +1,262 @@
+{
+  "Captain America": [
+    {
+      "dialogue_number": 1,
+      "clue": "A shield bearer from Brooklyn stands at attention. His compass points not north, but to the heart. The first letter of each word in his motto spells a direction. Airport code: JFK. When the Star-Spangled Man speaks, what does he say to inspire?",
+      "dialogue": "I can do this all day",
+      "hint_1": "Think about Captain America's most repeated phrase across multiple films",
+      "hint_2": "It's said during fights when he refuses to give up",
+      "hint_3": "Five words, starts with 'I can'"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "Before the serum, before the shield, there was a choice in a back alley. A scientist asks about conviction. The boy from Brooklyn answers with his heart, not his strength. What does he say about fighting?",
+      "dialogue": "I don't like bullies. I don't care where they're from",
+      "hint_1": "This is from The First Avenger, before he became a super soldier",
+      "hint_2": "Dr. Erskine asks him why he wants to join the army",
+      "hint_3": "It's about standing up to those who abuse power"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "In Civil War, divided they stand. Stark speaks of vengeance, but the Sentinel of Liberty speaks of purpose. When asked about their mission, what does the First Avenger declare to Bucky?",
+      "dialogue": "I'm with you till the end of the line",
+      "hint_1": "This line is said to Bucky, his best friend",
+      "hint_2": "It represents unwavering loyalty and friendship",
+      "hint_3": "Contains the word 'line'"
+    }
+  ],
+  "Iron Man": [
+    {
+      "dialogue_number": 1,
+      "clue": "In a cave with a box of scraps, genius meets necessity. Geographic coordinates: 34.0522°N, 118.2437°W. The billionaire returns home to face the press. What declaration does he make that changes everything?",
+      "dialogue": "I am Iron Man",
+      "hint_1": "This is from the very first Iron Man movie, at the press conference",
+      "hint_2": "He goes off-script and reveals his secret identity",
+      "hint_3": "Three words that define his character"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "Facing mortality after the snap. In Endgame, speaking to his father through time. What does Tony Stark say about his legacy and journey?",
+      "dialogue": "Part of the journey is the end",
+      "hint_1": "Said during Endgame, reflecting on mortality and purpose",
+      "hint_2": "It's a philosophical statement about accepting fate",
+      "hint_3": "Contains the words 'journey' and 'end'"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "In Avengers, Loki threatens Earth with an army. The Council speaks of sacrifice. But the man in the armor has confidence. What does he say about their team?",
+      "dialogue": "We have a Hulk",
+      "hint_1": "Three words expressing confidence in his team",
+      "hint_2": "It's his response when Loki threatens Earth",
+      "hint_3": "Shows faith in Banner's alter ego"
+    }
+  ],
+  "Thor": [
+    {
+      "dialogue_number": 1,
+      "clue": "The God of Thunder stands before a rainbow bridge. Stripped of power, he learns humility in the New Mexico desert. Coordinates: 32.3199°N, 108.7852°W. What does he say when he finally understands leadership?",
+      "dialogue": "I choose to run toward my problems and not away from them",
+      "hint_1": "This shows Thor's growth from arrogant prince to worthy hero",
+      "hint_2": "It's about facing challenges head-on",
+      "hint_3": "Contains the phrase 'run toward'"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "In Ragnarok, facing his sister Hela, he realizes truth. Not in the hammer, but in himself. Lightning code: ⚡⚡⚡. What does the Son of Odin declare about his power?",
+      "dialogue": "I am not as strong as you. No. I am stronger",
+      "hint_1": "Said during the final battle against Hela",
+      "hint_2": "It's about accepting his own strength without the hammer",
+      "hint_3": "Reversal statement about strength"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "To the Guardians, to Rocket, he speaks of loss. In Infinity War, having lost everything—mother, father, brother, home, people. What does Thor say about having nothing left to lose?",
+      "dialogue": "What more could I lose?",
+      "hint_1": "This is a rhetorical question showing his despair",
+      "hint_2": "He's already lost his family, home, and people",
+      "hint_3": "Four words, starts with 'What more'"
+    }
+  ],
+  "Spider-Man": [
+    {
+      "dialogue_number": 1,
+      "clue": "A boy from Queens receives wisdom from his uncle. Before the mask, before the webs, there was a lesson. Borough code: NYC-Q. What mantra does he live by?",
+      "dialogue": "With great power comes great responsibility",
+      "hint_1": "This is Spider-Man's most famous quote across all versions",
+      "hint_2": "Uncle Ben's wisdom that defines Peter Parker",
+      "hint_3": "Contains the words 'power' and 'responsibility'"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "On the ferry in Homecoming, he faces consequences. Stark confronts him about worthiness. What does Tony say that becomes Peter's core belief?",
+      "dialogue": "If you're nothing without the suit then you shouldn't have it",
+      "hint_1": "Tony Stark says this TO Peter",
+      "hint_2": "It's about being worthy of power",
+      "hint_3": "Lesson about inner heroism versus equipment"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "In Far From Home, amid Mysterio's illusions, Peter trusts his instincts. What does Spider-Man say about his unique ability to sense danger?",
+      "dialogue": "My Spider-Sense is tingling",
+      "hint_1": "This is about his unique ability to sense danger",
+      "hint_2": "A classic Spider-Man phrase across all adaptations",
+      "hint_3": "Contains 'Spider-Sense'"
+    }
+  ],
+  "Black Widow": [
+    {
+      "dialogue_number": 1,
+      "clue": "A spy with red in her ledger speaks to a god in a cell. In Avengers, she manipulates through vulnerability. What metaphor does she use about her past?",
+      "dialogue": "I've got red in my ledger",
+      "hint_1": "She's talking about her dark past with Loki",
+      "hint_2": "'Red' symbolizes blood and past sins",
+      "hint_3": "Five words about her history"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "On Vormir, facing an impossible choice. The coordinates of sacrifice. She speaks to Clint, her best friend, about family. What does Natasha say?",
+      "dialogue": "Let me go",
+      "hint_1": "This is during the soul stone scene in Endgame",
+      "hint_2": "She's speaking to Clint as they both try to sacrifice themselves",
+      "hint_3": "Three simple words of sacrifice"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "In her own film, facing her past in the Red Room. To her 'sister' Yelena, what does Natasha say about her choices?",
+      "dialogue": "I chose to go back. It was my choice",
+      "hint_1": "About returning to confront her past",
+      "hint_2": "Emphasizes her agency and decision-making",
+      "hint_3": "Contains 'choice' or 'chose'"
+    }
+  ],
+  "Hulk": [
+    {
+      "dialogue_number": 1,
+      "clue": "A scientist's secret revealed in Avengers. Fury asks about control. Banner speaks of his constant state. What is his secret?",
+      "dialogue": "That's my secret Cap. I'm always angry",
+      "hint_1": "This reveals how Banner controls the Hulk",
+      "hint_2": "Said right before he transforms to fight the Chitauri",
+      "hint_3": "Contains 'always angry'"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "In Ragnarok, speaking as Hulk on Sakaar. Thor tries to reason with the Green Goliath. What does Hulk say about their friendship?",
+      "dialogue": "No Banner! Only Hulk!",
+      "hint_1": "Hulk is asserting his own identity separate from Banner",
+      "hint_2": "He doesn't want to be Banner anymore",
+      "hint_3": "Four words establishing Hulk's independence"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "In Endgame, Professor Hulk explains his evolution. At the diner, he describes the merger. What does he say about his transformation?",
+      "dialogue": "I put the brains and the brawn together",
+      "hint_1": "He's explaining how Banner and Hulk merged into one",
+      "hint_2": "It's about combining intelligence with strength",
+      "hint_3": "Contains 'brains' and 'brawn'"
+    }
+  ],
+  "Black Panther": [
+    {
+      "dialogue_number": 1,
+      "clue": "A king rises in the ritual challenge. Waterfall coordinates: fictional Wakanda. He speaks the words of his people before combat. What does T'Challa say?",
+      "dialogue": "Wakanda Forever",
+      "hint_1": "The rallying cry of Wakanda",
+      "hint_2": "Said throughout Black Panther and Endgame",
+      "hint_3": "Two words representing a nation"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "In Civil War, facing Zemo after revenge consumed him. At the facility, he makes a choice about vengeance. What does the Panther say?",
+      "dialogue": "Vengeance has consumed you. It's consuming them. I'm done letting it consume me",
+      "hint_1": "He's choosing to break the cycle of revenge",
+      "hint_2": "Said when he decides not to kill Zemo",
+      "hint_3": "About letting go of vengeance"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "Before the UN, T'Challa speaks of Wakanda's future. He quotes his father T'Chaka about unity. What wisdom does he share?",
+      "dialogue": "In times of crisis the wise build bridges while the foolish build barriers",
+      "hint_1": "This is T'Chaka's wisdom that T'Challa quotes",
+      "hint_2": "It's about unity versus division",
+      "hint_3": "Contrasts 'bridges' with 'barriers'"
+    }
+  ],
+  "Doctor Strange": [
+    {
+      "dialogue_number": 1,
+      "clue": "A surgeon's hands tremble in New York. Coordinates: NYC Hospital. Before magic, there was ego. What does Strange say about his purpose as a doctor?",
+      "dialogue": "I became a doctor to save lives not to take them",
+      "hint_1": "Shows his core values despite his arrogance",
+      "hint_2": "Said when discussing his medical oath",
+      "hint_3": "About saving versus taking lives"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "On Titan, facing Thanos with 14,000,605 futures seen. One finger raised. What does the Sorcerer Supreme say about their situation?",
+      "dialogue": "We're in the endgame now",
+      "hint_1": "This line foreshadowed the title of the next film",
+      "hint_2": "Said after viewing all possible futures",
+      "hint_3": "Five words about the final phase"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "The Ancient One teaches about letting go. Trapped in a time loop with Dormammu. What does Strange declare repeatedly in the Dark Dimension?",
+      "dialogue": "Dormammu I've come to bargain",
+      "hint_1": "Repeated many times in a time loop",
+      "hint_2": "How he defeats Dormammu through persistence",
+      "hint_3": "Five words, includes 'bargain'"
+    }
+  ],
+  "Ant-Man": [
+    {
+      "dialogue_number": 1,
+      "clue": "A thief becomes a hero in San Francisco. Pym teaches about size and heart. Airport code: SFO. What does Scott say about being this hero with a silly name?",
+      "dialogue": "I'm Ant-Man. I know it wasn't my idea",
+      "hint_1": "Scott's humorous introduction of himself",
+      "hint_2": "Shows his insecurity about the name",
+      "hint_3": "Self-deprecating introduction"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "In Civil War, at the Leipzig airport battle. Cap needs help. Scott reveals his greatest trick and says something before going giant. What transformation does he announce?",
+      "dialogue": "I guess I got to get big",
+      "hint_1": "He says this before becoming Giant-Man",
+      "hint_2": "His big moment in Civil War—literally",
+      "hint_3": "About his size-changing abilities"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "To Cassie, his daughter, he makes a promise. A father's love drives him through everything. What does Scott say about being there for her?",
+      "dialogue": "I love you so much. You're my little girl",
+      "hint_1": "Shows his motivation—being a good father",
+      "hint_2": "Said to Cassie in emotional moments",
+      "hint_3": "Expression of parental love"
+    }
+  ],
+  "Scarlet Witch": [
+    {
+      "dialogue_number": 1,
+      "clue": "In Sokovia, twins volunteer for experiments. Hatred for Stark drives them. In Age of Ultron, what does Wanda say about her telepathic powers?",
+      "dialogue": "I can read him. He's dreaming",
+      "hint_1": "About her telepathic abilities",
+      "hint_2": "Said when using her powers on someone",
+      "hint_3": "Shows her mind-reading capability"
+    },
+    {
+      "dialogue_number": 2,
+      "clue": "In Infinity War, Vision speaks of sacrifice. Wanda faces an impossible choice in Wakanda destroying the Mind Stone. What does she say as she loses their connection?",
+      "dialogue": "I can't feel you",
+      "hint_1": "Said to Vision as she destroys the Mind Stone",
+      "hint_2": "About their psychic connection being severed",
+      "hint_3": "Four words of heartbreak"
+    },
+    {
+      "dialogue_number": 3,
+      "clue": "In WandaVision's finale, the Scarlet Witch emerges. What does Agatha Harkness reveal about Wanda's true nature and power?",
+      "dialogue": "You have no idea how dangerous you are. You're supposed to be a myth",
+      "hint_1": "Agatha says this TO Wanda about her destiny",
+      "hint_2": "About being the Scarlet Witch from prophecy",
+      "hint_3": "Contains 'dangerous' and 'myth'"
+    }
+  ]
+}
