@@ -11,7 +11,7 @@ const VolunteerManagement = () => {
   const fetchVolunteers = async () => {
     try {
       const response = await getVolunteerList()
-      setVolunteers(response.data.volunteers)
+      setVolunteers(response.volunteers)
       setLoading(false)
     } catch (err) {
       console.error('Failed to fetch volunteer list:', err)

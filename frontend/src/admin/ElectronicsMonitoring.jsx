@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { getAllTeams, getTeamTabSwitches } from '../api/client'
+import { getAllTeams, getTeamTabSwitches, getTeamsActiveDevices } from '../api/client'
 
 const ElectronicsMonitoring = () => {
   const [teams, setTeams] = useState([])
   const [tabSwitchData, setTabSwitchData] = useState({})
+  const [activeDevicesData, setActiveDevicesData] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [sortBy, setSortBy] = useState('switches') // 'switches' or 'name'
+  const [showDevicesView, setShowDevicesView] = useState(false)
 
   useEffect(() => {
     const fetchData = async (isInitialLoad = false) => {
@@ -17,18 +19,27 @@ const ElectronicsMonitoring = () => {
         
         // Fetch all teams
         const teamsResponse = await getAllTeams()
-        const teamsList = teamsResponse.data.teams.map(team => ({
+        const teamsList = teamsResponse.teams.map(team => ({
           name: team.name,
           members: team.members || []
         }))
         setTeams(teamsList)
+
+        // Fetch active devices info
+        try {
+          const devicesResponse = await getTeamsActiveDevices()
+          setActiveDevicesData(devicesResponse.teams || [])
+        } catch (err) {
+          console.error('Failed to fetch active devices:', err)
+          setActiveDevicesData([])
+        }
 
         // Fetch tab switch logs for each team
         const switchData = {}
         for (const team of teamsList) {
           try {
             const response = await getTeamTabSwitches(team.name)
-            switchData[team.name] = response.data
+            switchData[team.name] = response
           } catch (err) {
             switchData[team.name] = { total_tab_left: 0, events: [] }
           }
@@ -86,9 +97,192 @@ const ElectronicsMonitoring = () => {
           📱 Electronics Monitoring Dashboard
         </h1>
         <p style={{ color: '#7f8c8d', marginBottom: '20px' }}>
-          Track which teams switched to other applications/tabs during the game
+          Track device activity and tab switches during the game
         </p>
 
+        {/* View Toggle */}
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          padding: '12px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px',
+          border: '1px solid #e0e0e0',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={() => setShowDevicesView(false)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: !showDevicesView ? '#e74c3c' : '#e0e0e0',
+              color: !showDevicesView ? 'white' : '#2c3e50',
+              fontWeight: !showDevicesView ? '600' : '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '13px'
+            }}
+          >
+            📊 Tab Switch Violations
+          </button>
+          <button
+            onClick={() => setShowDevicesView(true)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: showDevicesView ? '#3498db' : '#e0e0e0',
+              color: showDevicesView ? 'white' : '#2c3e50',
+              fontWeight: showDevicesView ? '600' : '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: '13px'
+            }}
+          >
+            📱 Active Devices
+          </button>
+        </div>
+
+        {/* Active Devices View */}
+        {showDevicesView && (
+          <div style={{ marginBottom: '30px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '20px',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                padding: '20px',
+                borderRadius: '8px',
+                backgroundColor: '#e3f2fd',
+                border: '2px solid #2196f3'
+              }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1565c0' }}>Total Teams</h3>
+                <p style={{ margin: '0', fontSize: '32px', fontWeight: 'bold', color: '#1976d2' }}>
+                  {activeDevicesData.length}
+                </p>
+              </div>
+
+              <div style={{
+                padding: '20px',
+                borderRadius: '8px',
+                backgroundColor: '#c8e6c9',
+                border: '2px solid #4caf50'
+              }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#2e7d32' }}>With Active Device</h3>
+                <p style={{ margin: '0', fontSize: '32px', fontWeight: 'bold', color: '#388e3c' }}>
+                  {activeDevicesData.filter(t => t.has_active).length}
+                </p>
+              </div>
+
+              <div style={{
+                padding: '20px',
+                borderRadius: '8px',
+                backgroundColor: '#fff3e0',
+                border: '2px solid #ff9800'
+              }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#e65100' }}>No Active Device</h3>
+                <p style={{ margin: '0', fontSize: '32px', fontWeight: 'bold', color: '#f57c00' }}>
+                  {activeDevicesData.filter(t => !t.has_active).length}
+                </p>
+              </div>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
+              gap: '20px'
+            }}>
+              {activeDevicesData.map(team => (
+                <div
+                  key={team.team_name}
+                  style={{
+                    padding: '16px',
+                    borderRadius: '8px',
+                    backgroundColor: team.has_active ? '#f0f7ff' : '#fff5f5',
+                    border: `2px solid ${team.has_active ? '#2196f3' : '#ff6b6b'}`,
+                    borderLeft: team.has_active ? '6px solid #4caf50' : '6px solid #ff6b6b'
+                  }}
+                >
+                  <div style={{ marginBottom: '12px' }}>
+                    <h3 style={{ margin: '0 0 4px 0', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {team.team_name}
+                      {team.has_active && (
+                        <span style={{
+                          padding: '2px 8px',
+                          backgroundColor: '#4caf50',
+                          color: '#fff',
+                          borderRadius: '3px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          🟢 ACTIVE
+                        </span>
+                      )}
+                      {!team.has_active && (
+                        <span style={{
+                          padding: '2px 8px',
+                          backgroundColor: '#ff6b6b',
+                          color: '#fff',
+                          borderRadius: '3px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          ⚠️ OFFLINE
+                        </span>
+                      )}
+                    </h3>
+                    <p style={{ margin: '0', color: '#7f8c8d', fontSize: '12px' }}>
+                      {team.members_count} members • {team.registered_devices_count} registered devices
+                    </p>
+                  </div>
+
+                  {team.has_active && team.active_device ? (
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                      borderRadius: '6px',
+                      border: '1px solid #4caf50'
+                    }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <p style={{ margin: '0', fontWeight: '600', color: '#2c3e50' }}>
+                          {team.active_device.device_name || 'Unknown Device'}
+                        </p>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#555' }}>
+                        <p style={{ margin: '4px 0' }}>📱 {team.active_device.browser} • {team.active_device.os}</p>
+                        <p style={{ margin: '4px 0' }}>🖥️ {team.active_device.screen_resolution}</p>
+                        {team.active_device.last_login && (
+                          <p style={{ margin: '4px 0', color: '#7f8c8d' }}>
+                            ⏱️ Last: {new Date(team.active_device.last_login).toLocaleTimeString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                      borderRadius: '6px',
+                      border: '1px solid #ff6b6b',
+                      textAlign: 'center',
+                      color: '#ff6b6b'
+                    }}>
+                      No device currently active
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab Switches View */}
+        {!showDevicesView && (
+          <>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -227,30 +421,30 @@ const ElectronicsMonitoring = () => {
             🔤 Team Name
           </button>
         </div>
-      </div>
 
-      {/* Teams List */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-        gap: '20px'
-      }}>
-        {sortedTeams.map(team => {
-          const switchCount = tabSwitchData[team.name]?.total_tab_left || 0
-          const isSuspicious = switchCount > 3
-          const penaltyAmount = Math.max(0, switchCount - 3) * 50
+        {/* Teams List - only for tab switches view */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+          gap: '20px',
+          marginTop: '20px'
+        }}>
+          {sortedTeams.map(team => {
+            const switchCount = tabSwitchData[team.name]?.total_tab_left || 0
+            const isSuspicious = switchCount > 3
+            const penaltyAmount = Math.max(0, switchCount - 3) * 50
 
-          return (
-            <div
-              key={team.name}
-              onClick={() => setSelectedTeam(selectedTeam === team.name ? null : team.name)}
-              style={{
-                padding: '16px',
-                borderRadius: '8px',
-                backgroundColor: isSuspicious ? '#fff5f5' : '#f8f9fa',
-                border: `2px solid ${isSuspicious ? '#e74c3c' : '#bdc3c7'}`,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
+            return (
+              <div
+                key={team.name}
+                onClick={() => setSelectedTeam(selectedTeam === team.name ? null : team.name)}
+                style={{
+                  padding: '16px',
+                  borderRadius: '8px',
+                  backgroundColor: isSuspicious ? '#fff5f5' : '#f8f9fa',
+                  border: `2px solid ${isSuspicious ? '#e74c3c' : '#bdc3c7'}`,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -374,25 +568,28 @@ const ElectronicsMonitoring = () => {
             </div>
           )
         })}
-      </div>
-
-      {teamsWithViolations.length === 0 && (
-        <div style={{
-          padding: '40px',
-          textAlign: 'center',
-          borderRadius: '8px',
-          backgroundColor: '#d4edda',
-          border: '2px solid #28a745',
-          marginTop: '30px'
-        }}>
-          <h2 style={{ color: '#155724', margin: '0 0 10px 0' }}>
-            ✅ All Teams Playing Fair!
-          </h2>
-          <p style={{ color: '#155724', margin: '0' }}>
-            No tab switches detected from any team.
-          </p>
         </div>
-      )}
+
+        {teamsWithViolations.length === 0 && (
+          <div style={{
+            padding: '40px',
+            textAlign: 'center',
+            borderRadius: '8px',
+            backgroundColor: '#d4edda',
+            border: '2px solid #28a745',
+            marginTop: '30px'
+          }}>
+            <h2 style={{ color: '#155724', margin: '0 0 10px 0' }}>
+              ✅ All Teams Playing Fair!
+            </h2>
+            <p style={{ color: '#155724', margin: '0' }}>
+              No tab switches detected from any team.
+            </p>
+          </div>
+        )}
+        </>
+        )}
+      </div>
     </div>
   )
 }

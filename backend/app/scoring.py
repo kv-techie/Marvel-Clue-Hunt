@@ -4,6 +4,100 @@ from app.config import settings
 from app.models import Team
 
 
+def calculate_speed_multiplier(time_taken: int, difficulty: str) -> float:
+    """
+    Calculate speed multiplier based on time and question difficulty.
+    Faster answers get higher multipliers (Quizzizz-style).
+
+    Args:
+        time_taken: Time to answer in seconds
+        difficulty: Question difficulty ("easy", "medium", "hard")
+
+    Returns:
+        Multiplier between 0.8x and 1.5x
+
+    Formula:
+        - Each difficulty has a baseline time
+        - If answered faster: bonus = 1 + (1 - time/baseline) * 0.5 (max 1.5x)
+        - If answered slower: 1.0x
+    """
+    # Baseline times in seconds by difficulty
+    baseline_times = {
+        "easy": 30,
+        "medium": 60,
+        "hard": 90,
+    }
+
+    baseline = baseline_times.get(difficulty, 60)
+
+    if time_taken <= baseline:
+        # Faster than baseline: award multiplier up to 1.5x
+        multiplier = 1.0 + ((baseline - time_taken) / baseline) * 0.5
+        return min(multiplier, 1.5)  # Cap at 1.5x
+    else:
+        # Slower than baseline: no bonus
+        return 1.0
+
+
+def calculate_combo_multiplier(time_taken: int, previous_correct: bool = False) -> float:
+    """
+    Calculate combo multiplier for consecutive fast correct answers.
+    Bonuses stack for up to 3x.
+
+    Args:
+        time_taken: Time to answer in seconds
+        previous_correct: Whether the previous answer was correct
+
+    Returns:
+        Combo multiplier between 1.0x and 3.0x
+    """
+    if not previous_correct:
+        return 1.0  # Break combo on wrong answer
+    
+    if time_taken <= 15:
+        return 1.5  # Fast answer (≤15s) = 1.5x
+    elif time_taken <= 30:
+        return 1.25  # Mid-fast (16-30s) = 1.25x
+    else:
+        return 1.0  # Slower = no combo bonus
+
+
+def calculate_question_score(
+    base_points: int,
+    time_taken: int,
+    difficulty: str,
+    hints_used: int = 0,
+    combo_multiplier: float = 1.0,
+) -> int:
+    """
+    Calculate score for a single question with speed multiplier, combo, and hint penalties.
+
+    Args:
+        base_points: Points for correct answer
+        time_taken: Time to answer in seconds
+        difficulty: Question difficulty
+        hints_used: Number of hints used for this question
+        combo_multiplier: Combo multiplier from consecutive correct answers
+
+    Returns:
+        Final score for this question
+    """
+    # Calculate speed multiplier
+    multiplier = calculate_speed_multiplier(time_taken, difficulty)
+
+    # Apply speed multiplier to base points
+    score = int(base_points * multiplier)
+
+    # Apply combo multiplier
+    score = int(score * combo_multiplier)
+
+    # Subtract hint penalty
+    hint_penalty = hints_used * settings.hint_penalty
+    score -= hint_penalty
+
+    return max(score, 0)  # Don't let score go negative
+
+
 def calculate_dialogue_score(dialogue_number: int, time_taken: int) -> int:
     """Calculate score based on dialogue number and time taken (in seconds)"""
 
@@ -35,26 +129,20 @@ def calculate_dialogue_score(dialogue_number: int, time_taken: int) -> int:
 
 
 def calculate_final_score(team: Team) -> int:
-    """Calculate final score for a team"""
+    """Calculate final score for a team based on questions completed"""
     score = 0
 
-    # Add dialogue scores
-    if team.dialogue_1_completed and team.dialogue_1_time:
-        score += calculate_dialogue_score(1, team.dialogue_1_time)
-
-    if team.dialogue_2_completed and team.dialogue_2_time:
-        score += calculate_dialogue_score(2, team.dialogue_2_time)
-
-    if team.dialogue_3_completed and team.dialogue_3_time:
-        score += calculate_dialogue_score(3, team.dialogue_3_time)
+    # Add scores from completed questions
+    if team.questions_completed:
+        for question_result in team.questions_completed:
+            if isinstance(question_result, dict):
+                score += question_result.get("points", 0)
+            else:
+                score += getattr(question_result, "points", 0)
 
     # Subtract hint penalties
-    hint_penalty = team.hints_used * settings.hint_penalty
+    hint_penalty = team.hints_used_count * settings.hint_penalty
     score -= hint_penalty
-
-    # Add enactment bonus if awarded
-    if team.enactment_bonus_awarded:
-        score += team.enactment_bonus_amount
 
     # Add manual adjustments (rewards/deductions)
     for adjustment in team.manual_adjustments:
@@ -79,15 +167,11 @@ def calculate_final_score(team: Team) -> int:
 
 
 def check_qualification(team: Team) -> bool:
-    """Check if team qualifies (completed at least 2 dialogues)"""
-    completed = sum(
-        [
-            team.dialogue_1_completed,
-            team.dialogue_2_completed,
-            team.dialogue_3_completed,
-        ]
-    )
-    return completed >= settings.qualification_threshold
+    """Check if team qualifies (completed enough questions)"""
+    # Check if team has completed at least 2 questions (or a threshold defined in settings)
+    questions_completed = len(team.questions_completed) if team.questions_completed else 0
+    qualification_threshold = getattr(settings, "qualification_threshold", 2)
+    return questions_completed >= qualification_threshold
 
 
 def calculate_total_deductions(team: Team) -> int:
@@ -95,7 +179,7 @@ def calculate_total_deductions(team: Team) -> int:
     total_deductions = 0
 
     # Add hint penalties
-    total_deductions += team.hints_used * settings.hint_penalty
+    total_deductions += team.hints_used_count * settings.hint_penalty
 
     # Add manual deductions
     for adjustment in team.manual_adjustments:
@@ -126,6 +210,49 @@ def check_auto_disqualification(team: Team) -> bool:
     return total_deductions >= settings.disqualification_deduction_threshold
 
 
+def calculate_final_score_questions(team: Team) -> int:
+    """
+    Calculate final score for a team using the question-based system.
+
+    Formula:
+    Final Score = Sum(Question Scores) - Tab Violation Penalties + Manual Adjustments
+
+    Where Question Score = (Base Points × Speed Multiplier) - Hint Penalties
+    """
+    score = 0
+
+    # Sum question scores (already includes speed multiplier and hint deductions)
+    for question_data in team.questions_completed:
+        score += question_data.get("score", 0)
+
+    # Subtract tab violation penalties
+    # Each tab switch after first 3 free switches costs 50 points
+    tab_switches = len(team.tab_switch_logs)
+    if tab_switches > 3:
+        penalty = (tab_switches - 3) * 50
+        score -= penalty
+
+    # Add manual adjustments (rewards/deductions from volunteers/admins)
+    for adjustment in team.manual_adjustments:
+        adj_type = (
+            adjustment.get("adjustment_type")
+            if isinstance(adjustment, dict)
+            else adjustment.adjustment_type
+        )
+        adj_amount = (
+            adjustment.get("amount")
+            if isinstance(adjustment, dict)
+            else adjustment.amount
+        )
+
+        if adj_type == "reward":
+            score += adj_amount
+        elif adj_type == "deduct":
+            score -= abs(adj_amount)
+
+    return score  # Allow negative scores for heavy deductions
+
+
 def get_leaderboard(teams: Dict[str, Team]) -> list:
     """Generate sorted leaderboard"""
     from app.scoring import calculate_total_deductions, check_auto_disqualification
@@ -141,14 +268,8 @@ def get_leaderboard(teams: Dict[str, Team]) -> list:
                 "team_name": team_name,
                 "score": final_score,
                 "qualified": check_qualification(team),
-                "dialogues_completed": sum(
-                    [
-                        team.dialogue_1_completed,
-                        team.dialogue_2_completed,
-                        team.dialogue_3_completed,
-                    ]
-                ),
-                "hints_used": team.hints_used,
+                "questions_completed": len(team.questions_completed) if team.questions_completed else 0,
+                "hints_used": team.hints_used_count,
                 "members": team.members,
                 "disqualified": team.disqualified,
                 "disqualification_reason": team.disqualification_reason,

@@ -2,14 +2,21 @@ from datetime import datetime
 
 from app.config import settings
 from app.dialogue_manager import dialogue_manager
-from app.models import DialogueSubmission, HintRequest, TabSwitchLog
+from app.models import DialogueSubmission, HintRequest, QuestionSubmission, TabSwitchLog
+from app.question_manager import question_manager
 from app.routes.admin import game_state, save_game_state
 from app.scoring import (
     calculate_final_score,
+    calculate_final_score_questions,
+    calculate_question_score,
+    calculate_speed_multiplier,
+    calculate_combo_multiplier,
     calculate_total_deductions,
     check_auto_disqualification,
     check_qualification,
 )
+from app.achievement_manager import evaluate_achievements, get_badge_details
+from app.leaderboard_manager import update_team_stats
 from app.timer_manager import timer_manager
 from fastapi import APIRouter, HTTPException
 
@@ -19,6 +26,7 @@ router = APIRouter()
 @router.post("/start-timer/{team_name}")
 async def start_team_timer(team_name: str):
     """Start timer when first team member logs in"""
+    from app.powerup_manager import powerup_manager
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
@@ -31,9 +39,21 @@ async def start_team_timer(team_name: str):
     if not team.timer_started:
         start_time = timer_manager.start_team_timer(team_name)
         team.timer_started = start_time
+        
+        # Initialize team-specific powerups if not already initialized
+        if not team.powerups_available:
+            powerup_manager.initialize_powerups_for_team(team)
+        
         save_game_state()
 
-    return {"message": "Timer started", "timer_started": team.timer_started.isoformat()}
+    # Get current elapsed time based on global timer (not team's timer_started)
+    elapsed_time = timer_manager.get_team_elapsed_time(team_name)
+    
+    return {
+        "message": "Timer started",
+        "timer_started": team.timer_started.isoformat(),
+        "elapsed_time": elapsed_time
+    }
 
 
 @router.get("/team-status/{team_name}")
@@ -79,185 +99,6 @@ async def get_team_status(team_name: str):
     }
 
 
-@router.post("/request-hint")
-async def request_hint(request: HintRequest):
-    """Request a hint (max 3 per team)"""
-
-    if request.team_name not in game_state.teams:
-        raise HTTPException(status_code=404, detail="Team not found")
-
-    team = game_state.teams[request.team_name]
-
-    if not team.character:
-        raise HTTPException(status_code=400, detail="Team character not assigned")
-
-    if team.hints_used >= settings.max_hints:
-        raise HTTPException(status_code=400, detail="Maximum hints already used")
-
-    # Check if dialogue is already completed
-    if request.dialogue_number == 1 and team.dialogue_1_completed:
-        raise HTTPException(status_code=400, detail="Dialogue already completed")
-    if request.dialogue_number == 2 and team.dialogue_2_completed:
-        raise HTTPException(status_code=400, detail="Dialogue already completed")
-    if request.dialogue_number == 3 and team.dialogue_3_completed:
-        raise HTTPException(status_code=400, detail="Dialogue already completed")
-
-    # Increment hints used
-    team.hints_used += 1
-    save_game_state()
-
-    # Get hint based on how many hints have been used (1-indexed)
-    hint_number = team.hints_used
-    if hint_number > 3:
-        hint_number = 3  # Cap at 3 hints
-
-    hint_text = dialogue_manager.get_hint(
-        team.character, request.dialogue_number, hint_number
-    )
-
-    if not hint_text:
-        raise HTTPException(status_code=400, detail="Hint not available")
-
-    return {
-        "hint": hint_text,
-        "hints_used": team.hints_used,
-        "hints_remaining": settings.max_hints - team.hints_used,
-        "penalty": settings.hint_penalty * team.hints_used,
-    }
-
-
-@router.post("/submit-dialogue")
-async def submit_dialogue(submission: DialogueSubmission):
-    """Submit answer for a dialogue round"""
-
-    if submission.team_name not in game_state.teams:
-        raise HTTPException(status_code=404, detail="Team not found")
-
-    team = game_state.teams[submission.team_name]
-
-    if not team.character:
-        raise HTTPException(status_code=400, detail="Team character not assigned")
-
-    # Validate dialogue number
-    if submission.dialogue_number not in [1, 2, 3]:
-        raise HTTPException(status_code=400, detail="Invalid dialogue number")
-
-    # Check if already completed
-    if submission.dialogue_number == 1 and team.dialogue_1_completed:
-        raise HTTPException(status_code=400, detail="Dialogue 1 already completed")
-    if submission.dialogue_number == 2 and team.dialogue_2_completed:
-        raise HTTPException(status_code=400, detail="Dialogue 2 already completed")
-    if submission.dialogue_number == 3 and team.dialogue_3_completed:
-        raise HTTPException(status_code=400, detail="Dialogue 3 already completed")
-
-    # Check if previous dialogue is completed (except for dialogue 1)
-    if submission.dialogue_number == 2 and not team.dialogue_1_completed:
-        raise HTTPException(status_code=400, detail="Complete Dialogue 1 first")
-    if submission.dialogue_number == 3 and not team.dialogue_2_completed:
-        raise HTTPException(status_code=400, detail="Complete Dialogue 2 first")
-
-    # Validate answer using dialogue manager
-    is_correct = dialogue_manager.validate_answer(
-        team.character, submission.dialogue_number, submission.answer
-    )
-
-    if not is_correct:
-        return {"correct": False, "message": "Incorrect answer. Try again!"}
-
-    # Mark as completed and record time
-    if submission.dialogue_number == 1:
-        team.dialogue_1_completed = True
-        team.dialogue_1_time = submission.time_taken
-    elif submission.dialogue_number == 2:
-        team.dialogue_2_completed = True
-        team.dialogue_2_time = submission.time_taken
-    elif submission.dialogue_number == 3:
-        team.dialogue_3_completed = True
-        team.dialogue_3_time = submission.time_taken
-
-    # Update qualification status
-    team.qualified = check_qualification(team)
-
-    save_game_state()
-
-    return {
-        "correct": True,
-        "message": f"Dialogue {submission.dialogue_number} completed!",
-        "time_taken": submission.time_taken,
-        "current_score": calculate_final_score(team),
-        "qualified": team.qualified,
-    }
-
-
-@router.get("/current-dialogue/{team_name}")
-async def get_current_dialogue(team_name: str):
-    """Get which dialogue the team should be working on"""
-
-    if team_name not in game_state.teams:
-        raise HTTPException(status_code=404, detail="Team not found")
-
-    team = game_state.teams[team_name]
-
-    if not team.dialogue_1_completed:
-        return {"current_dialogue": 1, "message": "Work on Dialogue 1"}
-    elif not team.dialogue_2_completed:
-        return {"current_dialogue": 2, "message": "Work on Dialogue 2"}
-    elif not team.dialogue_3_completed:
-        return {"current_dialogue": 3, "message": "Work on Dialogue 3"}
-    else:
-        return {"current_dialogue": 0, "message": "All dialogues completed!"}
-
-
-@router.get("/dialogue/{team_name}/{dialogue_number}")
-async def get_dialogue(team_name: str, dialogue_number: int):
-    """Get the clue for a specific dialogue for a team's character"""
-
-    if team_name not in game_state.teams:
-        raise HTTPException(status_code=404, detail="Team not found")
-
-    team = game_state.teams[team_name]
-
-    if not team.character:
-        raise HTTPException(status_code=400, detail="Team character not assigned")
-
-    if dialogue_number not in [1, 2, 3]:
-        raise HTTPException(status_code=400, detail="Invalid dialogue number")
-
-    clue = dialogue_manager.get_clue(team.character, dialogue_number)
-
-    if not clue:
-        raise HTTPException(status_code=404, detail="Dialogue not found")
-
-    return {
-        "dialogue_number": dialogue_number,
-        "character": team.character,
-        "clue": clue,
-    }
-
-
-@router.get("/team-character/{team_name}")
-async def get_team_character(team_name: str):
-    """Get the character assigned to a team"""
-
-    if team_name not in game_state.teams:
-        raise HTTPException(status_code=404, detail="Team not found")
-
-    team = game_state.teams[team_name]
-
-    return {
-        "team_name": team_name,
-        "character": team.character,
-    }
-
-
-@router.get("/available-characters")
-async def get_available_characters():
-    """Get list of all available characters"""
-    characters = dialogue_manager.get_all_characters()
-    return {
-        "characters": sorted(characters),
-        "count": len(characters),
-    }
 
 
 @router.post("/log-tab-switch")
@@ -267,8 +108,16 @@ async def log_tab_switch(request: TabSwitchLog):
     Rules:
     - First 3 switches: Warning only, no deductions
     - 4th switch and beyond: -50 points per switch
+    - Tab switches NOT logged after game is stopped
     """
 
+    # Do not log tab switches if game has been stopped
+    if not game_state.game_active:
+        return {
+            "message": "Game has ended. Tab switch not logged.",
+            "logged": False
+        }
+    
     if request.team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
@@ -326,3 +175,425 @@ async def log_tab_switch(request: TabSwitchLog):
         "total_deductions_from_switches": total_deductions,
         "is_penalized": total_left_switches > 3,
     }
+
+
+# ===================== INFINITY STONE QUESTION-BASED ENDPOINTS =====================
+
+
+@router.get("/current-question/{team_name}")
+async def get_current_question(team_name: str):
+    """Get the current question for a team (based on their stone and progress)"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    if not team.stone:
+        raise HTTPException(status_code=400, detail="Team stone not assigned")
+
+    if team.current_question_index >= 10:
+        return {
+            "completed": True,
+            "message": "All 10 questions completed!",
+            "total_completed": 10,
+            "current_score": calculate_final_score_questions(team),
+        }
+
+    # Get current question
+    question = question_manager.get_current_question(
+        team.stone, team.current_question_index
+    )
+
+    if not question:
+        raise HTTPException(
+            status_code=500, detail="Question retrieval error"
+        )
+
+    return {
+        "question_id": question["id"],
+        "question_index": team.current_question_index,
+        "total_questions": 10,
+        "question_text": question["question_text"],
+        "clue_1": question["clue_1"],
+        "clue_2": question["clue_2"],
+        "difficulty": question["difficulty"],
+        "base_points": question["base_points"],
+        "hint_text": question.get("hint_text", ""),
+        "hints_remaining": max(0, 3 - team.hints_used_count),
+        "powerups_available": team.powerups_available,
+        "powerups_used": team.powerups_used,
+    }
+
+
+@router.post("/submit-question")
+async def submit_question(submission: QuestionSubmission):
+    """Submit answer to current question"""
+    try:
+        # Block submissions if game has been stopped by admin
+        if not game_state.game_active:
+            raise HTTPException(status_code=403, detail="Game has been stopped by admin. No more answers accepted.")
+        
+        if submission.team_name not in game_state.teams:
+            raise HTTPException(status_code=404, detail="Team not found")
+
+        team = game_state.teams[submission.team_name]
+
+        if not team.stone:
+            raise HTTPException(status_code=400, detail="Team stone not assigned")
+
+        # Get the question
+        question = question_manager.get_question(submission.question_id)
+        if not question:
+            raise HTTPException(status_code=404, detail="Question not found")
+
+        # Check if answer is correct
+        is_correct = question_manager.validate_answer(
+            submission.question_id, submission.answer
+        )
+
+        if not is_correct:
+            # Store the wrong answer (still counts as attempted)
+            question_data = {
+                "question_id": submission.question_id,
+                "question_index": team.current_question_index,
+                "correct": False,
+                "time_taken": submission.time_taken,
+                "points": 0,
+                "combo_multiplier": 1.0,
+                "powerup_used": submission.powerup_used,
+                "hints_used": 0,
+            }
+            team.questions_completed.append(question_data)
+            
+            # Break the streak on wrong answer
+            team.current_streak = 0
+            team.current_combo = 1.0
+            
+            # Move to next question anyway (quiz doesn't lock you on wrong answers)
+            team.current_question_index += 1
+            save_game_state()
+            
+            return {
+                "correct": False,
+                "message": "Incorrect answer. Moving to next question...",
+                "current_question_index": team.current_question_index,
+                "questions_completed": team.current_question_index,
+                "next_question_ready": team.current_question_index < 10,
+                "powerup_used": submission.powerup_used,
+                "streak_broken": True,
+                "current_streak": team.current_streak,
+                "current_total_score": calculate_final_score_questions(team),
+            }
+
+        # Calculate combo multiplier based on speed and previous correct
+        previous_correct = len(team.questions_completed) > 0 and team.questions_completed[-1].get("correct", False)
+        combo_mult = calculate_combo_multiplier(submission.time_taken, previous_correct)
+        
+        # Update streak on correct answer
+        team.current_streak += 1
+        team.best_streak = max(team.best_streak, team.current_streak)
+        
+        # Update combo multiplier (cap at 3x)
+        team.current_combo = min(team.current_combo * combo_mult, 3.0)
+
+        # Calculate score with speed multiplier and combo
+        question_score = calculate_question_score(
+            base_points=question["base_points"],
+            time_taken=submission.time_taken,
+            difficulty=question["difficulty"],
+            hints_used=0,  # Hint deductions handled separately
+            combo_multiplier=team.current_combo,
+        )
+
+        # Apply powerup bonus if used
+        if submission.powerup_used:
+            if "Power" in submission.powerup_used:  # Power Stone powerups
+                if "Surge" in submission.powerup_used:
+                    question_score *= 2  # 2x points
+                elif "Jeopardy" in submission.powerup_used:
+                    question_score *= 2  # 2x points (risk/reward)
+                elif "Multiplier" in submission.powerup_used:
+                    # This one applies to next 3 answers - handled as active effect
+                    pass
+            
+            # Mark powerup as used
+            team.powerups_used.append(submission.powerup_used)
+            team.powerups_available[submission.powerup_used] = False
+
+        # Store completed question
+        question_data = {
+            "question_id": submission.question_id,
+            "question_index": team.current_question_index,
+            "correct": True,
+            "time_taken": submission.time_taken,
+            "points": question_score,
+            "combo_multiplier": team.current_combo,
+            "powerup_used": submission.powerup_used,
+            "hints_used": 0,
+        }
+        team.questions_completed.append(question_data)
+
+        # AWARD POWERUPS BASED ON PERFORMANCE
+        from app.powerup_manager import powerup_manager
+        
+        powerups_awarded = []
+        team_powerups = powerup_manager.get_team_powerups(submission.team_name)
+        
+        if len(team_powerups) >= 3:
+            powerup_1_id = team_powerups[0]["id"]
+            powerup_2_id = team_powerups[1]["id"]
+            powerup_3_id = team_powerups[2]["id"]
+            
+            # Award for lightning speed (< 10 seconds) - Unlock 1st powerup
+            if submission.time_taken < 10 and team.powerups_available.get(powerup_1_id, False) == False and powerup_1_id not in team.powerups_used:
+                team.powerups_available[powerup_1_id] = True
+                powerups_awarded.append(f"{team_powerups[0]['name']} ⚡ (Lightning Speed!)")
+            
+            # Award for building a streak (3+ consecutive correct) - Unlock 2nd powerup
+            if team.current_streak >= 3 and team.powerups_available.get(powerup_2_id, False) == False and powerup_2_id not in team.powerups_used:
+                team.powerups_available[powerup_2_id] = True
+                powerups_awarded.append(f"{team_powerups[1]['name']} 🔥 (Streak Unlocked!)")
+            
+            # Award for high combo multiplier (2.0x or higher) - Unlock 3rd powerup
+            if team.current_combo >= 2.0 and team.powerups_available.get(powerup_3_id, False) == False and powerup_3_id not in team.powerups_used:
+                team.powerups_available[powerup_3_id] = True
+                powerups_awarded.append(f"{team_powerups[2]['name']} 💫 (Combo Mastery!)")
+
+        # Convert team to dict for manager functions (they expect dicts)
+        team_dict = team.dict()
+        team_dict["questions_completed"] = team.questions_completed
+        team_dict["achievements"] = team.achievements
+        team_dict["badges_earned"] = team.badges_earned
+        
+        # Check for achievements
+        new_badges = evaluate_achievements(team_dict, question_data)
+        # Update badges back to team object
+        team.badges_earned = team_dict.get("badges_earned", [])
+        team.achievements = team_dict.get("achievements", {})
+        badge_details = [{"id": b, "data": get_badge_details(b)} for b in new_badges]
+
+        # Update team stats for leaderboard (now works with both dict and Pydantic)
+        update_team_stats(team)
+
+        # Move to next question
+        team.current_question_index += 1
+        save_game_state()
+
+        return {
+            "correct": True,
+            "message": f"Correct! Question {team.current_question_index} of 10 completed!" + (f" Earned: {', '.join(powerups_awarded)}!" if powerups_awarded else ""),
+            "score_earned": question_score,
+            "speed_multiplier": calculate_speed_multiplier(submission.time_taken, question["difficulty"]),
+            "combo_multiplier": team.current_combo,
+            "current_streak": team.current_streak,
+            "best_streak": team.best_streak,
+            "current_total_score": calculate_final_score_questions(team),
+            "questions_completed": team.current_question_index,
+            "next_question_ready": team.current_question_index < 10,
+            "badges_earned": badge_details,
+            "all_badges": team.badges_earned,
+            "powerups_awarded": powerups_awarded,
+            "powerups_available": team.powerups_available,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [ERROR] submit_question failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+@router.get("/team-powerups/{team_name}")
+async def get_team_powerups(team_name: str):
+    """Get powerup information for a team"""
+    from app.powerup_manager import powerup_manager
+    
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    team = game_state.teams[team_name]
+    
+    # Get team's powerup definitions
+    powerups = powerup_manager.get_team_powerups(team_name)
+    
+    # Build response with powerup details
+    powerup_details = []
+    for powerup in powerups:
+        powerup_details.append({
+            "id": powerup["id"],
+            "name": powerup["name"],
+            "description": powerup["description"],
+            "effect": powerup["effect"],
+            "available": team.powerups_available.get(powerup["id"], False),
+            "used": powerup["id"] in team.powerups_used,
+        })
+    
+    return {
+        "team_name": team_name,
+        "powerups": powerup_details,
+    }
+
+
+@router.post("/request-hint-question")
+async def request_hint_question(request:HintRequest):
+    """Request a hint for current question (max 3 per session)"""
+
+    if request.team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[request.team_name]
+
+    if team.hints_used_count >= 3:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum hints (3) already used for this session"
+        )
+
+    # Get the question
+    question = question_manager.get_question(request.question_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    # Get hint
+    hint_text = question_manager.get_hint(request.question_id)
+
+    # Increment hint counter
+    team.hints_used_count += 1
+    save_game_state()
+
+    return {
+        "hint": hint_text,
+        "hints_used": team.hints_used_count,
+        "hints_remaining": max(0, 3 - team.hints_used_count),
+        "hint_penalty": settings.hint_penalty,
+        "penalty_applied_to_score": True,
+    }
+
+
+@router.post("/certainty-check")
+async def certainty_check(team_name: str, question_id: str, submitted_answer: str):
+    """Reality Stone PowerUp: Check answer confidence before submitting"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    if "Certainty Check" not in team.powerups_available:
+        raise HTTPException(status_code=400, detail="Certainty Check not available")
+
+    # If powerup already used, reject
+    if "Certainty Check" in team.powerups_used:
+        raise HTTPException(status_code=400, detail="Certainty Check already used")
+
+    # Get feedback on answer
+    feedback = question_manager.get_answer_quality_feedback(question_id, submitted_answer)
+
+    return {
+        "feedback": feedback,
+        "powerup_name": "Certainty Check",
+        "can_revise": True,
+    }
+
+
+@router.get("/team-stone/{team_name}")
+async def get_team_stone(team_name: str):
+    """Get the Infinity Stone assigned to a team"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    return {
+        "team_name": team_name,
+        "stone": team.stone,
+        "current_question_index": team.current_question_index,
+        "questions_completed": len(team.questions_completed),
+        "hints_used": team.hints_used_count,
+        "hints_remaining": max(0, 3 - team.hints_used_count),
+        "powerups_available": team.powerups_available,
+        "current_score": calculate_final_score_questions(team),
+        "current_streak": team.current_streak,
+        "best_streak": team.best_streak,
+    }
+
+
+@router.get("/available-stones")
+async def get_available_stones():
+    """Get list of all available Infinity Stones"""
+    stones = question_manager.get_all_stone_names()
+    return {
+        "stones": sorted(stones),
+        "count": len(stones),
+    }
+
+
+@router.get("/team-badges/{team_name}")
+async def get_team_badges(team_name: str):
+    """Get badges and achievements for a team"""
+
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team = game_state.teams[team_name]
+
+    badge_details = [
+        {
+            "id": badge_id,
+            "details": get_badge_details(badge_id)
+        }
+        for badge_id in team.badges_earned
+    ]
+
+    return {
+        "team_name": team_name,
+        "badges_earned": badge_details,
+        "badge_count": len(badge_details),
+        "achievements": team.achievements,
+        "current_streak": team.current_streak,
+        "best_streak": team.best_streak,
+    }
+
+
+@router.get("/leaderboard")
+async def get_leaderboard(sort_by: str = "total_points_earned"):
+    """Get full leaderboard with team rankings"""
+    
+    from app.leaderboard_manager import get_leaderboard
+    
+    leaderboard = get_leaderboard(game_state.teams, sort_by)
+    
+    return {
+        "leaderboard": leaderboard,
+        "sort_by": sort_by,
+        "total_teams": len(leaderboard),
+    }
+
+
+@router.get("/team-rank/{team_name}")
+async def get_team_rank(team_name: str, sort_by: str = "total_points_earned"):
+    """Get a specific team's rank and nearby teams"""
+    
+    from app.leaderboard_manager import get_team_rank
+    
+    if team_name not in game_state.teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    rank_data = get_team_rank(game_state.teams, team_name, sort_by)
+    
+    return rank_data
+
+
+@router.get("/leaderboard-stats")
+async def get_leaderboard_stats():
+    """Get overall leaderboard statistics"""
+    
+    from app.leaderboard_manager import get_stats_comparison
+    
+    stats = get_stats_comparison(game_state.teams)
+    
+    return stats
+

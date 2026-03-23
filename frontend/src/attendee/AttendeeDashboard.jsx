@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTimer } from '../context/TimerContext'
-import { getTeamStatus, startTeamTimer, getCurrentDialogue, teamAcknowledgeDisqualification } from '../api/client'
+import { getTeamStatus, getTeamStone, startTeamTimer, teamAcknowledgeDisqualification, getTeamBadges } from '../api/client'
 import { useTabFocusTracking } from '../hooks/useTabFocusTracking'
 import TeamTimer from './TeamTimer'
-import HintPanel from './HintPanel'
-import DialogueRound from './DialogueRound'
+import QuestionRound from './QuestionRound'
 import StatusBanner from '../components/StatusBanner'
+import BadgeDisplay from '../components/BadgeDisplay'
+import StreakCounter from '../components/StreakCounter'
+import GameLeaderboard from '../components/GameLeaderboard'
 
 // Tab Switch Warning Component
 const TabSwitchWarning = ({ focusWarning, isPenalized, switchesRemaining, onDismiss }) => {
@@ -87,25 +89,24 @@ const DisqualificationNotice = ({ teamStatus, onAcknowledge, acknowledging, ackM
 }
 
 // Team Progress Component
-const TeamProgress = ({ teamStatus, currentDialogue }) => {
+const TeamProgress = ({ teamStatus, currentQuestionIndex }) => {
   if (!teamStatus) return null
 
-  const getProgressStatus = (dialogueNum) => {
-    const completed = teamStatus[`dialogue_${dialogueNum}_completed`]
-    if (completed) return { status: 'completed', text: '✅ Complete' }
-    if (currentDialogue === dialogueNum) return { status: 'active', text: '⏳ Active' }
+  const getProgressStatus = (questionNum) => {
+    if (questionNum <= currentQuestionIndex) return { status: 'completed', text: '✅ Complete' }
+    if (questionNum === currentQuestionIndex + 1) return { status: 'active', text: '⏳ Active' }
     return { status: 'locked', text: '🔒 Locked' }
   }
 
   return (
     <div className="card">
-      <h2>📊 Team Progress</h2>
+      <h2>📊 Question Progress ({currentQuestionIndex}/10)</h2>
       <div className="progress-indicator">
-        {[1, 2, 3].map(num => {
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
           const { status, text } = getProgressStatus(num)
           return (
             <div key={num} className={`progress-step ${status}`}>
-              <h3>Dialogue {num}</h3>
+              <h3>Q{num}</h3>
               <p>{text}</p>
             </div>
           )
@@ -116,21 +117,20 @@ const TeamProgress = ({ teamStatus, currentDialogue }) => {
 }
 
 // Completion Message Component
-const CompletionMessage = ({ teamStatus }) => {
+const CompletionMessage = ({ teamStatus, stone }) => {
   return (
     <div className="completion-message">
       <div className="completion-content">
         <div className="completion-emoji">🎉</div>
-        <h2>Congratulations! All dialogues completed!</h2>
+        <h2>Congratulations! All 10 questions completed!</h2>
+        <div className="stone-name">
+          <span className="stone-badge">{stone}</span>
+        </div>
         <div className="completion-status">
-          {teamStatus?.qualified ? (
-            <span className="qualified-badge">✅ Your team is QUALIFIED for the final round!</span>
-          ) : (
-            <span>You completed the hunt! Check the leaderboard for results.</span>
-          )}
+          <span className="qualified-badge">✅ Your team has finished the Infinity Stone Challenge!</span>
         </div>
         <div className={`completion-score ${teamStatus?.current_score < 0 ? 'negative' : 'positive'}`}>
-          Final Score: {teamStatus?.current_score}
+          Final Score: {teamStatus?.current_score} points
         </div>
       </div>
     </div>
@@ -142,43 +142,64 @@ const AttendeeDashboard = () => {
   const { startTimer, elapsedTime } = useTimer()
   const { focusWarning, total_tab_left, switches_remaining, is_penalized, setFocusWarning } = useTabFocusTracking(team)
   const [teamStatus, setTeamStatus] = useState(null)
-  const [currentDialogue, setCurrentDialogue] = useState(1)
+  const [stone, setStone] = useState(null)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [acknowledging, setAcknowledging] = useState(false)
   const [ackMessage, setAckMessage] = useState('')
+  const [badges, setBadges] = useState([])
+  const [currentStreak, setCurrentStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   // Data fetching functions
   const fetchTeamStatus = async () => {
     try {
       const response = await getTeamStatus(team)
-      setTeamStatus(response.data)
-      
-      // Start timer if not already running
-      if (response.data.elapsed_time > 0) {
-        startTimer(response.data.elapsed_time)
-      }
+      setTeamStatus(response)
     } catch (err) {
       console.error('Failed to fetch team status:', err)
     }
   }
 
-  const fetchCurrentDialogue = async () => {
+  const fetchTeamStone = async () => {
     try {
-      const response = await getCurrentDialogue(team)
-      setCurrentDialogue(response.data.current_dialogue)
+      const response = await getTeamStone(team)
+      console.log("[AttendeeDashboard] Team stone data (unwrapped):", response);
+      setStone(response.stone)
+      setCurrentQuestionIndex(response.current_question_index)
+      console.log("[AttendeeDashboard] Set currentQuestionIndex to:", response.current_question_index);
+      setCurrentStreak(response.current_streak || 0)
+      setBestStreak(response.best_streak || 0)
     } catch (err) {
-      console.error('Failed to fetch current dialogue:', err)
+      console.error('Failed to fetch team stone:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchTeamBadges = async () => {
+    try {
+      const response = await getTeamBadges(team)
+      setBadges(response.badges_earned || [])
+      setCurrentStreak(response.current_streak || 0)
+      setBestStreak(response.best_streak || 0)
+    } catch (err) {
+      console.error('Failed to fetch team badges:', err)
     }
   }
 
   useEffect(() => {
     const initializeTeam = async () => {
       try {
-        await startTeamTimer(team)
+        const timerResponse = await startTeamTimer(team)
+        // Start the frontend timer with elapsed time from backend
+        const elapsedTime = timerResponse.elapsed_time || 0
+        startTimer(elapsedTime)
+        
         await fetchTeamStatus()
-        await fetchCurrentDialogue()
+        await fetchTeamStone()
+        await fetchTeamBadges()
       } catch (err) {
         console.error('Failed to initialize:', err)
         setLoading(false)
@@ -190,17 +211,19 @@ const AttendeeDashboard = () => {
     // Refresh status every 2 seconds for instant updates
     const interval = setInterval(() => {
       fetchTeamStatus()
-      fetchCurrentDialogue()
+      fetchTeamStone()
+      fetchTeamBadges()
     }, 2000)
 
     return () => clearInterval(interval)
   }, [team])
 
   // Event handlers
-  const handleDialogueComplete = () => {
+  const handleQuestionComplete = (response) => {
     setTimeout(() => {
       fetchTeamStatus()
-      fetchCurrentDialogue()
+      fetchTeamStone()
+      fetchTeamBadges()
     }, 500)
   }
 
@@ -234,7 +257,7 @@ const AttendeeDashboard = () => {
   return (
     <div className="dashboard-grid">
       {/* Status and Notifications */}
-      <StatusBanner teamStatus={teamStatus} />
+      <StatusBanner teamStatus={teamStatus} currentQuestionIndex={currentQuestionIndex} />
       
       <TabSwitchWarning
         focusWarning={focusWarning}
@@ -254,29 +277,40 @@ const AttendeeDashboard = () => {
       <TeamTimer />
 
       {/* Progress Tracker */}
-      <TeamProgress teamStatus={teamStatus} currentDialogue={currentDialogue} />
+      <TeamProgress teamStatus={teamStatus} currentQuestionIndex={currentQuestionIndex} />
 
-      {/* Active Dialogue Section */}
-      {currentDialogue > 0 && currentDialogue <= 3 && (
-        <>
-          <HintPanel 
-            teamName={team} 
-            dialogueNumber={currentDialogue}
-            hintsUsed={teamStatus?.hints_used || 0}
-            hintsRemaining={teamStatus?.hints_remaining || 3}
-          />
-          
-          <DialogueRound 
-            teamName={team}
-            dialogueNumber={currentDialogue}
-            elapsedTime={elapsedTime}
-            onComplete={handleDialogueComplete}
-          />
-        </>
+      {/* Gamification - Streak Counter */}
+      {currentQuestionIndex > 0 && (
+        <StreakCounter currentStreak={currentStreak} bestStreak={bestStreak} />
+      )}
+
+      {/* Gamification - Badges */}
+      {badges.length > 0 && <BadgeDisplay badges={badges} />}
+
+      {/* Leaderboard Toggle Button */}
+      <div className="leaderboard-toggle">
+        <button 
+          className={`toggle-btn ${showLeaderboard ? 'active' : ''}`}
+          onClick={() => setShowLeaderboard(!showLeaderboard)}
+        >
+          {showLeaderboard ? '🏆 Hide Leaderboard' : '🏆 Show Leaderboard'}
+        </button>
+      </div>
+
+      {/* Leaderboard Section */}
+      {showLeaderboard && <GameLeaderboard teamName={team} autoRefresh={true} />}
+
+      {/* Active Question Section */}
+      {currentQuestionIndex < 10 && (
+        <QuestionRound
+          teamName={team}
+          stone={stone}
+          onQuestionComplete={handleQuestionComplete}
+        />
       )}
 
       {/* Completion Message */}
-      {currentDialogue === 0 && <CompletionMessage teamStatus={teamStatus} />}
+      {currentQuestionIndex === 10 && <CompletionMessage teamStatus={teamStatus} stone={stone} />}
     </div>
   )
 }

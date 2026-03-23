@@ -1,6 +1,6 @@
 import React from 'react'
 
-const StatusBanner = ({ teamStatus }) => {
+const StatusBanner = ({ teamStatus, currentQuestionIndex = 0 }) => {
   if (!teamStatus) return null
 
   return (
@@ -14,16 +14,16 @@ const StatusBanner = ({ teamStatus }) => {
         </div>
         
         <div>
-          <h3>Dialogues</h3>
+          <h3>Question Progress</h3>
           <p style={{ fontSize: '32px', color: '#3498db', fontWeight: 'bold' }}>
-            {[teamStatus.dialogue_1_completed, teamStatus.dialogue_2_completed, teamStatus.dialogue_3_completed].filter(Boolean).length}/3
+            {currentQuestionIndex}/10
           </p>
         </div>
         
         <div>
           <h3>Hints Used</h3>
           <p style={{ fontSize: '32px', color: '#f39c12', fontWeight: 'bold' }}>
-            {teamStatus.hints_used}/3
+            {teamStatus.hints_used_count || 0}/3
           </p>
         </div>
         

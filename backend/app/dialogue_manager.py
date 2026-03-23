@@ -27,14 +27,14 @@ class DialogueManager:
                 with open(self.dialogue_path, "r", encoding="utf-8") as f:
                     self.dialogues = json.load(f)
                 print(
-                    f"✅ Loaded dialogues for characters: {list(self.dialogues.keys())}"
+                    f"[OK] Loaded dialogues for characters: {list(self.dialogues.keys())}"
                 )
             else:
                 print(
-                    f"⚠️  Dialogue file not found at: {os.path.abspath(self.dialogue_path)}"
+                    f"[WARN] Dialogue file not found at: {os.path.abspath(self.dialogue_path)}"
                 )
         except Exception as e:
-            print(f"❌ Error loading dialogues: {e}")
+            print(f"[ERROR] Error loading dialogues: {e}")
 
     def get_dialogue(self, character: str, dialogue_number: int) -> Optional[Dict]:
         """

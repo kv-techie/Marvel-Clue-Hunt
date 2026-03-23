@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { uploadTeamsAndAttendees, getAllTeams } from '../api/client'
+import { uploadAttendees, getAllTeams } from '../api/client'
 
 const TeamDistribution = () => {
-  const [teamNamesFile, setTeamNamesFile] = useState(null)
   const [attendeesFile, setAttendeesFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -13,7 +12,7 @@ const TeamDistribution = () => {
   const fetchTeams = async () => {
     try {
       const response = await getAllTeams()
-      setTeams(response.data)
+      setTeams(response)
     } catch (err) {
       console.error('Failed to fetch teams:', err)
     }
@@ -22,14 +21,6 @@ const TeamDistribution = () => {
   useEffect(() => {
     fetchTeams()
   }, [])
-
-  const handleTeamNamesFileChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setTeamNamesFile(file)
-      setError('')
-    }
-  }
 
   const handleAttendeesFileChange = (e) => {
     const file = e.target.files[0]
@@ -45,11 +36,6 @@ const TeamDistribution = () => {
     setSuccess('')
     setResult(null)
 
-    if (!teamNamesFile) {
-      setError('Please select a team names file')
-      return
-    }
-
     if (!attendeesFile) {
       setError('Please select an attendees file')
       return
@@ -58,8 +44,8 @@ const TeamDistribution = () => {
     setLoading(true)
 
     try {
-      const response = await uploadTeamsAndAttendees(teamNamesFile, attendeesFile)
-      const data = response.data
+      const response = await uploadAttendees(attendeesFile)
+      const data = response
 
       setSuccess(data.message)
       setResult(data)
@@ -67,12 +53,8 @@ const TeamDistribution = () => {
       // Refresh teams list
       fetchTeams()
       
-      // Clear file inputs
-      setTeamNamesFile(null)
+      // Clear file input
       setAttendeesFile(null)
-      
-      // Reset file input elements
-      document.getElementById('teamNamesInput').value = ''
       document.getElementById('attendeesInput').value = ''
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to allocate teams')
@@ -85,7 +67,7 @@ const TeamDistribution = () => {
     <div style={{ padding: '20px' }}>
       <h2>📋 Team Distribution</h2>
       <p style={{ color: '#888', marginBottom: '20px' }}>
-        Upload team names and attendees to randomly allocate teams
+        Upload attendees to randomly allocate them into the 6 Infinity Stone teams
       </p>
 
       {error && (
@@ -117,79 +99,10 @@ const TeamDistribution = () => {
       <form onSubmit={handleUpload} style={{ marginBottom: '30px' }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: '1fr',
           gap: '20px',
           marginBottom: '20px'
         }}>
-          {/* Team Names File Upload */}
-          <div style={{
-            padding: '20px',
-            border: '2px dashed #444',
-            borderRadius: '8px',
-            backgroundColor: 'rgba(255, 255, 255, 0.02)'
-          }}>
-            <h3 style={{ marginTop: 0, marginBottom: '10px', color: '#fff' }}>
-              📝 Team Names File
-            </h3>
-            <p style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px' }}>
-              One team name per line (CSV or TXT)
-            </p>
-            
-            <input
-              id="teamNamesInput"
-              type="file"
-              accept=".csv,.txt"
-              onChange={handleTeamNamesFileChange}
-              style={{
-                padding: '10px',
-                width: '100%',
-                borderRadius: '4px',
-                border: '1px solid #444',
-                backgroundColor: '#222',
-                color: '#fff',
-                cursor: 'pointer'
-              }}
-            />
-            
-            {teamNamesFile && (
-              <div style={{
-                marginTop: '10px',
-                padding: '8px',
-                backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                borderRadius: '4px',
-                fontSize: '13px',
-                border: '1px solid rgba(46, 204, 113, 0.3)'
-              }}>
-                ✓ {teamNamesFile.name}
-              </div>
-            )}
-            
-            <div style={{
-              marginTop: '15px',
-              padding: '12px',
-              backgroundColor: 'rgba(52, 152, 219, 0.1)',
-              borderRadius: '4px',
-              fontSize: '12px',
-              color: '#3498db',
-              border: '1px solid rgba(52, 152, 219, 0.3)'
-            }}>
-              <strong>Example format:</strong>
-              <pre style={{ 
-                marginTop: '8px', 
-                marginBottom: 0, 
-                fontFamily: 'monospace',
-                fontSize: '11px',
-                lineHeight: '1.5'
-              }}>
-{`Team Avengers
-Team Justice League
-Team X-Men
-Team Guardians
-Team Fantastic Four`}
-              </pre>
-            </div>
-          </div>
-
           {/* Attendees File Upload */}
           <div style={{
             padding: '20px',
@@ -262,22 +175,31 @@ Charlie Brown`}
 
         <button
           type="submit"
-          disabled={loading || !teamNamesFile || !attendeesFile}
-          className="btn btn-primary"
+          disabled={!attendeesFile || loading}
           style={{
-            padding: '12px 30px',
-            fontSize: '16px',
-            width: '100%',
-            opacity: loading || !teamNamesFile || !attendeesFile ? 0.5 : 1,
-            cursor: loading || !teamNamesFile || !attendeesFile ? 'not-allowed' : 'pointer',
-            backgroundColor: '#3498db',
+            padding: '12px 24px',
+            backgroundColor: attendeesFile && !loading ? '#3498db' : '#555',
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
-            fontWeight: 'bold'
+            fontSize: '14px',
+            fontWeight: 'bold',
+            cursor: attendeesFile && !loading ? 'pointer' : 'default',
+            opacity: attendeesFile && !loading ? 1 : 0.5,
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            if (attendeesFile && !loading) {
+              e.target.style.backgroundColor = '#2980b9'
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (attendeesFile && !loading) {
+              e.target.style.backgroundColor = '#3498db'
+            }
           }}
         >
-          {loading ? '🔄 Allocating Teams...' : '🚀 Upload & Allocate Teams'}
+          {loading ? '⏳ Allocating...' : '🚀 Allocate Teams'}
         </button>
       </form>
 
@@ -323,76 +245,29 @@ Charlie Brown`}
               </div>
               <div style={{ fontSize: '14px', color: '#aaa' }}>Total Attendees</div>
             </div>
-            
-            <div style={{
-              padding: '15px',
-              backgroundColor: 'rgba(155, 89, 182, 0.1)',
-              borderRadius: '6px',
-              textAlign: 'center',
-              border: '1px solid rgba(155, 89, 182, 0.3)'
-            }}>
-              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#9b59b6' }}>
-                {result.min_team_size} - {result.max_team_size}
-              </div>
-              <div style={{ fontSize: '14px', color: '#aaa' }}>Members per Team</div>
-            </div>
           </div>
 
           <div style={{ marginTop: '20px' }}>
-            <h4 style={{ color: '#fff' }}>🎲 Team Distribution</h4>
+            <h4 style={{ color: '#fff' }}>🎲 Team Sizes</h4>
             <div style={{
-              display: 'flex',
-              flexDirection: 'column',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
               gap: '10px'
             }}>
-              {Object.entries(result.teams).map(([teamName, members]) => (
+              {Object.entries(result.team_sizes || {}).map(([teamName, size]) => (
                 <div
                   key={teamName}
                   style={{
-                    padding: '15px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                    padding: '12px',
+                    backgroundColor: 'rgba(155, 89, 182, 0.1)',
                     borderRadius: '6px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                    border: '1px solid rgba(155, 89, 182, 0.3)',
+                    textAlign: 'center'
                   }}
                 >
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '10px'
-                  }}>
-                    <strong style={{ fontSize: '16px', color: '#fff' }}>{teamName}</strong>
-                    <span style={{
-                      padding: '4px 12px',
-                      backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                      borderRadius: '12px',
-                      fontSize: '13px',
-                      color: '#3498db',
-                      border: '1px solid rgba(52, 152, 219, 0.3)'
-                    }}>
-                      {members.length} members
-                    </span>
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '8px'
-                  }}>
-                    {members.map((member, idx) => (
-                      <span
-                        key={idx}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          color: '#ddd',
-                          border: '1px solid rgba(255, 255, 255, 0.1)'
-                        }}
-                      >
-                        {member}
-                      </span>
-                    ))}
+                  <div style={{ color: '#fff', fontWeight: 'bold' }}>{teamName}</div>
+                  <div style={{ color: '#aaa', fontSize: '12px' }}>
+                    {size} attendee{size !== 1 ? 's' : ''}
                   </div>
                 </div>
               ))}
@@ -401,86 +276,56 @@ Charlie Brown`}
         </div>
       )}
 
-      {/* Existing Teams Display */}
-      {teams && teams.teams && (
-        <div style={{ marginTop: '40px' }}>
-          <h3 style={{ color: '#fff' }}>📊 Current Teams Status</h3>
-          <div className="teams-grid" style={{ 
+      {/* Current Teams */}
+      {teams && teams.teams && teams.teams.length > 0 && (
+        <div style={{
+          marginTop: '30px',
+          padding: '20px',
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '8px',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}>
+          <h3 style={{ color: '#fff' }}>👥 Current Teams ({teams.teams.length})</h3>
+          <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '20px',
-            marginTop: '20px'
+            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+            gap: '15px'
           }}>
-            {teams.teams.map((teamData) => (
-              <div key={teamData.name} className="team-card" style={{
-                padding: '20px',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.1)'
-              }}>
-                <h3 style={{ marginTop: 0, color: '#fff' }}>{teamData.name}</h3>
-                <ul className="team-members" style={{
-                  listStyle: 'none',
-                  padding: 0,
-                  margin: '10px 0'
+            {teams.teams.map((team, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: '15px',
+                  backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                  borderRadius: '6px',
+                  border: `1px solid rgba(52, 152, 219, 0.3)`
+                }}
+              >
+                <h4 style={{ color: '#3498db', marginTop: 0, marginBottom: '8px' }}>{team.name}</h4>
+                <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '12px', fontWeight: 'bold' }}>
+                  {team.members.length} team member{team.members.length !== 1 ? 's' : ''}
+                </div>
+                <div style={{
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  fontSize: '13px',
+                  color: '#ddd'
                 }}>
-                  {teamData.members.map((member, idx) => (
-                    <li key={idx} style={{
-                      padding: '5px 0',
-                      color: '#ddd',
-                      fontSize: '14px'
-                    }}>• {member}</li>
-                  ))}
-                </ul>
-                <div className="team-stats" style={{
-                  marginTop: '15px',
-                  paddingTop: '15px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.1)'
-                }}>
-                  <div className="stat-row" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '5px 0',
-                    fontSize: '14px'
-                  }}>
-                    <span style={{ color: '#aaa' }}>Character:</span>
-                    <span style={{ color: teamData.character ? '#2ecc71' : '#e74c3c', fontWeight: 'bold' }}>
-                      {teamData.character || 'Unassigned'}
-                    </span>
-                  </div>
-                  <div className="stat-row" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '5px 0',
-                    fontSize: '14px'
-                  }}>
-                    <span style={{ color: '#aaa' }}>Hints Used:</span>
-                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{teamData.hints_used}/3</span>
-                  </div>
-                  <div className="stat-row" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '5px 0',
-                    fontSize: '14px'
-                  }}>
-                    <span style={{ color: '#aaa' }}>Dialogues:</span>
-                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{teamData.dialogues_completed}/3</span>
-                  </div>
-                  <div className="stat-row" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '5px 0',
-                    fontSize: '14px'
-                  }}>
-                    <span style={{ color: '#aaa' }}>Score:</span>
-                    <span style={{ 
-                      color: teamData.current_score < 0 ? '#e74c3c' : '#2ecc71', 
-                      fontWeight: 'bold',
-                      fontSize: '16px'
-                    }}>
-                      {teamData.current_score}
-                    </span>
-                  </div>
+                  {team.members && team.members.length > 0 ? (
+                    team.members.map((member, idx) => (
+                      <div key={idx} style={{ 
+                        padding: '8px', 
+                        marginBottom: '6px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '4px',
+                        borderLeft: '3px solid #3498db'
+                      }}>
+                        {member}
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ color: '#999', fontStyle: 'italic' }}>No members assigned</div>
+                  )}
                 </div>
               </div>
             ))}

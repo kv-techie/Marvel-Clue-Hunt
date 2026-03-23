@@ -16,9 +16,9 @@ const Attendee = () => {
     const checkDisqualificationStatus = async () => {
       try {
         const response = await getTeamStatus(team)
-        if (response.data.disqualified) {
+        if (response.disqualified) {
           setIsDisqualified(true)
-          setDisqualificationReason(response.data.disqualification_reason || 'Unknown reason')
+          setDisqualificationReason(response.disqualification_reason || 'Unknown reason')
         }
       } catch (err) {
         console.error('Failed to check disqualification status:', err)

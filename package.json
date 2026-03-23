@@ -1,0 +1,16 @@
+{
+  "name": "marvel-clue-hunt-proxy",
+  "version": "1.0.0",
+  "description": "Reverse proxy for Marvel Clue Hunt - routes /api to backend and everything else to frontend",
+  "main": "proxy.js",
+  "scripts": {
+    "start": "node proxy.js",
+    "dev": "node proxy.js"
+  },
+  "dependencies": {
+    "http-proxy": "^1.18.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

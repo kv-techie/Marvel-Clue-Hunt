@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { logout as logoutAPI } from '../api/client'
 
 const AuthContext = createContext(null)
 
@@ -7,50 +8,69 @@ export const AuthProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isVolunteer, setIsVolunteer] = useState(false)
   const [team, setTeam] = useState(null)
+  const [deviceId, setDeviceId] = useState(null)
   const [loading, setLoading] = useState(true) // Add loading state
 
   useEffect(() => {
-    // Load from localStorage on mount
-    const savedUser = localStorage.getItem('user')
-    const savedIsAdmin = localStorage.getItem('isAdmin') === 'true'
-    const savedIsVolunteer = localStorage.getItem('isVolunteer') === 'true'
-    const savedTeam = localStorage.getItem('team')
+    // Load from sessionStorage on mount (per-tab sessions)
+    const savedUser = sessionStorage.getItem('user')
+    const savedIsAdmin = sessionStorage.getItem('isAdmin') === 'true'
+    const savedIsVolunteer = sessionStorage.getItem('isVolunteer') === 'true'
+    const savedTeam = sessionStorage.getItem('team')
+    const savedDeviceId = sessionStorage.getItem('deviceId')
 
     if (savedUser) {
       setUser(savedUser)
       setIsAdmin(savedIsAdmin)
       setIsVolunteer(savedIsVolunteer)
       setTeam(savedTeam)
+      setDeviceId(savedDeviceId)
     }
     
     setLoading(false) // Done loading
   }, [])
 
-  const loginUser = (name, isAdminFlag, teamName, isVolunteerFlag = false) => {
+  const loginUser = (name, isAdminFlag, teamName, isVolunteerFlag = false, deviceId = null) => {
     setUser(name)
     setIsAdmin(isAdminFlag)
     setIsVolunteer(isVolunteerFlag)
     setTeam(teamName)
+    setDeviceId(deviceId)
 
-    localStorage.setItem('user', name)
-    localStorage.setItem('isAdmin', isAdminFlag)
-    localStorage.setItem('isVolunteer', isVolunteerFlag)
+    sessionStorage.setItem('user', name)
+    sessionStorage.setItem('isAdmin', isAdminFlag)
+    sessionStorage.setItem('isVolunteer', isVolunteerFlag)
     if (teamName) {
-      localStorage.setItem('team', teamName)
+      sessionStorage.setItem('team', teamName)
+    }
+    if (deviceId) {
+      sessionStorage.setItem('deviceId', deviceId)
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
+    // Call backend logout to deactivate device for attendees
+    if (team && deviceId && !isAdmin && !isVolunteer) {
+      try {
+        await logoutAPI({ team_name: team, device_id: deviceId })
+        console.log('Device logged out from backend')
+      } catch (err) {
+        console.error('Error logging out device:', err)
+        // Continue with frontend logout even if backend call fails
+      }
+    }
+
     setUser(null)
     setIsAdmin(false)
     setIsVolunteer(false)
     setTeam(null)
-    localStorage.clear()
+    setDeviceId(null)
+    sessionStorage.clear()
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, isAdmin, isVolunteer, team, loading, loginUser, logout }}
+      value={{ user, isAdmin, isVolunteer, team, deviceId, loading, loginUser, logout }}
     >
       {children}
     </AuthContext.Provider>

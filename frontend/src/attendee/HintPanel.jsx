@@ -12,7 +12,7 @@ const HintPanel = ({ teamName, dialogueNumber, hintsUsed, hintsRemaining }) => {
     
     try {
       const response = await requestHint(teamName, dialogueNumber)
-      setHint(response.data.hint)
+      setHint(response.hint)
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to get hint')
     } finally {

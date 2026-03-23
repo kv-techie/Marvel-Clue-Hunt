@@ -54,7 +54,7 @@ const AuditLog = () => {
   const fetchAdjustments = async () => {
     try {
       const response = await getAdjustmentsLog()
-      setAdjustments(response.data.adjustments)
+      setAdjustments(response.adjustments)
       setLoading(false)
     } catch (err) {
       console.error('Failed to fetch adjustments log:', err)

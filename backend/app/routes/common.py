@@ -7,13 +7,17 @@ from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
-TEAMS_FILE = "app/data/teams.json"
-ADMIN_WHITELIST_FILE = "app/data/admin_whitelist.json"
-VOLUNTEER_WHITELIST_FILE = "app/data/volunteer_whitelist.json"
-DEVICES_FILE = "app/data/devices.json"
-GAME_STATE_FILE = "app/data/game_state.json"
-ADMIN_CREDENTIALS_FILE = "app/data/admin_credentials.json"
-VOLUNTEER_CREDENTIALS_FILE = "app/data/volunteer_credentials.json"
+# Get absolute path to data directory (works from any working directory)
+APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(APP_DIR, 'data')
+
+TEAMS_FILE = os.path.join(DATA_DIR, 'teams.json')
+ADMIN_WHITELIST_FILE = os.path.join(DATA_DIR, 'admin_whitelist.json')
+VOLUNTEER_WHITELIST_FILE = os.path.join(DATA_DIR, 'volunteer_whitelist.json')
+DEVICES_FILE = os.path.join(DATA_DIR, 'devices.json')
+GAME_STATE_FILE = os.path.join(DATA_DIR, 'game_state.json')
+ADMIN_CREDENTIALS_FILE = os.path.join(DATA_DIR, 'admin_credentials.json')
+VOLUNTEER_CREDENTIALS_FILE = os.path.join(DATA_DIR, 'volunteer_credentials.json')
 
 
 def load_admin_credentials():
@@ -153,7 +157,7 @@ def _find_matching_device(team_devices, request):
     return None, None, None
 
 
-def _update_device_entry(device, request, match_type):
+def _update_device_entry(device, request, match_type, is_active=False):
     """Update device entry with latest information"""
     now = datetime.now().isoformat()
 
@@ -170,6 +174,7 @@ def _update_device_entry(device, request, match_type):
             if request.device_info
             else None,
             "registered_at": now,
+            "is_active": is_active,
         }
 
     # Update device_id if fingerprint matched (localStorage was cleared and new UUID generated)
@@ -188,6 +193,9 @@ def _update_device_entry(device, request, match_type):
 
     # Update last_login
     device["last_login"] = now
+
+    # Set is_active status
+    device["is_active"] = is_active
 
     # Update device_name if provided
     if request.device_name:
@@ -222,7 +230,7 @@ def _update_device_entry(device, request, match_type):
     return device
 
 
-def _create_device_entry(request):
+def _create_device_entry(request, is_active=True):
     """Create a new device entry"""
     now = datetime.now().isoformat()
 
@@ -262,6 +270,7 @@ def _create_device_entry(request):
         if request.device_info
         else now,
         "last_login": now,
+        "is_active": is_active,
     }
 
     return device_entry
@@ -463,10 +472,17 @@ async def login(request: LoginRequest):
         # Device already registered with this team - update it
         print(f"[DEVICE] Match found - Type: {match_type}, Team: {team_name}")
 
-        updated_device = _update_device_entry(matched_device, request, match_type)
+        # Deactivate all other devices for this team (enforce single active device)
+        for device in team_devices:
+            device["is_active"] = False
+
+        # Activate the current device
+        updated_device = _update_device_entry(matched_device, request, match_type, is_active=True)
         team_devices[device_idx] = updated_device
         devices[team_name] = team_devices
         _save_devices(devices)
+
+        print(f"[DEVICE] Device {request.device_id} activated for {team_name}. Other devices deactivated.")
 
         return LoginResponse(
             success=True,
@@ -487,11 +503,18 @@ async def login(request: LoginRequest):
 
     # Register new device with metadata
     print(f"[DEVICE] Registering new device for {team_name}")
-    device_entry = _create_device_entry(request)
+    
+    # Deactivate all other devices for this team (enforce single active device)
+    for device in team_devices:
+        device["is_active"] = False
+    
+    device_entry = _create_device_entry(request, is_active=True)
 
     team_devices.append(device_entry)
     devices[team_name] = team_devices
     _save_devices(devices)
+
+    print(f"[DEVICE] Device {request.device_id} registered and activated for {team_name}. Other devices deactivated.")
 
     return LoginResponse(
         success=True,
@@ -501,6 +524,45 @@ async def login(request: LoginRequest):
         is_volunteer=False,
         message=f"Welcome to {team_name}! Device registered.",
     )
+
+
+@router.post("/logout")
+async def logout(request: LoginRequest):
+    """
+    Logout a device by deactivating it.
+    Requires: team_name and device_id
+    """
+    if not request.team_name or not request.device_id:
+        raise HTTPException(
+            status_code=400, detail="team_name and device_id are required"
+        )
+
+    team_name = request.team_name.strip()
+
+    # Load devices
+    devices = _load_devices()
+    team_devices = devices.get(team_name, [])
+
+    if not team_devices:
+        raise HTTPException(status_code=404, detail="No devices found for this team")
+
+    # Find and deactivate the device
+    device_found = False
+    for device in team_devices:
+        if isinstance(device, dict) and device.get("device_id") == request.device_id:
+            device["is_active"] = False
+            device_found = True
+            print(f"[DEVICE] Device {request.device_id} logged out from {team_name}")
+            break
+
+    if not device_found:
+        raise HTTPException(status_code=404, detail="Device not found for this team")
+
+    # Save updated devices
+    devices[team_name] = team_devices
+    _save_devices(devices)
+
+    return {"success": True, "message": "Device logged out successfully"}
 
 
 @router.get("/health")

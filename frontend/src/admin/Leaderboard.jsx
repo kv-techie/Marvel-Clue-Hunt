@@ -60,7 +60,7 @@ const Leaderboard = () => {
   const fetchLeaderboard = async () => {
     try {
       const response = await getLeaderboard()
-      setLeaderboard(response.data.leaderboard)
+      setLeaderboard(response.leaderboard)
     } catch (err) {
       console.error('Failed to fetch leaderboard:', err)
     } finally {
@@ -108,7 +108,7 @@ const Leaderboard = () => {
 
     try {
       const response = await awardEnactmentBonus(teamName, bonus)
-      alert(`Enactment bonus of ${bonus} awarded to ${teamName}!\nNew Score: ${response.data.new_score}`)
+      alert(`Enactment bonus of ${bonus} awarded to ${teamName}!\nNew Score: ${response.new_score}`)
       // Immediately refresh leaderboard
       await fetchLeaderboard()
     } catch (err) {

@@ -48,12 +48,15 @@ const Login = () => {
       }
 
       const response = await login(payload)
-      const data = response.data
+      const data = response
 
       if (data.success) {
         // Ensure `user` is non-empty so ProtectedRoute allows attendee access
         const userForContext = data.name || data.team || teamName
-        loginUser(userForContext, data.is_admin, data.team, data.is_volunteer)
+        
+        // For attendees, also store device_id
+        const deviceInfo = isAdminLogin ? null : getDeviceInfo()
+        loginUser(userForContext, data.is_admin, data.team, data.is_volunteer, deviceInfo?.device_id)
 
         // Navigate based on role
         if (data.is_admin) {
@@ -203,11 +206,13 @@ const Login = () => {
 
         {!isAdminLogin && (
           <div className="device-info-note">
-            <p><strong>Device Registration:</strong></p>
+            <p><strong>Device Registration & Activation:</strong></p>
             <ul>
               <li>Your device is automatically registered on first login</li>
-              <li>Each team can use up to 3 different devices</li>
-              <li>You can login from the same device multiple times</li>
+              <li>Each team can register up to 3 different devices</li>
+              <li>⚡ <strong>Only 1 device can be active at a time</strong> - prevents simultaneous access</li>
+              <li>If one device has issues, switch to a fallback device immediately</li>
+              <li>Logging in from another device will automatically deactivate the previous one</li>
             </ul>
           </div>
         )}

@@ -1,7 +1,8 @@
 import axios from 'axios'
 
-// Use environment variable, fallback to localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Use environment variable, or construct from current origin
+// This allows the proxy to intercept /api calls when accessed from network IP
+const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,  // Add /api to the base URL
@@ -10,6 +11,23 @@ const api = axios.create({
   },
 })
 
+// Auto-unwrap response data
+api.interceptors.response.use(
+  (response) => {
+    // Unwrap .data from axios response
+    return response.data;
+  },
+  (error) => {
+    // Log the error for debugging
+    console.error("[API Error]", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+    });
+    return Promise.reject(error);
+  }
+)
 
 // Auth
 // login payloads:
@@ -17,7 +35,22 @@ const api = axios.create({
 // - Attendee: { team_name, device_id, device_name, device_info }
 export const login = (payload) => api.post('/login', payload)
 
+// logout payload:
+// - Attendee: { team_name, device_id }
+export const logout = (payload) => api.post('/logout', payload)
+
 // Admin APIs - Team Allocation
+export const uploadAttendees = (attendeesFile) => {
+  const formData = new FormData()
+  formData.append('file', attendeesFile)
+  
+  return api.post('/admin/allocate-teams-random', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
 export const uploadTeamsAndAttendees = (teamNamesFile, attendeesFile) => {
   const formData = new FormData()
   formData.append('team_names_file', teamNamesFile)
@@ -74,14 +107,16 @@ export const getDevices = (teamName) => api.get(`/admin/devices/${encodeURICompo
 
 export const removeDevice = (teamName, deviceId) => api.delete(`/admin/devices/${encodeURIComponent(teamName)}/${encodeURIComponent(deviceId)}`)
 
+export const getTeamsActiveDevices = () => api.get('/admin/teams-active-devices')
+
 export const getTeamTabSwitches = (teamName) => api.get(`/admin/team-tab-switches/${encodeURIComponent(teamName)}`)
 
 // Attendee APIs
 export const startTeamTimer = (teamName) =>
-  api.post(`/attendee/start-timer/${teamName}`)
+  api.post(`/attendee/start-timer/${encodeURIComponent(teamName)}`)
 
 export const getTeamStatus = (teamName) =>
-  api.get(`/attendee/team-status/${teamName}`)
+  api.get(`/attendee/team-status/${encodeURIComponent(teamName)}`)
 
 export const requestHint = (teamName, dialogueNumber) =>
   api.post('/attendee/request-hint', { team_name: teamName, dialogue_number: dialogueNumber })
@@ -95,7 +130,7 @@ export const submitDialogue = (teamName, dialogueNumber, answer, timeTaken) =>
   })
 
 export const getCurrentDialogue = (teamName) =>
-  api.get(`/attendee/current-dialogue/${teamName}`)
+  api.get(`/attendee/current-dialogue/${encodeURIComponent(teamName)}`)
 
 export const logTabSwitch = (teamName, eventType) =>
   api.post('/attendee/log-tab-switch', {
@@ -111,13 +146,61 @@ export const deleteParticipantData = () => api.post('/admin/delete-participant-d
 export const getDisqualificationCandidates = () => api.get('/admin/disqualification-candidates')
 
 export const confirmDisqualification = (teamName, confirmedBy) =>
-  api.post(`/admin/confirm-disqualification/${teamName}`, {}, { params: { confirmed_by: confirmedBy } })
+  api.post(`/admin/confirm-disqualification/${encodeURIComponent(teamName)}`, {}, { params: { confirmed_by: confirmedBy } })
 
 export const reverseDisqualification = (teamName, reversedBy) =>
-  api.post(`/admin/reverse-disqualification/${teamName}`, {}, { params: { reversed_by: reversedBy } })
+  api.post(`/admin/reverse-disqualification/${encodeURIComponent(teamName)}`, {}, { params: { reversed_by: reversedBy } })
 
 export const teamAcknowledgeDisqualification = (teamName) =>
-  api.post(`/admin/team-acknowledge-disqualification/${teamName}`)
+  api.post(`/admin/team-acknowledge-disqualification/${encodeURIComponent(teamName)}`)
+
+// ===================== INFINITY STONE QUESTION-BASED APIs =====================
+
+// Get current question for a team
+export const getCurrentQuestion = (teamName) =>
+  api.get(`/attendee/current-question/${encodeURIComponent(teamName)}`)
+
+// Submit answer to a question
+export const submitQuestion = (submission) =>
+  api.post('/attendee/submit-question', submission)
+
+// Request a hint for current question
+export const requestHintQuestion = (request) =>
+  api.post('/attendee/request-hint-question', request)
+
+// Get certainty check feedback (Reality Stone PowerUp)
+export const certaintyCheck = (teamName, questionId, submittedAnswer) =>
+  api.post('/attendee/certainty-check', {
+    team_name: teamName,
+    question_id: questionId,
+    submitted_answer: submittedAnswer,
+  })
+
+// Get team's assigned stone and progress
+export const getTeamStone = (teamName) =>
+  api.get(`/attendee/team-stone/${encodeURIComponent(teamName)}`)
+
+// Get available Infinity Stones
+export const getAvailableStones = () =>
+  api.get('/attendee/available-stones')
+
+// ===================== GAMIFICATION APIs =====================
+
+// Get team's badges and achievements
+export const getTeamBadges = (teamName) =>
+  api.get(`/attendee/team-badges/${encodeURIComponent(teamName)}`)
+
+// Get full leaderboard
+export const getLeaderboardData = (sortBy = 'total_points_earned') =>
+  api.get('/attendee/leaderboard', { params: { sort_by: sortBy } })
+
+// Get specific team's rank
+export const getTeamRank = (teamName, sortBy = 'total_points_earned') =>
+  api.get(`/attendee/team-rank/${encodeURIComponent(teamName)}`, { params: { sort_by: sortBy } })
+
+// Get leaderboard statistics
+export const getLeaderboardStats = () =>
+  api.get('/attendee/leaderboard-stats')
 
 // Export api as both default and named export
 export const apiClient = api

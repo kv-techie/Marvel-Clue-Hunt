@@ -8,7 +8,7 @@ const AdminDashboard = () => {
   const fetchStatus = async () => {
     try {
       const response = await getGameStatus()
-      setStatus(response.data)
+      setStatus(response)
     } catch (err) {
       console.error('Failed to fetch game status:', err)
     } finally {

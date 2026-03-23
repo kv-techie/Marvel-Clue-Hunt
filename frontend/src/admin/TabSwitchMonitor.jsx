@@ -11,7 +11,7 @@ const TabSwitchMonitor = ({ teamName }) => {
       try {
         setLoading(true)
         const response = await getTeamTabSwitches(teamName)
-        setTabSwitches(response.data)
+        setTabSwitches(response)
         setError('')
       } catch (err) {
         setError('Failed to fetch tab switch logs')

@@ -49,8 +49,8 @@ const AdminManagement = () => {
   const fetchUsersWithPins = async () => {
     try {
       const pinsResponse = await getPins()
-      setAdminUsers(pinsResponse.data.admin_users || [])
-      setVolunteerUsers(pinsResponse.data.volunteer_users || [])
+      setAdminUsers(pinsResponse.admin_users || [])
+      setVolunteerUsers(pinsResponse.volunteer_users || [])
     } catch (err) {
       console.error('Failed to fetch users with PINs:', err)
     }
@@ -186,11 +186,11 @@ const AdminManagement = () => {
 
     try {
       const response = await getDevices(teamName.trim())
-      setDevices(response.data.devices || [])
+      setDevices(response.devices || [])
       setDeviceMessage(
-        response.data.devices.length === 0
+        response.devices.length === 0
           ? 'No devices registered for this team'
-          : `✅ Found ${response.data.devices.length} device(s)`
+          : `✅ Found ${response.devices.length} device(s)`
       )
     } catch (err) {
       setDeviceMessage(`❌ Error: ${err.response?.data?.detail || 'Failed to fetch devices'}`)
@@ -747,12 +747,25 @@ const AdminManagement = () => {
                       padding: '12px',
                       backgroundColor: 'rgba(255, 255, 255, 0.03)',
                       borderRadius: '4px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderLeft: typeof device === 'object' && device.is_active ? '4px solid #2ecc71' : '4px solid transparent'
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', color: '#fff' }}>
+                      <div style={{ fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {getDeviceDisplayName(device)}
+                        {typeof device === 'object' && device.is_active && (
+                          <span style={{
+                            padding: '2px 8px',
+                            backgroundColor: 'rgba(46, 204, 113, 0.3)',
+                            color: '#2ecc71',
+                            borderRadius: '3px',
+                            fontSize: '11px',
+                            fontWeight: 'bold'
+                          }}>
+                            🟢 ACTIVE
+                          </span>
+                        )}
                       </div>
                       {typeof device === 'object' && (
                         <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>

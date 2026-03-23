@@ -47,11 +47,23 @@ class TimerManager:
         return int(delta.total_seconds())
 
     def restore_from_game_state(self, game_state: dict):
-        """Restore per-team timers from saved game_state structure.
+        """Restore global start time and per-team timers from saved game_state structure.
 
-        Expects a dict with a 'teams' key mapping team names to Team-like dicts
-        where each team may have a 'timer_started' ISO timestamp/string.
+        Expects a dict with 'global_start_time' and 'teams' keys.
         """
+        # Restore global start time
+        global_start = game_state.get("global_start_time")
+        if global_start:
+            try:
+                if isinstance(global_start, datetime):
+                    self.global_start_time = global_start
+                else:
+                    self.global_start_time = datetime.fromisoformat(global_start)
+                print(f"🕐 Restored global_start_time: {self.global_start_time} (game_active: {self.is_game_active()})")
+            except Exception as e:
+                print(f"⚠️  Failed to restore global_start_time: {e}")
+        
+        # Restore per-team timers
         teams = game_state.get("teams") if isinstance(game_state, dict) else None
         if not teams:
             return

@@ -18,14 +18,14 @@ const DialogueRound = ({ teamName, dialogueNumber, elapsedTime, onComplete }) =>
         
         // Get team's assigned character
         const charResponse = await apiClient.get(`/attendee/team-character/${teamName}`)
-        setCharacter(charResponse.data.character)
+        setCharacter(charResponse.character)
         
         // Get dialogue clue
-        if (charResponse.data.character && dialogueNumber) {
+        if (charResponse.character && dialogueNumber) {
           const dialogueResponse = await apiClient.get(
             `/attendee/dialogue/${teamName}/${dialogueNumber}`
           )
-          setClue(dialogueResponse.data.clue)
+          setClue(dialogueResponse.clue)
         }
       } catch (err) {
         console.error('Error fetching dialogue:', err)
@@ -59,14 +59,14 @@ const DialogueRound = ({ teamName, dialogueNumber, elapsedTime, onComplete }) =>
     try {
       const response = await submitDialogue(teamName, dialogueNumber, answer, elapsedTime)
       
-      if (response.data.correct) {
+      if (response.correct) {
         setIsCorrect(true)
-        setMessage(`🎉 Correct! ${response.data.message}`)
+        setMessage(`🎉 Correct! ${response.message}`)
         setTimeout(() => {
           onComplete()
         }, 2000)
       } else {
-        setMessage('❌ ' + response.data.message)
+        setMessage('❌ ' + response.message)
       }
     } catch (err) {
       setMessage('Error: ' + (err.response?.data?.detail || 'Failed to submit'))

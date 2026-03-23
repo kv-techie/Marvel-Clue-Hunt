@@ -15,11 +15,11 @@ const DisqualificationManager = () => {
   const fetchData = async () => {
     try {
       const candidatesResponse = await getDisqualificationCandidates()
-      setCandidates(candidatesResponse.data.candidates)
+      setCandidates(candidatesResponse.candidates)
       
       // Fetch all teams to get disqualified ones
       const teamsResponse = await getAllTeams()
-      const disqualified = teamsResponse.data.teams.filter(team => team.disqualified)
+      const disqualified = teamsResponse.teams.filter(team => team.disqualified)
       setDisqualifiedTeams(disqualified)
     } catch (err) {
       console.error('Failed to fetch data:', err)

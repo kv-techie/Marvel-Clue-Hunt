@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Attendee(BaseModel):
     name: str
     team: Optional[str] = None
+    favorite_character: Optional[str] = None  # Character preference for team allocation
 
 
 class PointAdjustment(BaseModel):
@@ -20,46 +21,116 @@ class PointAdjustment(BaseModel):
 class Team(BaseModel):
     name: str
     members: List[str]
-    character: Optional[str] = (
-        None  # Character this team is assigned (e.g., "Iron Man", "Thor")
-    )
+    stone: Optional[str] = None  # Infinity Stone assigned to team (Mind, Power, Time, Space, Reality, Soul)
     timer_started: Optional[datetime] = None
-    hints_used: int = 0
+    game_started: Optional[datetime] = None
+    
+    # Question-based gameplay
+    current_question_index: int = 0  # Current question number (0-9)
+    questions_completed: List[Dict] = Field(default_factory=list)  # Track which questions completed and scores
+    hints_used_count: int = 0  # Global hint counter (max 3 per session)
+    
+    # Legacy dialogue fields (for backward compatibility)
     dialogue_1_completed: bool = False
-    dialogue_1_time: Optional[int] = None
     dialogue_2_completed: bool = False
-    dialogue_2_time: Optional[int] = None
     dialogue_3_completed: bool = False
+    dialogue_1_time: Optional[int] = None
+    dialogue_2_time: Optional[int] = None
     dialogue_3_time: Optional[int] = None
-    qualified: bool = False
+    hints_used: int = 0  # Legacy field (use hints_used_count instead)
     enactment_bonus_awarded: bool = False
     enactment_bonus_amount: int = 0
-    manual_adjustments: List[Dict] = []
+    
+    # PowerUp tracking - team-specific powerups loaded from powerups.json
+    powerups_available: Dict[str, bool] = Field(default_factory=dict)  # Team-specific powerups {id: is_available}
+    powerups_used: List[str] = Field(default_factory=list)  # Track which powerup IDs have been used
+    active_powerup_effect: Optional[Dict] = None  # Current active powerup (for multi-question effects)
+    
+    # Gamification - Streaks & Combos
+    current_streak: int = 0  # Consecutive correct answers
+    best_streak: int = 0  # Best streak in this session
+    current_combo: float = 1.0  # Combo multiplier for consecutive fast answers (starts at 1x)
+    last_answer_time: Optional[int] = None  # Time of last answer in seconds
+    
+    # Gamification - Badges & Achievements
+    badges_earned: List[str] = Field(default_factory=list)  # List of earned badge IDs
+    achievements: Dict[str, Any] = Field(default_factory=lambda: {
+        "50_points_total": False,
+        "100_points_total": False,
+        "perfect_score": False,  # 100% on a question
+        "speed_demon": False,  # All questions < 20s
+        "streak_5": False,  # 5 consecutive correct
+        "combo_master": False,  # 3x combo achieved
+        "powerup_champion": False,  # Used all 3 powerups
+        "flawless_game": False,  # No hints used, all correct
+        "hint_hero": False,  # Used all 3 hints effectively (high accuracy)
+        "stone_sage": False  # All 10 questions correct
+    })  # Achievement progress tracking
+    
+    # Leaderboard stats
+    questions_answered_correctly: int = 0
+    total_questions_answered: int = 0
+    accuracy_percentage: float = 0.0
+    total_points_earned: int = 0
+    average_answer_time: float = 0.0
+    
+    # Legacy fields (preserved for admin/volunteer functionality)
+    qualified: bool = False
+    manual_adjustments: List[Dict] = Field(default_factory=list)
     final_score: Optional[int] = None
     disqualified: bool = False
     disqualification_reason: Optional[str] = None
     disqualification_timestamp: Optional[datetime] = None
     disqualification_confirmed_by_admin: bool = False
     disqualification_acknowledged_by_team: bool = False
-    tab_switch_logs: List[Dict] = []  # Track tab focus changes
+    tab_switch_logs: List[Dict] = Field(default_factory=list)  # Track tab focus changes
+
+
+class Question(BaseModel):
+    id: str
+    question_text: str
+    clue_1: str
+    clue_2: str
+    hint_text: str
+    correct_answer: str
+    base_points: int
+    difficulty: str
+
+
+class PowerUp(BaseModel):
+    id: str
+    stone: str
+    name: str
+    description: str
+    effect_type: str  # "points", "time", "hint", "protection", "info"
+    effect_value: Optional[int] = None
+    used: bool = False
+
+
+class QuestionSubmission(BaseModel):
+    team_name: str
+    question_id: str
+    answer: str
+    time_taken: int  # seconds
+    powerup_used: Optional[str] = None  # Which powerup was used with this answer
 
 
 class DialogueSubmission(BaseModel):
     team_name: str
-    dialogue_number: int
+    question_id: str
     answer: str
     time_taken: int
 
 
 class HintRequest(BaseModel):
     team_name: str
-    dialogue_number: int
+    question_id: str
 
 
 class GameState(BaseModel):
     global_start_time: Optional[datetime] = None
     game_active: bool = False
-    teams: Dict[str, Team] = {}
+    teams: Dict[str, Team] = Field(default_factory=dict)
 
 
 class LoginRequest(BaseModel):

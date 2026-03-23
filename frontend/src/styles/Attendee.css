@@ -451,3 +451,35 @@
     transform: scale(1.1);
   }
 }
+
+/* Leaderboard Toggle Styles */
+.leaderboard-toggle {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.toggle-btn {
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.3) 0%, rgba(41, 128, 185, 0.3) 100%);
+  border: 2px solid rgba(52, 152, 219, 0.6);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.5) 0%, rgba(41, 128, 185, 0.5) 100%);
+  border-color: rgba(52, 152, 219, 0.9);
+  box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, rgba(255, 150, 0, 0.3) 0%, rgba(255, 100, 0, 0.3) 100%);
+  border-color: rgba(255, 150, 0, 0.8);
+  box-shadow: 0 0 20px rgba(255, 150, 0, 0.3);
+}

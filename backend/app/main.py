@@ -5,16 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(title="Marvel Clue Hunt API", version="1.0.0")
 
 # CORS configuration for localhost development
+# Allow all origins for development, restrict in production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://172.20.249.85:3000",  # Your network IP
-        "http://172.20.249.85:5173",
-        "http://10.97.89.114:3000",
-        "http://10.97.89.114:5173",
-    ],
+    allow_origins=["*"],  # Allow all origins for dev
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

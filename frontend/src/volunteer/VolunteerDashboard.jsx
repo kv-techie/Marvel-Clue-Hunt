@@ -46,7 +46,7 @@ const VolunteerDashboard = () => {
   const fetchLeaderboard = async () => {
     try {
       const response = await getLeaderboard()
-      setLeaderboard(response.data.leaderboard)
+      setLeaderboard(response.leaderboard)
       setLoading(false)
     } catch (err) {
       console.error('Failed to fetch leaderboard:', err)
@@ -101,7 +101,7 @@ const VolunteerDashboard = () => {
       })
 
       setSuccess(
-        `${adjustmentForm.adjustment_type === 'reward' ? 'Reward' : 'Deduction'} of ${adjustmentForm.amount} points applied!\nNew Score: ${response.data.new_score}`
+        `${adjustmentForm.adjustment_type === 'reward' ? 'Reward' : 'Deduction'} of ${adjustmentForm.amount} points applied!\nNew Score: ${response.new_score}`
       )
 
       // Immediately refresh leaderboard
