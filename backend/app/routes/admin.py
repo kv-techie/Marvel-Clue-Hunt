@@ -784,7 +784,6 @@ async def remove_device(team_name: str, device_id: str):
 async def get_teams_active_devices():
     """Get all teams with their currently active device information"""
     DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
-    TEAMS_FILE_LOCAL = os.path.join(DATA_DIR, "teams.json")
 
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
@@ -792,20 +791,25 @@ async def get_teams_active_devices():
     else:
         devices_data = {}
 
-    if os.path.exists(TEAMS_FILE_LOCAL):
-        with open(TEAMS_FILE_LOCAL, "r") as f:
-            teams_list = json.load(f)
-    else:
-        teams_list = {}
+    current_team_names = set(game_state.teams.keys())
+
+    # Prune stale teams from devices store to keep only current teams
+    stale_team_names = [name for name in devices_data.keys() if name not in current_team_names]
+    if stale_team_names:
+        for stale_team_name in stale_team_names:
+            devices_data.pop(stale_team_name, None)
+
+        os.makedirs(os.path.dirname(DEVICES_FILE), exist_ok=True)
+        with open(DEVICES_FILE, "w") as f:
+            json.dump(devices_data, f, indent=2)
+
+        print(f"🧹 Pruned stale teams from devices.json: {stale_team_names}")
 
     teams_active_devices = []
 
-    for team_name, team_devices in devices_data.items():
-        # Get team member count from teams list
-        team_info = teams_list.get(team_name, {})
-        team_members = (
-            team_info.get("members", []) if isinstance(team_info, dict) else []
-        )
+    for team_name, team in game_state.teams.items():
+        team_devices = devices_data.get(team_name, [])
+        team_members = team.members if hasattr(team, "members") and team.members else []
 
         # Find active device for this team
         active_device = None

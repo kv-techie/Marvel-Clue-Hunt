@@ -121,7 +121,7 @@ const Leaderboard = () => {
       'Team Name': team.team_name,
       'Members': team.members.join('; '),
       'Score': team.score,
-      'Dialogues Completed': team.dialogues_completed,
+      'Questions Completed': team.questions_completed,
       'Hints Used': team.hints_used,
       'Qualified': team.qualified ? 'Yes' : 'No',
       'Status': team.disqualified ? 'Disqualified' : 'Active',
@@ -244,7 +244,7 @@ const Leaderboard = () => {
                   <th>Rank</th>
                   <th>Team</th>
                   <th>Score</th>
-                  <th>Dialogues</th>
+                  <th>Questions</th>
                   <th>Hints Used</th>
                   <th>Qualified</th>
                   <th>Action</th>
@@ -266,7 +266,7 @@ const Leaderboard = () => {
                     <td style={{ fontSize: '20px', fontWeight: 'bold', color: team.score < 0 ? '#e74c3c' : '#2ecc71' }}>
                       {team.score}
                     </td>
-                    <td>{team.dialogues_completed}/3</td>
+                    <td>{team.questions_completed || 0}/10</td>
                     <td>{team.hints_used}/3</td>
                     <td>
                       {team.qualified ? (
