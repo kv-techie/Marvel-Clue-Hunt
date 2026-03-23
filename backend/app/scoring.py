@@ -39,7 +39,9 @@ def calculate_speed_multiplier(time_taken: int, difficulty: str) -> float:
         return 1.0
 
 
-def calculate_combo_multiplier(time_taken: int, previous_correct: bool = False) -> float:
+def calculate_combo_multiplier(
+    time_taken: int, previous_correct: bool = False
+) -> float:
     """
     Calculate combo multiplier for consecutive fast correct answers.
     Bonuses stack for up to 3x.
@@ -53,7 +55,7 @@ def calculate_combo_multiplier(time_taken: int, previous_correct: bool = False) 
     """
     if not previous_correct:
         return 1.0  # Break combo on wrong answer
-    
+
     if time_taken <= 15:
         return 1.5  # Fast answer (≤15s) = 1.5x
     elif time_taken <= 30:
@@ -169,7 +171,9 @@ def calculate_final_score(team: Team) -> int:
 def check_qualification(team: Team) -> bool:
     """Check if team qualifies (completed enough questions)"""
     # Check if team has completed at least 2 questions (or a threshold defined in settings)
-    questions_completed = len(team.questions_completed) if team.questions_completed else 0
+    questions_completed = (
+        len(team.questions_completed) if team.questions_completed else 0
+    )
     qualification_threshold = getattr(settings, "qualification_threshold", 2)
     return questions_completed >= qualification_threshold
 
@@ -268,7 +272,9 @@ def get_leaderboard(teams: Dict[str, Team]) -> list:
                 "team_name": team_name,
                 "score": final_score,
                 "qualified": check_qualification(team),
-                "questions_completed": len(team.questions_completed) if team.questions_completed else 0,
+                "questions_completed": len(team.questions_completed)
+                if team.questions_completed
+                else 0,
                 "hints_used": team.hints_used_count,
                 "members": team.members,
                 "disqualified": team.disqualified,

@@ -1,7 +1,18 @@
 import json
 
 # Available characters
-characters = ['Captain America', 'Iron Man', 'Thor', 'Spider-Man', 'Black Widow', 'Hulk', 'Black Panther', 'Doctor Strange', 'Ant-Man', 'Scarlet Witch']
+characters = [
+    "Captain America",
+    "Iron Man",
+    "Thor",
+    "Spider-Man",
+    "Black Widow",
+    "Hulk",
+    "Black Panther",
+    "Doctor Strange",
+    "Ant-Man",
+    "Scarlet Witch",
+]
 
 # Load game state
 with open("app/data/game_state.json", "r") as f:

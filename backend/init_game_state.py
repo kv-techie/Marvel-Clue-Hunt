@@ -1,16 +1,11 @@
 import json
-from datetime import datetime
 
 # Read teams.json
 with open("app/data/teams.json", "r") as f:
     teams_data = json.load(f)
 
 # Create game state structure
-game_state = {
-    "global_start_time": None,
-    "game_active": False,
-    "teams": {}
-}
+game_state = {"global_start_time": None, "game_active": False, "teams": {}}
 
 # Initialize each team
 for team_name, members in teams_data.items():
@@ -50,7 +45,7 @@ for team_name, members in teams_data.items():
             "powerup_champion": False,
             "flawless_game": False,
             "hint_hero": False,
-            "stone_sage": False
+            "stone_sage": False,
         },
         "questions_answered_correctly": 0,
         "total_questions_answered": 0,
@@ -65,7 +60,7 @@ for team_name, members in teams_data.items():
         "disqualification_timestamp": None,
         "disqualification_confirmed_by_admin": False,
         "disqualification_acknowledged_by_team": False,
-        "tab_switch_logs": []
+        "tab_switch_logs": [],
     }
     print(f"✅ Initialized {team_name} with {len(members)} members")
 

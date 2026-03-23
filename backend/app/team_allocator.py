@@ -410,28 +410,26 @@ def allocate_teams_by_preference(
     return teams
 
 
-def assign_character_to_team(
-    team_name: str, character: str, teams_path: str
-) -> bool:
+def assign_character_to_team(team_name: str, character: str, teams_path: str) -> bool:
     """
     Assign a character to a specific team in the teams.json file.
-    
+
     Args:
         team_name: Name of the team
         character: Character to assign
         teams_path: Path to teams.json file
-    
+
     Returns:
         True if successful, False otherwise
     """
     try:
         with open(teams_path, "r", encoding="utf-8") as f:
             teams_data = json.load(f)
-        
+
         if team_name not in teams_data:
             print(f"[CHARACTER ASSIGNMENT] Team {team_name} not found")
             return False
-        
+
         # Update team with character
         team_data = teams_data[team_name]
         if isinstance(team_data, dict):
@@ -440,12 +438,12 @@ def assign_character_to_team(
             # Convert list format to dict format
             teams_data[team_name] = {
                 "members": team_data if isinstance(team_data, list) else [],
-                "character": character
+                "character": character,
             }
-        
+
         with open(teams_path, "w", encoding="utf-8") as f:
             json.dump(teams_data, f, indent=2, ensure_ascii=False)
-        
+
         print(f"[CHARACTER ASSIGNMENT] Assigned {character} to {team_name}")
         return True
     except Exception as e:
@@ -458,31 +456,31 @@ def assign_characters_by_matching(
 ) -> Dict[str, str]:
     """
     Automatically assign characters to teams by matching team names with available character names.
-    
+
     Args:
         teams_path: Path to teams.json file
         available_characters: List of available character names
-    
+
     Returns:
         Dictionary mapping team names to assigned characters
     """
     assignments = {}
-    
+
     try:
         with open(teams_path, "r", encoding="utf-8") as f:
             teams_data = json.load(f)
-        
+
         updated_teams = {}
-        
+
         for team_name, team_data in teams_data.items():
             assigned_character = None
-            
+
             # Try exact match first
             for character in available_characters:
                 if character.lower() == team_name.lower():
                     assigned_character = character
                     break
-            
+
             # Try partial match (team name contains character name)
             if not assigned_character:
                 team_lower = team_name.lower()
@@ -491,7 +489,7 @@ def assign_characters_by_matching(
                     if char_lower in team_lower or team_lower in char_lower:
                         assigned_character = character
                         break
-            
+
             # Update teams data
             if isinstance(team_data, dict):
                 if assigned_character:
@@ -501,19 +499,19 @@ def assign_characters_by_matching(
                 # Convert list format to dict format
                 updated_teams[team_name] = {
                     "members": team_data if isinstance(team_data, list) else [],
-                    "character": assigned_character
+                    "character": assigned_character,
                 }
-            
+
             assignments[team_name] = assigned_character
             if assigned_character:
                 print(f"[CHARACTER MATCHING] {team_name} → {assigned_character}")
             else:
                 print(f"[CHARACTER MATCHING] {team_name} → (no match found)")
-        
+
         # Save updated teams
         with open(teams_path, "w", encoding="utf-8") as f:
             json.dump(updated_teams, f, indent=2, ensure_ascii=False)
-        
+
         return assignments
     except Exception as e:
         print(f"[CHARACTER MATCHING] Error: {e}")

@@ -59,10 +59,12 @@ class TimerManager:
                     self.global_start_time = global_start
                 else:
                     self.global_start_time = datetime.fromisoformat(global_start)
-                print(f"🕐 Restored global_start_time: {self.global_start_time} (game_active: {self.is_game_active()})")
+                print(
+                    f"🕐 Restored global_start_time: {self.global_start_time} (game_active: {self.is_game_active()})"
+                )
             except Exception as e:
                 print(f"⚠️  Failed to restore global_start_time: {e}")
-        
+
         # Restore per-team timers
         teams = game_state.get("teams") if isinstance(game_state, dict) else None
         if not teams:

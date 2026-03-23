@@ -2,6 +2,8 @@ import json
 import os
 from datetime import datetime
 
+from fastapi import APIRouter, File, HTTPException, UploadFile
+
 from app.config import settings
 from app.dialogue_manager import dialogue_manager
 from app.models import (
@@ -21,21 +23,20 @@ from app.team_allocator import (
     allocate_teams_from_files as allocate_teams,
 )
 from app.timer_manager import timer_manager
-from fastapi import APIRouter, File, HTTPException, UploadFile
 
 router = APIRouter()
 
 # Get absolute path to data directory (works from any working directory)
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(APP_DIR, 'data')
+DATA_DIR = os.path.join(APP_DIR, "data")
 
-TEAMS_FILE = os.path.join(DATA_DIR, 'teams.json')
-ATTENDANCE_FILE = os.path.join(DATA_DIR, 'attendance.csv')
-GAME_STATE_FILE = os.path.join(DATA_DIR, 'game_state.json')
-ADMIN_WHITELIST_FILE = os.path.join(DATA_DIR, 'admin_whitelist.json')
-VOLUNTEER_WHITELIST_FILE = os.path.join(DATA_DIR, 'volunteer_whitelist.json')
-ADMIN_CREDENTIALS_FILE = os.path.join(DATA_DIR, 'admin_credentials.json')
-VOLUNTEER_CREDENTIALS_FILE = os.path.join(DATA_DIR, 'volunteer_credentials.json')
+TEAMS_FILE = os.path.join(DATA_DIR, "teams.json")
+ATTENDANCE_FILE = os.path.join(DATA_DIR, "attendance.csv")
+GAME_STATE_FILE = os.path.join(DATA_DIR, "game_state.json")
+ADMIN_WHITELIST_FILE = os.path.join(DATA_DIR, "admin_whitelist.json")
+VOLUNTEER_WHITELIST_FILE = os.path.join(DATA_DIR, "volunteer_whitelist.json")
+ADMIN_CREDENTIALS_FILE = os.path.join(DATA_DIR, "admin_credentials.json")
+VOLUNTEER_CREDENTIALS_FILE = os.path.join(DATA_DIR, "volunteer_credentials.json")
 
 # In-memory game state
 game_state: GameState = GameState()
@@ -47,18 +48,22 @@ def load_game_state():
     if os.path.exists(GAME_STATE_FILE):
         with open(GAME_STATE_FILE, "r") as f:
             data = json.load(f)
-            print(f"📄 Raw JSON - Mind Stone stone: {data.get('teams', {}).get('Mind Stone', {}).get('stone')}")
+            print(
+                f"📄 Raw JSON - Mind Stone stone: {data.get('teams', {}).get('Mind Stone', {}).get('stone')}"
+            )
             game_state = GameState(**data)
             print(f"✅ Loaded game state: {len(data.get('teams', {}))} teams")
-            
+
             # **CRITICAL FIX**: Ensure all teams have stones assigned (team name = stone name)
             # This handles the case where JSON was created without stone assignments
             for team_name, team in game_state.teams.items():
                 if team.stone is None or team.stone == "":
                     team.stone = team_name
                     print(f"🔨 Auto-assigned stone '{team_name}' to team '{team_name}'")
-            
-            print(f"🔍 Loaded - Mind Stone stone: {game_state.teams.get('Mind Stone').stone if game_state.teams.get('Mind Stone') else 'TEAM NOT FOUND'}")
+
+            print(
+                f"🔍 Loaded - Mind Stone stone: {game_state.teams.get('Mind Stone').stone if game_state.teams.get('Mind Stone') else 'TEAM NOT FOUND'}"
+            )
             # Restore in-memory timers from persisted state (if present)
             try:
                 from app.timer_manager import timer_manager
@@ -161,9 +166,7 @@ async def upload_attendance(file: UploadFile = File(...)):
         # Initialize game state with teams
         game_state.teams = {}
         for name, members in teams.items():
-            game_state.teams[name] = Team(
-                name=name, members=members
-            )
+            game_state.teams[name] = Team(name=name, members=members)
 
         save_game_state()
 
@@ -180,65 +183,66 @@ async def upload_attendance(file: UploadFile = File(...)):
 @router.post("/allocate-teams-random")
 async def allocate_teams_random(file: UploadFile = File(...)):
     """Allocate attendees randomly into stone-named teams"""
-    
+
     INFINITY_STONES = [
         "Mind Stone",
         "Power Stone",
         "Time Stone",
         "Space Stone",
         "Reality Stone",
-        "Soul Stone"
+        "Soul Stone",
     ]
-    
+
     try:
         # Read attendees file
         content = await file.read()
         attendees_text = content.decode("utf-8")
-        
+
         # Parse attendees (one per line)
         attendees = []
         for line in attendees_text.splitlines():
             line = line.strip()
             if line:
                 attendees.append(line)
-        
+
         if not attendees:
             raise HTTPException(status_code=400, detail="No attendees found in file")
-        
+
         # Create stone-based team names
         team_names = INFINITY_STONES  # Use only 6 stone teams
-        
+
         # Randomly distribute attendees across teams
         import random
+
         random.shuffle(attendees)
-        
+
         teams = {stone: [] for stone in INFINITY_STONES}
         for idx, attendee in enumerate(attendees):
             team_idx = idx % len(INFINITY_STONES)
             teams[INFINITY_STONES[team_idx]].append(attendee)
-        
+
         # Save teams to file
         os.makedirs(os.path.dirname(TEAMS_FILE), exist_ok=True)
         with open(TEAMS_FILE, "w", encoding="utf-8") as f:
             json.dump(teams, f, indent=2, ensure_ascii=False)
-        
+
         # Initialize game state with teams
         game_state.teams = {}
         for team_name, members in teams.items():
             game_state.teams[team_name] = Team(
                 name=team_name,
                 members=members,
-                character=None  # Characters will be assigned separately
+                character=None,  # Characters will be assigned separately
             )
-        
+
         save_game_state()
-        
+
         return {
             "message": f"Teams allocated successfully! {len(attendees)} attendees into 6 Infinity Stone teams",
             "teams": teams,
             "total_teams": len(teams),
             "total_attendees": len(attendees),
-            "team_sizes": {name: len(members) for name, members in teams.items()}
+            "team_sizes": {name: len(members) for name, members in teams.items()},
         }
     except HTTPException:
         raise
@@ -253,7 +257,7 @@ async def upload_teams_and_attendees(
 ):
     """
     Upload teams and attendees files to allocate teams based on character preferences.
-    
+
     Expected formats:
     - Teams CSV: Team 1, Team 2, Team 3 (on first line)
     - Attendees CSV: Name, FavoriteCharacter (one per line)
@@ -262,12 +266,12 @@ async def upload_teams_and_attendees(
         # Read teams file
         teams_content = await teams_file.read()
         teams_text = teams_content.decode("utf-8")
-        
+
         # Parse team names from first line
         team_names = [name.strip() for name in teams_text.split(",")]
         if not team_names:
             raise HTTPException(status_code=400, detail="No teams found in file")
-        
+
         # Read attendees file
         attendees_content = await attendees_file.read()
         attendees_text = attendees_content.decode("utf-8")
@@ -712,7 +716,7 @@ async def delete_pin(role: str, name: str):
 @router.get("/devices/{team_name}")
 async def list_devices(team_name: str):
     """List registered device IDs for a team"""
-    DEVICES_FILE = os.path.join(DATA_DIR, 'devices.json')
+    DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
             devices = json.load(f)
@@ -726,7 +730,7 @@ async def list_devices(team_name: str):
 @router.delete("/devices/{team_name}/{device_id}")
 async def remove_device(team_name: str, device_id: str):
     """Remove a specific device id from a team's registered devices"""
-    DEVICES_FILE = os.path.join(DATA_DIR, 'devices.json')
+    DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
             devices = json.load(f)
@@ -768,32 +772,34 @@ async def remove_device(team_name: str, device_id: str):
 @router.get("/teams-active-devices")
 async def get_teams_active_devices():
     """Get all teams with their currently active device information"""
-    DEVICES_FILE = os.path.join(DATA_DIR, 'devices.json')
-    TEAMS_FILE_LOCAL = os.path.join(DATA_DIR, 'teams.json')
-    
+    DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
+    TEAMS_FILE_LOCAL = os.path.join(DATA_DIR, "teams.json")
+
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
             devices_data = json.load(f)
     else:
         devices_data = {}
-    
+
     if os.path.exists(TEAMS_FILE_LOCAL):
         with open(TEAMS_FILE_LOCAL, "r") as f:
             teams_list = json.load(f)
     else:
         teams_list = {}
-    
+
     teams_active_devices = []
-    
+
     for team_name, team_devices in devices_data.items():
         # Get team member count from teams list
         team_info = teams_list.get(team_name, {})
-        team_members = team_info.get("members", []) if isinstance(team_info, dict) else []
-        
+        team_members = (
+            team_info.get("members", []) if isinstance(team_info, dict) else []
+        )
+
         # Find active device for this team
         active_device = None
         all_devices_count = len(team_devices)
-        
+
         for device in team_devices:
             if isinstance(device, dict) and device.get("is_active"):
                 active_device = {
@@ -806,22 +812,26 @@ async def get_teams_active_devices():
                     "registered_at": device.get("registered_at"),
                 }
                 break
-        
-        teams_active_devices.append({
-            "team_name": team_name,
-            "members_count": len(team_members),
-            "registered_devices_count": all_devices_count,
-            "active_device": active_device,
-            "has_active": active_device is not None
-        })
-    
+
+        teams_active_devices.append(
+            {
+                "team_name": team_name,
+                "members_count": len(team_members),
+                "registered_devices_count": all_devices_count,
+                "active_device": active_device,
+                "has_active": active_device is not None,
+            }
+        )
+
     # Sort by team name
     teams_active_devices.sort(key=lambda x: x["team_name"])
-    
+
     return {
         "teams": teams_active_devices,
         "total_teams": len(teams_active_devices),
-        "teams_with_active_device": len([t for t in teams_active_devices if t["has_active"]])
+        "teams_with_active_device": len(
+            [t for t in teams_active_devices if t["has_active"]]
+        ),
     }
 
 
@@ -1150,10 +1160,10 @@ async def assign_stone(team_name: str, stone: str):
     team.current_streak = 0  # Reset current streak for new stone
     team.current_combo = 1.0  # Reset combo multiplier
     team.timer_started = None  # Reset timer for new stone
-    
+
     # Initialize team-specific powerups based on team name
     powerup_manager.reset_powerups_for_new_stone(team)
-    
+
     save_game_state()
 
     return {
@@ -1165,63 +1175,63 @@ async def assign_stone(team_name: str, stone: str):
 
 # ==================== ADMIN LEADERBOARD ====================
 
+
 @router.get("/leaderboard")
 async def get_admin_leaderboard(sort_by: str = "total_points_earned"):
     """Get leaderboard for admin dashboard (same as attendee leaderboard)"""
     from app.leaderboard_manager import leaderboard_manager
-    
+
     leaderboard = leaderboard_manager.get_leaderboard(game_state.teams, sort_by)
-    
+
     return {
         "leaderboard": leaderboard,
         "sort_by": sort_by,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
 # ==================== DISQUALIFICATION CANDIDATES ====================
 
+
 @router.get("/disqualification-candidates")
 async def get_disqualification_candidates():
     """Get teams that could be disqualified (high tab switches or rule violations)"""
     candidates = []
-    
+
     for team_name, team in game_state.teams.items():
         if team.disqualified:
             continue  # Skip already disqualified teams
-        
+
         # Check for excessive tab switches (more than 3)
         tab_switches = len(team.tab_switches) if team.tab_switches else 0
-        
+
         # Flag teams with high tab switch counts
         violation_reason = None
         violation_score = 0
-        
+
         if tab_switches > 5:
             violation_reason = f"Excessive tab switches ({tab_switches})"
             violation_score = tab_switches
-        
+
         if violation_reason:
-            candidates.append({
-                "team_name": team_name,
-                "members": team.members,
-                "stone": team.stone,
-                "violation_reason": violation_reason,
-                "violation_score": violation_score,
-                "tab_switches": tab_switches,
-                "current_score": calculate_final_score(team)
-            })
-    
+            candidates.append(
+                {
+                    "team_name": team_name,
+                    "members": team.members,
+                    "stone": team.stone,
+                    "violation_reason": violation_reason,
+                    "violation_score": violation_score,
+                    "tab_switches": tab_switches,
+                    "current_score": calculate_final_score(team),
+                }
+            )
+
     # Sort by violation score (highest first)
-    candidates.sort(key=lambda x: x['violation_score'], reverse=True)
-    
-    return {
-        "candidates": candidates,
-        "total_flagged": len(candidates)
-    }
+    candidates.sort(key=lambda x: x["violation_score"], reverse=True)
+
+    return {"candidates": candidates, "total_flagged": len(candidates)}
 
 
 # Load game state on startup
 load_game_state()
 save_game_state()  # Persist auto-assigned stones to file
-

@@ -1,24 +1,24 @@
 from datetime import datetime
 
+from fastapi import APIRouter, HTTPException
+
+from app.achievement_manager import evaluate_achievements, get_badge_details
 from app.config import settings
-from app.dialogue_manager import dialogue_manager
-from app.models import DialogueSubmission, HintRequest, QuestionSubmission, TabSwitchLog
+from app.leaderboard_manager import update_team_stats
+from app.models import HintRequest, QuestionSubmission, TabSwitchLog
 from app.question_manager import question_manager
 from app.routes.admin import game_state, save_game_state
 from app.scoring import (
+    calculate_combo_multiplier,
     calculate_final_score,
     calculate_final_score_questions,
     calculate_question_score,
     calculate_speed_multiplier,
-    calculate_combo_multiplier,
     calculate_total_deductions,
     check_auto_disqualification,
     check_qualification,
 )
-from app.achievement_manager import evaluate_achievements, get_badge_details
-from app.leaderboard_manager import update_team_stats
 from app.timer_manager import timer_manager
-from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
@@ -39,20 +39,20 @@ async def start_team_timer(team_name: str):
     if not team.timer_started:
         start_time = timer_manager.start_team_timer(team_name)
         team.timer_started = start_time
-        
+
         # Initialize team-specific powerups if not already initialized
         if not team.powerups_available:
             powerup_manager.initialize_powerups_for_team(team)
-        
+
         save_game_state()
 
     # Get current elapsed time based on global timer (not team's timer_started)
     elapsed_time = timer_manager.get_team_elapsed_time(team_name)
-    
+
     return {
         "message": "Timer started",
         "timer_started": team.timer_started.isoformat(),
-        "elapsed_time": elapsed_time
+        "elapsed_time": elapsed_time,
     }
 
 
@@ -99,8 +99,6 @@ async def get_team_status(team_name: str):
     }
 
 
-
-
 @router.post("/log-tab-switch")
 async def log_tab_switch(request: TabSwitchLog):
     """Log when a team switches tabs or returns to the game
@@ -113,11 +111,8 @@ async def log_tab_switch(request: TabSwitchLog):
 
     # Do not log tab switches if game has been stopped
     if not game_state.game_active:
-        return {
-            "message": "Game has ended. Tab switch not logged.",
-            "logged": False
-        }
-    
+        return {"message": "Game has ended. Tab switch not logged.", "logged": False}
+
     if request.team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
@@ -206,9 +201,7 @@ async def get_current_question(team_name: str):
     )
 
     if not question:
-        raise HTTPException(
-            status_code=500, detail="Question retrieval error"
-        )
+        raise HTTPException(status_code=500, detail="Question retrieval error")
 
     return {
         "question_id": question["id"],
@@ -232,8 +225,11 @@ async def submit_question(submission: QuestionSubmission):
     try:
         # Block submissions if game has been stopped by admin
         if not game_state.game_active:
-            raise HTTPException(status_code=403, detail="Game has been stopped by admin. No more answers accepted.")
-        
+            raise HTTPException(
+                status_code=403,
+                detail="Game has been stopped by admin. No more answers accepted.",
+            )
+
         if submission.team_name not in game_state.teams:
             raise HTTPException(status_code=404, detail="Team not found")
 
@@ -265,15 +261,15 @@ async def submit_question(submission: QuestionSubmission):
                 "hints_used": 0,
             }
             team.questions_completed.append(question_data)
-            
+
             # Break the streak on wrong answer
             team.current_streak = 0
             team.current_combo = 1.0
-            
+
             # Move to next question anyway (quiz doesn't lock you on wrong answers)
             team.current_question_index += 1
             save_game_state()
-            
+
             return {
                 "correct": False,
                 "message": "Incorrect answer. Moving to next question...",
@@ -287,13 +283,15 @@ async def submit_question(submission: QuestionSubmission):
             }
 
         # Calculate combo multiplier based on speed and previous correct
-        previous_correct = len(team.questions_completed) > 0 and team.questions_completed[-1].get("correct", False)
+        previous_correct = len(
+            team.questions_completed
+        ) > 0 and team.questions_completed[-1].get("correct", False)
         combo_mult = calculate_combo_multiplier(submission.time_taken, previous_correct)
-        
+
         # Update streak on correct answer
         team.current_streak += 1
         team.best_streak = max(team.best_streak, team.current_streak)
-        
+
         # Update combo multiplier (cap at 3x)
         team.current_combo = min(team.current_combo * combo_mult, 3.0)
 
@@ -316,7 +314,7 @@ async def submit_question(submission: QuestionSubmission):
                 elif "Multiplier" in submission.powerup_used:
                     # This one applies to next 3 answers - handled as active effect
                     pass
-            
+
             # Mark powerup as used
             team.powerups_used.append(submission.powerup_used)
             team.powerups_available[submission.powerup_used] = False
@@ -336,36 +334,54 @@ async def submit_question(submission: QuestionSubmission):
 
         # AWARD POWERUPS BASED ON PERFORMANCE
         from app.powerup_manager import powerup_manager
-        
+
         powerups_awarded = []
         team_powerups = powerup_manager.get_team_powerups(submission.team_name)
-        
+
         if len(team_powerups) >= 3:
             powerup_1_id = team_powerups[0]["id"]
             powerup_2_id = team_powerups[1]["id"]
             powerup_3_id = team_powerups[2]["id"]
-            
+
             # Award for lightning speed (< 10 seconds) - Unlock 1st powerup
-            if submission.time_taken < 10 and team.powerups_available.get(powerup_1_id, False) == False and powerup_1_id not in team.powerups_used:
+            if (
+                submission.time_taken < 10
+                and team.powerups_available.get(powerup_1_id, False) == False
+                and powerup_1_id not in team.powerups_used
+            ):
                 team.powerups_available[powerup_1_id] = True
-                powerups_awarded.append(f"{team_powerups[0]['name']} ⚡ (Lightning Speed!)")
-            
+                powerups_awarded.append(
+                    f"{team_powerups[0]['name']} ⚡ (Lightning Speed!)"
+                )
+
             # Award for building a streak (3+ consecutive correct) - Unlock 2nd powerup
-            if team.current_streak >= 3 and team.powerups_available.get(powerup_2_id, False) == False and powerup_2_id not in team.powerups_used:
+            if (
+                team.current_streak >= 3
+                and team.powerups_available.get(powerup_2_id, False) == False
+                and powerup_2_id not in team.powerups_used
+            ):
                 team.powerups_available[powerup_2_id] = True
-                powerups_awarded.append(f"{team_powerups[1]['name']} 🔥 (Streak Unlocked!)")
-            
+                powerups_awarded.append(
+                    f"{team_powerups[1]['name']} 🔥 (Streak Unlocked!)"
+                )
+
             # Award for high combo multiplier (2.0x or higher) - Unlock 3rd powerup
-            if team.current_combo >= 2.0 and team.powerups_available.get(powerup_3_id, False) == False and powerup_3_id not in team.powerups_used:
+            if (
+                team.current_combo >= 2.0
+                and team.powerups_available.get(powerup_3_id, False) == False
+                and powerup_3_id not in team.powerups_used
+            ):
                 team.powerups_available[powerup_3_id] = True
-                powerups_awarded.append(f"{team_powerups[2]['name']} 💫 (Combo Mastery!)")
+                powerups_awarded.append(
+                    f"{team_powerups[2]['name']} 💫 (Combo Mastery!)"
+                )
 
         # Convert team to dict for manager functions (they expect dicts)
         team_dict = team.dict()
         team_dict["questions_completed"] = team.questions_completed
         team_dict["achievements"] = team.achievements
         team_dict["badges_earned"] = team.badges_earned
-        
+
         # Check for achievements
         new_badges = evaluate_achievements(team_dict, question_data)
         # Update badges back to team object
@@ -382,9 +398,12 @@ async def submit_question(submission: QuestionSubmission):
 
         return {
             "correct": True,
-            "message": f"Correct! Question {team.current_question_index} of 10 completed!" + (f" Earned: {', '.join(powerups_awarded)}!" if powerups_awarded else ""),
+            "message": f"Correct! Question {team.current_question_index} of 10 completed!"
+            + (f" Earned: {', '.join(powerups_awarded)}!" if powerups_awarded else ""),
             "score_earned": question_score,
-            "speed_multiplier": calculate_speed_multiplier(submission.time_taken, question["difficulty"]),
+            "speed_multiplier": calculate_speed_multiplier(
+                submission.time_taken, question["difficulty"]
+            ),
             "combo_multiplier": team.current_combo,
             "current_streak": team.current_streak,
             "best_streak": team.best_streak,
@@ -401,6 +420,7 @@ async def submit_question(submission: QuestionSubmission):
     except Exception as e:
         print(f"❌ [ERROR] submit_question failed: {str(e)}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
@@ -409,27 +429,29 @@ async def submit_question(submission: QuestionSubmission):
 async def get_team_powerups(team_name: str):
     """Get powerup information for a team"""
     from app.powerup_manager import powerup_manager
-    
+
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
-    
+
     team = game_state.teams[team_name]
-    
+
     # Get team's powerup definitions
     powerups = powerup_manager.get_team_powerups(team_name)
-    
+
     # Build response with powerup details
     powerup_details = []
     for powerup in powerups:
-        powerup_details.append({
-            "id": powerup["id"],
-            "name": powerup["name"],
-            "description": powerup["description"],
-            "effect": powerup["effect"],
-            "available": team.powerups_available.get(powerup["id"], False),
-            "used": powerup["id"] in team.powerups_used,
-        })
-    
+        powerup_details.append(
+            {
+                "id": powerup["id"],
+                "name": powerup["name"],
+                "description": powerup["description"],
+                "effect": powerup["effect"],
+                "available": team.powerups_available.get(powerup["id"], False),
+                "used": powerup["id"] in team.powerups_used,
+            }
+        )
+
     return {
         "team_name": team_name,
         "powerups": powerup_details,
@@ -437,7 +459,7 @@ async def get_team_powerups(team_name: str):
 
 
 @router.post("/request-hint-question")
-async def request_hint_question(request:HintRequest):
+async def request_hint_question(request: HintRequest):
     """Request a hint for current question (max 3 per session)"""
 
     if request.team_name not in game_state.teams:
@@ -447,8 +469,7 @@ async def request_hint_question(request:HintRequest):
 
     if team.hints_used_count >= 3:
         raise HTTPException(
-            status_code=400,
-            detail="Maximum hints (3) already used for this session"
+            status_code=400, detail="Maximum hints (3) already used for this session"
         )
 
     # Get the question
@@ -489,7 +510,9 @@ async def certainty_check(team_name: str, question_id: str, submitted_answer: st
         raise HTTPException(status_code=400, detail="Certainty Check already used")
 
     # Get feedback on answer
-    feedback = question_manager.get_answer_quality_feedback(question_id, submitted_answer)
+    feedback = question_manager.get_answer_quality_feedback(
+        question_id, submitted_answer
+    )
 
     return {
         "feedback": feedback,
@@ -541,10 +564,7 @@ async def get_team_badges(team_name: str):
     team = game_state.teams[team_name]
 
     badge_details = [
-        {
-            "id": badge_id,
-            "details": get_badge_details(badge_id)
-        }
+        {"id": badge_id, "details": get_badge_details(badge_id)}
         for badge_id in team.badges_earned
     ]
 
@@ -561,11 +581,11 @@ async def get_team_badges(team_name: str):
 @router.get("/leaderboard")
 async def get_leaderboard(sort_by: str = "total_points_earned"):
     """Get full leaderboard with team rankings"""
-    
+
     from app.leaderboard_manager import get_leaderboard
-    
+
     leaderboard = get_leaderboard(game_state.teams, sort_by)
-    
+
     return {
         "leaderboard": leaderboard,
         "sort_by": sort_by,
@@ -576,24 +596,23 @@ async def get_leaderboard(sort_by: str = "total_points_earned"):
 @router.get("/team-rank/{team_name}")
 async def get_team_rank(team_name: str, sort_by: str = "total_points_earned"):
     """Get a specific team's rank and nearby teams"""
-    
+
     from app.leaderboard_manager import get_team_rank
-    
+
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
-    
+
     rank_data = get_team_rank(game_state.teams, team_name, sort_by)
-    
+
     return rank_data
 
 
 @router.get("/leaderboard-stats")
 async def get_leaderboard_stats():
     """Get overall leaderboard statistics"""
-    
-    from app.leaderboard_manager import get_stats_comparison
-    
-    stats = get_stats_comparison(game_state.teams)
-    
-    return stats
 
+    from app.leaderboard_manager import get_stats_comparison
+
+    stats = get_stats_comparison(game_state.teams)
+
+    return stats

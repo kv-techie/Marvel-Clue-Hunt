@@ -52,7 +52,9 @@ class QuestionManager:
         """Get a specific question by ID"""
         return self.all_questions.get(question_id)
 
-    def get_current_question(self, stone_name: str, question_index: int) -> Optional[Dict]:
+    def get_current_question(
+        self, stone_name: str, question_index: int
+    ) -> Optional[Dict]:
         """Get the current question for a team (by index number)"""
         questions = self.get_questions_for_stone(stone_name)
         if 0 <= question_index < len(questions):
@@ -150,7 +152,11 @@ class QuestionManager:
         """
         question = self.get_question(question_id)
         if not question:
-            return {"match_level": "low", "similarity_percent": 0, "feedback": "Unknown question"}
+            return {
+                "match_level": "low",
+                "similarity_percent": 0,
+                "feedback": "Unknown question",
+            }
 
         similarity = self.get_answer_similarity(question_id, submitted_answer)
         similarity_percent = int(similarity * 100)
@@ -179,7 +185,5 @@ class QuestionManager:
 
 
 # Singleton instance
-_questions_file = os.path.join(
-    os.path.dirname(__file__), "data", "questions.json"
-)
+_questions_file = os.path.join(os.path.dirname(__file__), "data", "questions.json")
 question_manager = QuestionManager(_questions_file)

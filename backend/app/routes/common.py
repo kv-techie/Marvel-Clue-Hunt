@@ -2,22 +2,23 @@ import json
 import os
 from datetime import datetime
 
-from app.models import LoginRequest, LoginResponse
 from fastapi import APIRouter, HTTPException
+
+from app.models import LoginRequest, LoginResponse
 
 router = APIRouter()
 
 # Get absolute path to data directory (works from any working directory)
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(APP_DIR, 'data')
+DATA_DIR = os.path.join(APP_DIR, "data")
 
-TEAMS_FILE = os.path.join(DATA_DIR, 'teams.json')
-ADMIN_WHITELIST_FILE = os.path.join(DATA_DIR, 'admin_whitelist.json')
-VOLUNTEER_WHITELIST_FILE = os.path.join(DATA_DIR, 'volunteer_whitelist.json')
-DEVICES_FILE = os.path.join(DATA_DIR, 'devices.json')
-GAME_STATE_FILE = os.path.join(DATA_DIR, 'game_state.json')
-ADMIN_CREDENTIALS_FILE = os.path.join(DATA_DIR, 'admin_credentials.json')
-VOLUNTEER_CREDENTIALS_FILE = os.path.join(DATA_DIR, 'volunteer_credentials.json')
+TEAMS_FILE = os.path.join(DATA_DIR, "teams.json")
+ADMIN_WHITELIST_FILE = os.path.join(DATA_DIR, "admin_whitelist.json")
+VOLUNTEER_WHITELIST_FILE = os.path.join(DATA_DIR, "volunteer_whitelist.json")
+DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
+GAME_STATE_FILE = os.path.join(DATA_DIR, "game_state.json")
+ADMIN_CREDENTIALS_FILE = os.path.join(DATA_DIR, "admin_credentials.json")
+VOLUNTEER_CREDENTIALS_FILE = os.path.join(DATA_DIR, "volunteer_credentials.json")
 
 
 def load_admin_credentials():
@@ -477,12 +478,16 @@ async def login(request: LoginRequest):
             device["is_active"] = False
 
         # Activate the current device
-        updated_device = _update_device_entry(matched_device, request, match_type, is_active=True)
+        updated_device = _update_device_entry(
+            matched_device, request, match_type, is_active=True
+        )
         team_devices[device_idx] = updated_device
         devices[team_name] = team_devices
         _save_devices(devices)
 
-        print(f"[DEVICE] Device {request.device_id} activated for {team_name}. Other devices deactivated.")
+        print(
+            f"[DEVICE] Device {request.device_id} activated for {team_name}. Other devices deactivated."
+        )
 
         return LoginResponse(
             success=True,
@@ -503,18 +508,20 @@ async def login(request: LoginRequest):
 
     # Register new device with metadata
     print(f"[DEVICE] Registering new device for {team_name}")
-    
+
     # Deactivate all other devices for this team (enforce single active device)
     for device in team_devices:
         device["is_active"] = False
-    
+
     device_entry = _create_device_entry(request, is_active=True)
 
     team_devices.append(device_entry)
     devices[team_name] = team_devices
     _save_devices(devices)
 
-    print(f"[DEVICE] Device {request.device_id} registered and activated for {team_name}. Other devices deactivated.")
+    print(
+        f"[DEVICE] Device {request.device_id} registered and activated for {team_name}. Other devices deactivated."
+    )
 
     return LoginResponse(
         success=True,
