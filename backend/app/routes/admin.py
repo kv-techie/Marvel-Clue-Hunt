@@ -46,8 +46,10 @@ def load_game_state():
     """Load game state from file"""
     global game_state
     if os.path.exists(GAME_STATE_FILE):
-        with open(GAME_STATE_FILE, "r") as f:
-            data = json.load(f)
+        try:
+            with open(GAME_STATE_FILE, "r") as f:
+                data = json.load(f)
+
             print(
                 f"📄 Raw JSON - Mind Stone stone: {data.get('teams', {}).get('Mind Stone', {}).get('stone')}"
             )
@@ -71,6 +73,12 @@ def load_game_state():
                 timer_manager.restore_from_game_state(data)
             except Exception as e:
                 print(f"⚠️  Timer restoration error: {e}")
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            print(
+                f"⚠️  Invalid game state file at {os.path.abspath(GAME_STATE_FILE)}: {e}. Reinitializing with empty state."
+            )
+            game_state = GameState()
+            save_game_state()
     else:
         print(f"⚠️  Game state file not found at: {os.path.abspath(GAME_STATE_FILE)}")
 
