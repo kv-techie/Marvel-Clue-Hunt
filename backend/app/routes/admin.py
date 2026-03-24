@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from contextlib import contextmanager
 from datetime import datetime
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -20,6 +21,7 @@ from app.scoring import (
     check_auto_disqualification,
     get_leaderboard,
 )
+from app.state_io import atomic_write_json, state_write_lock
 from app.team_allocator import (
     allocate_teams_from_files as allocate_teams,
 )
@@ -78,6 +80,12 @@ VOLUNTEER_CREDENTIALS_FILE = _state_file("volunteer_credentials.json")
 game_state: GameState = GameState()
 
 
+@contextmanager
+def game_state_write_lock():
+    with state_write_lock():
+        yield
+
+
 def load_game_state():
     """Load game state from file"""
     global game_state
@@ -121,9 +129,7 @@ def load_game_state():
 
 def save_game_state():
     """Save game state to file"""
-    os.makedirs(os.path.dirname(GAME_STATE_FILE), exist_ok=True)
-    with open(GAME_STATE_FILE, "w") as f:
-        json.dump(game_state.dict(), f, default=str, indent=2)
+    atomic_write_json(GAME_STATE_FILE, game_state.dict(), default=str, indent=2)
     print(f"💾 Saved game state to: {os.path.abspath(GAME_STATE_FILE)}")
 
 
@@ -137,9 +143,7 @@ def load_admin_whitelist():
 
 def save_admin_whitelist(admins: list):
     """Save admin whitelist to file"""
-    os.makedirs(os.path.dirname(ADMIN_WHITELIST_FILE), exist_ok=True)
-    with open(ADMIN_WHITELIST_FILE, "w") as f:
-        json.dump({"admins": admins}, f, indent=2)
+    atomic_write_json(ADMIN_WHITELIST_FILE, {"admins": admins}, indent=2)
 
 
 def load_volunteer_whitelist():
@@ -152,9 +156,7 @@ def load_volunteer_whitelist():
 
 def save_volunteer_whitelist(volunteers: list):
     """Save volunteer whitelist to file"""
-    os.makedirs(os.path.dirname(VOLUNTEER_WHITELIST_FILE), exist_ok=True)
-    with open(VOLUNTEER_WHITELIST_FILE, "w") as f:
-        json.dump({"volunteers": volunteers}, f, indent=2)
+    atomic_write_json(VOLUNTEER_WHITELIST_FILE, {"volunteers": volunteers}, indent=2)
 
 
 def load_admin_credentials():
@@ -167,9 +169,7 @@ def load_admin_credentials():
 
 def save_admin_credentials(credentials: dict):
     """Save admin credentials to dedicated file"""
-    os.makedirs(os.path.dirname(ADMIN_CREDENTIALS_FILE), exist_ok=True)
-    with open(ADMIN_CREDENTIALS_FILE, "w") as f:
-        json.dump(credentials, f, indent=2)
+    atomic_write_json(ADMIN_CREDENTIALS_FILE, credentials, indent=2)
     print(f"💾 Saved {len(credentials)} admin credentials")
 
 
@@ -183,9 +183,7 @@ def load_volunteer_credentials():
 
 def save_volunteer_credentials(credentials: dict):
     """Save volunteer credentials to dedicated file"""
-    os.makedirs(os.path.dirname(VOLUNTEER_CREDENTIALS_FILE), exist_ok=True)
-    with open(VOLUNTEER_CREDENTIALS_FILE, "w") as f:
-        json.dump(credentials, f, indent=2)
+    atomic_write_json(VOLUNTEER_CREDENTIALS_FILE, credentials, indent=2)
     print(f"💾 Saved {len(credentials)} volunteer credentials")
 
 
@@ -265,8 +263,7 @@ async def allocate_teams_random(file: UploadFile = File(...)):
 
         # Save teams to file
         os.makedirs(os.path.dirname(TEAMS_FILE), exist_ok=True)
-        with open(TEAMS_FILE, "w", encoding="utf-8") as f:
-            json.dump(teams, f, indent=2, ensure_ascii=False)
+        atomic_write_json(TEAMS_FILE, teams, indent=2, ensure_ascii=False)
 
         # Initialize game state with teams
         game_state.teams = {}
@@ -424,8 +421,9 @@ async def upload_teams_and_attendees(
                 "character": character,
             }
 
-        with open(TEAMS_FILE, "w") as f:
-            json.dump(teams_with_character, f, indent=2, ensure_ascii=False)
+        atomic_write_json(
+            TEAMS_FILE, teams_with_character, indent=2, ensure_ascii=False
+        )
         print(f"💾 Saved teams to: {os.path.abspath(TEAMS_FILE)}")
 
         # Initialize game state with teams
@@ -781,33 +779,32 @@ async def remove_device(team_name: str, device_id: str):
     else:
         devices = {}
 
-    team_devices = devices.get(team_name, [])
+    with state_write_lock():
+        team_devices = devices.get(team_name, [])
 
-    # Find device by checking device_id field in each device object
-    device_found = False
-    updated_devices = []
+        # Find device by checking device_id field in each device object
+        device_found = False
+        updated_devices = []
 
-    for device in team_devices:
-        # Handle both old format (string) and new format (dict)
-        if isinstance(device, str):
-            if device != device_id:
-                updated_devices.append(device)
-            else:
-                device_found = True
-        elif isinstance(device, dict):
-            if device.get("device_id") != device_id:
-                updated_devices.append(device)
-            else:
-                device_found = True
+        for device in team_devices:
+            # Handle both old format (string) and new format (dict)
+            if isinstance(device, str):
+                if device != device_id:
+                    updated_devices.append(device)
+                else:
+                    device_found = True
+            elif isinstance(device, dict):
+                if device.get("device_id") != device_id:
+                    updated_devices.append(device)
+                else:
+                    device_found = True
 
-    if not device_found:
-        raise HTTPException(status_code=404, detail="Device not found for team")
+        if not device_found:
+            raise HTTPException(status_code=404, detail="Device not found for team")
 
-    devices[team_name] = updated_devices
+        devices[team_name] = updated_devices
 
-    os.makedirs(os.path.dirname(DEVICES_FILE), exist_ok=True)
-    with open(DEVICES_FILE, "w") as f:
-        json.dump(devices, f, indent=2)
+        atomic_write_json(DEVICES_FILE, devices, indent=2)
 
     print(f"🗑️  Removed device {device_id} from {team_name}")
     return {"message": f"Device removed from {team_name}", "devices": updated_devices}
@@ -834,9 +831,8 @@ async def get_teams_active_devices():
         for stale_team_name in stale_team_names:
             devices_data.pop(stale_team_name, None)
 
-        os.makedirs(os.path.dirname(DEVICES_FILE), exist_ok=True)
-        with open(DEVICES_FILE, "w") as f:
-            json.dump(devices_data, f, indent=2)
+        with state_write_lock():
+            atomic_write_json(DEVICES_FILE, devices_data, indent=2)
 
         print(f"🧹 Pruned stale teams from devices.json: {stale_team_names}")
 
@@ -947,26 +943,27 @@ async def adjust_points(
     if not request.reason.strip():
         raise HTTPException(status_code=400, detail="Reason is required")
 
-    team = game_state.teams[team_name]
+    with game_state_write_lock():
+        team = game_state.teams[team_name]
 
-    # Create adjustment record
-    adjustment = PointAdjustment(
-        timestamp=datetime.now(),
-        adjusted_by=adjusted_by,
-        amount=request.amount,
-        reason=request.reason.strip(),
-        adjustment_type=request.adjustment_type,
-    )
+        # Create adjustment record
+        adjustment = PointAdjustment(
+            timestamp=datetime.now(),
+            adjusted_by=adjusted_by,
+            amount=request.amount,
+            reason=request.reason.strip(),
+            adjustment_type=request.adjustment_type,
+        )
 
-    team.manual_adjustments.append(adjustment)
+        team.manual_adjustments.append(adjustment)
 
-    # Check if team should be auto-disqualified
-    if not team.disqualified and check_auto_disqualification(team):
-        team.disqualified = True
-        team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
-        team.disqualification_timestamp = datetime.now()
+        # Check if team should be auto-disqualified
+        if not team.disqualified and check_auto_disqualification(team):
+            team.disqualified = True
+            team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
+            team.disqualification_timestamp = datetime.now()
 
-    save_game_state()
+        save_game_state()
 
     return {
         "message": f"{request.adjustment_type.capitalize()} of {request.amount} points applied to {team_name}",
@@ -1113,20 +1110,21 @@ async def confirm_disqualification(team_name: str, confirmed_by: str):
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    team = game_state.teams[team_name]
+    with game_state_write_lock():
+        team = game_state.teams[team_name]
 
-    if team.disqualified and team.disqualification_confirmed_by_admin:
-        raise HTTPException(
-            status_code=400, detail="Team already disqualified and confirmed"
-        )
+        if team.disqualified and team.disqualification_confirmed_by_admin:
+            raise HTTPException(
+                status_code=400, detail="Team already disqualified and confirmed"
+            )
 
-    from app.scoring import calculate_total_deductions
+        from app.scoring import calculate_total_deductions
 
-    team.disqualified = True
-    team.disqualification_confirmed_by_admin = True
-    team.disqualification_timestamp = datetime.now()
-    team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
-    save_game_state()
+        team.disqualified = True
+        team.disqualification_confirmed_by_admin = True
+        team.disqualification_timestamp = datetime.now()
+        team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
+        save_game_state()
 
     return {
         "message": f"{team_name} has been disqualified",
@@ -1145,18 +1143,19 @@ async def team_acknowledge_disqualification(team_name: str):
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    team = game_state.teams[team_name]
+    with game_state_write_lock():
+        team = game_state.teams[team_name]
 
-    if not team.disqualified:
-        raise HTTPException(status_code=400, detail="Team is not disqualified")
+        if not team.disqualified:
+            raise HTTPException(status_code=400, detail="Team is not disqualified")
 
-    if team.disqualification_acknowledged_by_team:
-        raise HTTPException(
-            status_code=400, detail="Team already acknowledged disqualification"
-        )
+        if team.disqualification_acknowledged_by_team:
+            raise HTTPException(
+                status_code=400, detail="Team already acknowledged disqualification"
+            )
 
-    team.disqualification_acknowledged_by_team = True
-    save_game_state()
+        team.disqualification_acknowledged_by_team = True
+        save_game_state()
 
     return {
         "message": f"{team_name} has acknowledged disqualification",
@@ -1171,18 +1170,19 @@ async def reverse_disqualification(team_name: str, reversed_by: str):
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    team = game_state.teams[team_name]
+    with game_state_write_lock():
+        team = game_state.teams[team_name]
 
-    if not team.disqualified:
-        raise HTTPException(status_code=400, detail="Team is not disqualified")
+        if not team.disqualified:
+            raise HTTPException(status_code=400, detail="Team is not disqualified")
 
-    # Reverse the disqualification
-    team.disqualified = False
-    team.disqualification_confirmed_by_admin = False
-    team.disqualification_acknowledged_by_team = False
-    team.disqualification_reason = None
-    team.disqualification_timestamp = None
-    save_game_state()
+        # Reverse the disqualification
+        team.disqualified = False
+        team.disqualification_confirmed_by_admin = False
+        team.disqualification_acknowledged_by_team = False
+        team.disqualification_reason = None
+        team.disqualification_timestamp = None
+        save_game_state()
 
     return {
         "message": f"Disqualification reversed for {team_name}",
@@ -1204,17 +1204,18 @@ async def assign_stone(team_name: str, stone: str):
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    team = game_state.teams[team_name]
-    team.stone = stone
-    team.current_question_index = 0  # Reset question progress for new stone
-    team.current_streak = 0  # Reset current streak for new stone
-    team.current_combo = 1.0  # Reset combo multiplier
-    team.timer_started = None  # Reset timer for new stone
+    with game_state_write_lock():
+        team = game_state.teams[team_name]
+        team.stone = stone
+        team.current_question_index = 0  # Reset question progress for new stone
+        team.current_streak = 0  # Reset current streak for new stone
+        team.current_combo = 1.0  # Reset combo multiplier
+        team.timer_started = None  # Reset timer for new stone
 
-    # Initialize team-specific powerups based on team name
-    powerup_manager.reset_powerups_for_new_stone(team)
+        # Initialize team-specific powerups based on team name
+        powerup_manager.reset_powerups_for_new_stone(team)
 
-    save_game_state()
+        save_game_state()
 
     return {
         "message": f"Assigned {stone} to {team_name}. Streak and powerups reset for this stone!",

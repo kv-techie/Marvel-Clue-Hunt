@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
@@ -7,7 +8,7 @@ from app.config import settings
 from app.leaderboard_manager import update_team_stats
 from app.models import HintRequest, QuestionSubmission, TabSwitchLog
 from app.question_manager import question_manager
-from app.routes.admin import game_state, save_game_state
+from app.routes.admin import game_state, game_state_write_lock, save_game_state
 from app.scoring import (
     calculate_combo_multiplier,
     calculate_final_score,
@@ -30,6 +31,59 @@ INFINITY_STONES = [
     "Reality Stone",
     "Soul Stone",
 ]
+
+MAX_TIME_TAKEN_SECONDS = 3600
+MIN_TIME_TAKEN_SECONDS = 1
+CLIENT_SERVER_TIME_DELTA_WARN_SECONDS = 5
+
+
+def _get_elapsed_seconds(team_name: str, team) -> int:
+    elapsed = timer_manager.get_team_elapsed_time(team_name)
+    if elapsed > 0:
+        return elapsed
+
+    start = team.timer_started
+    if isinstance(start, str):
+        try:
+            start = datetime.fromisoformat(start)
+        except Exception:
+            start = None
+
+    if isinstance(start, datetime):
+        return max(0, int((datetime.now() - start).total_seconds()))
+
+    return 0
+
+
+def _get_authoritative_time_taken(team_name: str, team, client_time_taken: int) -> int:
+    elapsed = _get_elapsed_seconds(team_name, team)
+    consumed = sum((q.get("time_taken", 0) for q in team.questions_completed), 0)
+
+    server_time_taken = max(
+        MIN_TIME_TAKEN_SECONDS,
+        elapsed - consumed,
+    )
+    server_time_taken = min(server_time_taken, MAX_TIME_TAKEN_SECONDS)
+
+    if client_time_taken < 0 or client_time_taken > MAX_TIME_TAKEN_SECONDS:
+        logging.warning(
+            "Invalid client time_taken for %s: %s. Using server=%s",
+            team_name,
+            client_time_taken,
+            server_time_taken,
+        )
+    elif (
+        abs(client_time_taken - server_time_taken)
+        >= CLIENT_SERVER_TIME_DELTA_WARN_SECONDS
+    ):
+        logging.info(
+            "Client/server time delta for %s: client=%s server=%s",
+            team_name,
+            client_time_taken,
+            server_time_taken,
+        )
+
+    return server_time_taken
 
 
 @router.post("/start-timer/{team_name}")
@@ -125,50 +179,52 @@ async def log_tab_switch(request: TabSwitchLog):
     if request.team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    team = game_state.teams[request.team_name]
+    with game_state_write_lock():
+        team = game_state.teams[request.team_name]
 
-    # Initialize tab_switch_logs if not present
-    if not hasattr(team, "tab_switch_logs") or team.tab_switch_logs is None:
-        team.tab_switch_logs = []
+        # Initialize tab_switch_logs if not present
+        if not hasattr(team, "tab_switch_logs") or team.tab_switch_logs is None:
+            team.tab_switch_logs = []
 
-    # Only count "tab_left" as switches for deduction purposes
-    if request.event_type == "tab_left":
-        total_switches = (
-            len([e for e in team.tab_switch_logs if e["event_type"] == "tab_left"]) + 1
+        # Only count "tab_left" as switches for deduction purposes
+        if request.event_type == "tab_left":
+            total_switches = (
+                len([e for e in team.tab_switch_logs if e["event_type"] == "tab_left"])
+                + 1
+            )
+
+            # Apply deduction if beyond 3 switches
+            deduction = 0
+            if total_switches > 3:
+                deduction = 50
+                # Create a point adjustment for this switch
+                adjustment = {
+                    "timestamp": request.timestamp.isoformat(),
+                    "adjusted_by": "SYSTEM",
+                    "amount": -deduction,
+                    "reason": f"Tab switch violation #{total_switches}",
+                    "adjustment_type": "deduct",
+                }
+                team.manual_adjustments.append(adjustment)
+
+        # Log the tab switch event
+        log_entry = {
+            "timestamp": request.timestamp.isoformat(),
+            "event_type": request.event_type,
+        }
+
+        team.tab_switch_logs.append(log_entry)
+        save_game_state()
+
+        total_left_switches = len(
+            [e for e in team.tab_switch_logs if e["event_type"] == "tab_left"]
         )
-
-        # Apply deduction if beyond 3 switches
-        deduction = 0
-        if total_switches > 3:
-            deduction = 50
-            # Create a point adjustment for this switch
-            adjustment = {
-                "timestamp": request.timestamp.isoformat(),
-                "adjusted_by": "SYSTEM",
-                "amount": -deduction,
-                "reason": f"Tab switch violation #{total_switches}",
-                "adjustment_type": "deduct",
-            }
-            team.manual_adjustments.append(adjustment)
-
-    # Log the tab switch event
-    log_entry = {
-        "timestamp": request.timestamp.isoformat(),
-        "event_type": request.event_type,
-    }
-
-    team.tab_switch_logs.append(log_entry)
-    save_game_state()
-
-    total_left_switches = len(
-        [e for e in team.tab_switch_logs if e["event_type"] == "tab_left"]
-    )
-    switches_remaining = max(0, 3 - total_left_switches)
-    total_deductions = sum(
-        adj["amount"]
-        for adj in team.manual_adjustments
-        if "Tab switch violation" in adj.get("reason", "")
-    )
+        switches_remaining = max(0, 3 - total_left_switches)
+        total_deductions = sum(
+            adj["amount"]
+            for adj in team.manual_adjustments
+            if "Tab switch violation" in adj.get("reason", "")
+        )
 
     return {
         "message": f"Tab switch event logged: {request.event_type}",
@@ -257,178 +313,196 @@ async def submit_question(submission: QuestionSubmission):
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
 
-        # Check if answer is correct
-        is_correct = question_manager.validate_answer(
-            submission.question_id, submission.answer
-        )
+        with game_state_write_lock():
+            team = game_state.teams[submission.team_name]
+            authoritative_time_taken = _get_authoritative_time_taken(
+                submission.team_name, team, submission.time_taken
+            )
 
-        if not is_correct:
-            # Store the wrong answer (still counts as attempted)
+            # Check if answer is correct
+            is_correct = question_manager.validate_answer(
+                submission.question_id, submission.answer
+            )
+
+            if not is_correct:
+                # Store the wrong answer (still counts as attempted)
+                question_data = {
+                    "question_id": submission.question_id,
+                    "question_index": team.current_question_index,
+                    "correct": False,
+                    "time_taken": authoritative_time_taken,
+                    "points": 0,
+                    "combo_multiplier": 1.0,
+                    "powerup_used": submission.powerup_used,
+                    "hints_used": 0,
+                }
+                team.questions_completed.append(question_data)
+
+                # Break the streak on wrong answer
+                team.current_streak = 0
+                team.current_combo = 1.0
+
+                # Move to next question anyway (quiz doesn't lock you on wrong answers)
+                team.current_question_index += 1
+                save_game_state()
+
+                return {
+                    "correct": False,
+                    "message": "Incorrect answer. Moving to next question...",
+                    "current_question_index": team.current_question_index,
+                    "questions_completed": team.current_question_index,
+                    "next_question_ready": team.current_question_index < 10,
+                    "powerup_used": submission.powerup_used,
+                    "streak_broken": True,
+                    "current_streak": team.current_streak,
+                    "current_total_score": calculate_final_score_questions(team),
+                    "time_taken_used": authoritative_time_taken,
+                    "client_time_taken": submission.time_taken,
+                }
+
+            # Calculate combo multiplier based on speed and previous correct
+            previous_correct = len(
+                team.questions_completed
+            ) > 0 and team.questions_completed[-1].get("correct", False)
+            combo_mult = calculate_combo_multiplier(
+                authoritative_time_taken, previous_correct
+            )
+
+            # Update streak on correct answer
+            team.current_streak += 1
+            team.best_streak = max(team.best_streak, team.current_streak)
+
+            # Update combo multiplier (cap at 3x)
+            team.current_combo = min(team.current_combo * combo_mult, 3.0)
+
+            # Calculate score with speed multiplier and combo
+            question_score = calculate_question_score(
+                base_points=question["base_points"],
+                time_taken=authoritative_time_taken,
+                difficulty=question["difficulty"],
+                hints_used=0,  # Hint deductions handled separately
+                combo_multiplier=team.current_combo,
+            )
+
+            # Apply powerup bonus if used
+            if submission.powerup_used:
+                if "Power" in submission.powerup_used:  # Power Stone powerups
+                    if "Surge" in submission.powerup_used:
+                        question_score *= 2  # 2x points
+                    elif "Jeopardy" in submission.powerup_used:
+                        question_score *= 2  # 2x points (risk/reward)
+                    elif "Multiplier" in submission.powerup_used:
+                        # This one applies to next 3 answers - handled as active effect
+                        pass
+
+                # Mark powerup as used
+                team.powerups_used.append(submission.powerup_used)
+                team.powerups_available[submission.powerup_used] = False
+
+            # Store completed question
             question_data = {
                 "question_id": submission.question_id,
                 "question_index": team.current_question_index,
-                "correct": False,
-                "time_taken": submission.time_taken,
-                "points": 0,
-                "combo_multiplier": 1.0,
+                "correct": True,
+                "time_taken": authoritative_time_taken,
+                "points": question_score,
+                "combo_multiplier": team.current_combo,
                 "powerup_used": submission.powerup_used,
                 "hints_used": 0,
             }
             team.questions_completed.append(question_data)
 
-            # Break the streak on wrong answer
-            team.current_streak = 0
-            team.current_combo = 1.0
+            # AWARD POWERUPS BASED ON PERFORMANCE
+            from app.powerup_manager import powerup_manager
 
-            # Move to next question anyway (quiz doesn't lock you on wrong answers)
+            powerups_awarded = []
+            team_powerups = powerup_manager.get_team_powerups(submission.team_name)
+
+            if len(team_powerups) >= 3:
+                powerup_1_id = team_powerups[0]["id"]
+                powerup_2_id = team_powerups[1]["id"]
+                powerup_3_id = team_powerups[2]["id"]
+
+                # Award for lightning speed (< 10 seconds) - Unlock 1st powerup
+                if (
+                    authoritative_time_taken < 10
+                    and not team.powerups_available.get(powerup_1_id, False)
+                    and powerup_1_id not in team.powerups_used
+                ):
+                    team.powerups_available[powerup_1_id] = True
+                    powerups_awarded.append(
+                        f"{team_powerups[0]['name']} ⚡ (Lightning Speed!)"
+                    )
+
+                # Award for building a streak (3+ consecutive correct) - Unlock 2nd powerup
+                if (
+                    team.current_streak >= 3
+                    and not team.powerups_available.get(powerup_2_id, False)
+                    and powerup_2_id not in team.powerups_used
+                ):
+                    team.powerups_available[powerup_2_id] = True
+                    powerups_awarded.append(
+                        f"{team_powerups[1]['name']} 🔥 (Streak Unlocked!)"
+                    )
+
+                # Award for high combo multiplier (2.0x or higher) - Unlock 3rd powerup
+                if (
+                    team.current_combo >= 2.0
+                    and not team.powerups_available.get(powerup_3_id, False)
+                    and powerup_3_id not in team.powerups_used
+                ):
+                    team.powerups_available[powerup_3_id] = True
+                    powerups_awarded.append(
+                        f"{team_powerups[2]['name']} 💫 (Combo Mastery!)"
+                    )
+
+            # Convert team to dict for manager functions (they expect dicts)
+            team_dict = team.dict()
+            team_dict["questions_completed"] = team.questions_completed
+            team_dict["achievements"] = team.achievements
+            team_dict["badges_earned"] = team.badges_earned
+
+            # Check for achievements
+            new_badges = evaluate_achievements(team_dict, question_data)
+            # Update badges back to team object
+            team.badges_earned = team_dict.get("badges_earned", [])
+            team.achievements = team_dict.get("achievements", {})
+            badge_details = [
+                {"id": b, "data": get_badge_details(b)} for b in new_badges
+            ]
+
+            # Update team stats for leaderboard (now works with both dict and Pydantic)
+            update_team_stats(team)
+
+            # Move to next question
             team.current_question_index += 1
             save_game_state()
 
             return {
-                "correct": False,
-                "message": "Incorrect answer. Moving to next question...",
-                "current_question_index": team.current_question_index,
+                "correct": True,
+                "message": f"Correct! Question {team.current_question_index} of 10 completed!"
+                + (
+                    f" Earned: {', '.join(powerups_awarded)}!"
+                    if powerups_awarded
+                    else ""
+                ),
+                "score_earned": question_score,
+                "speed_multiplier": calculate_speed_multiplier(
+                    authoritative_time_taken, question["difficulty"]
+                ),
+                "combo_multiplier": team.current_combo,
+                "current_streak": team.current_streak,
+                "best_streak": team.best_streak,
+                "current_total_score": calculate_final_score_questions(team),
                 "questions_completed": team.current_question_index,
                 "next_question_ready": team.current_question_index < 10,
-                "powerup_used": submission.powerup_used,
-                "streak_broken": True,
-                "current_streak": team.current_streak,
-                "current_total_score": calculate_final_score_questions(team),
+                "badges_earned": badge_details,
+                "all_badges": team.badges_earned,
+                "powerups_awarded": powerups_awarded,
+                "powerups_available": team.powerups_available,
+                "time_taken_used": authoritative_time_taken,
+                "client_time_taken": submission.time_taken,
             }
-
-        # Calculate combo multiplier based on speed and previous correct
-        previous_correct = len(
-            team.questions_completed
-        ) > 0 and team.questions_completed[-1].get("correct", False)
-        combo_mult = calculate_combo_multiplier(submission.time_taken, previous_correct)
-
-        # Update streak on correct answer
-        team.current_streak += 1
-        team.best_streak = max(team.best_streak, team.current_streak)
-
-        # Update combo multiplier (cap at 3x)
-        team.current_combo = min(team.current_combo * combo_mult, 3.0)
-
-        # Calculate score with speed multiplier and combo
-        question_score = calculate_question_score(
-            base_points=question["base_points"],
-            time_taken=submission.time_taken,
-            difficulty=question["difficulty"],
-            hints_used=0,  # Hint deductions handled separately
-            combo_multiplier=team.current_combo,
-        )
-
-        # Apply powerup bonus if used
-        if submission.powerup_used:
-            if "Power" in submission.powerup_used:  # Power Stone powerups
-                if "Surge" in submission.powerup_used:
-                    question_score *= 2  # 2x points
-                elif "Jeopardy" in submission.powerup_used:
-                    question_score *= 2  # 2x points (risk/reward)
-                elif "Multiplier" in submission.powerup_used:
-                    # This one applies to next 3 answers - handled as active effect
-                    pass
-
-            # Mark powerup as used
-            team.powerups_used.append(submission.powerup_used)
-            team.powerups_available[submission.powerup_used] = False
-
-        # Store completed question
-        question_data = {
-            "question_id": submission.question_id,
-            "question_index": team.current_question_index,
-            "correct": True,
-            "time_taken": submission.time_taken,
-            "points": question_score,
-            "combo_multiplier": team.current_combo,
-            "powerup_used": submission.powerup_used,
-            "hints_used": 0,
-        }
-        team.questions_completed.append(question_data)
-
-        # AWARD POWERUPS BASED ON PERFORMANCE
-        from app.powerup_manager import powerup_manager
-
-        powerups_awarded = []
-        team_powerups = powerup_manager.get_team_powerups(submission.team_name)
-
-        if len(team_powerups) >= 3:
-            powerup_1_id = team_powerups[0]["id"]
-            powerup_2_id = team_powerups[1]["id"]
-            powerup_3_id = team_powerups[2]["id"]
-
-            # Award for lightning speed (< 10 seconds) - Unlock 1st powerup
-            if (
-                submission.time_taken < 10
-                and team.powerups_available.get(powerup_1_id, False) == False
-                and powerup_1_id not in team.powerups_used
-            ):
-                team.powerups_available[powerup_1_id] = True
-                powerups_awarded.append(
-                    f"{team_powerups[0]['name']} ⚡ (Lightning Speed!)"
-                )
-
-            # Award for building a streak (3+ consecutive correct) - Unlock 2nd powerup
-            if (
-                team.current_streak >= 3
-                and team.powerups_available.get(powerup_2_id, False) == False
-                and powerup_2_id not in team.powerups_used
-            ):
-                team.powerups_available[powerup_2_id] = True
-                powerups_awarded.append(
-                    f"{team_powerups[1]['name']} 🔥 (Streak Unlocked!)"
-                )
-
-            # Award for high combo multiplier (2.0x or higher) - Unlock 3rd powerup
-            if (
-                team.current_combo >= 2.0
-                and team.powerups_available.get(powerup_3_id, False) == False
-                and powerup_3_id not in team.powerups_used
-            ):
-                team.powerups_available[powerup_3_id] = True
-                powerups_awarded.append(
-                    f"{team_powerups[2]['name']} 💫 (Combo Mastery!)"
-                )
-
-        # Convert team to dict for manager functions (they expect dicts)
-        team_dict = team.dict()
-        team_dict["questions_completed"] = team.questions_completed
-        team_dict["achievements"] = team.achievements
-        team_dict["badges_earned"] = team.badges_earned
-
-        # Check for achievements
-        new_badges = evaluate_achievements(team_dict, question_data)
-        # Update badges back to team object
-        team.badges_earned = team_dict.get("badges_earned", [])
-        team.achievements = team_dict.get("achievements", {})
-        badge_details = [{"id": b, "data": get_badge_details(b)} for b in new_badges]
-
-        # Update team stats for leaderboard (now works with both dict and Pydantic)
-        update_team_stats(team)
-
-        # Move to next question
-        team.current_question_index += 1
-        save_game_state()
-
-        return {
-            "correct": True,
-            "message": f"Correct! Question {team.current_question_index} of 10 completed!"
-            + (f" Earned: {', '.join(powerups_awarded)}!" if powerups_awarded else ""),
-            "score_earned": question_score,
-            "speed_multiplier": calculate_speed_multiplier(
-                submission.time_taken, question["difficulty"]
-            ),
-            "combo_multiplier": team.current_combo,
-            "current_streak": team.current_streak,
-            "best_streak": team.best_streak,
-            "current_total_score": calculate_final_score_questions(team),
-            "questions_completed": team.current_question_index,
-            "next_question_ready": team.current_question_index < 10,
-            "badges_earned": badge_details,
-            "all_badges": team.badges_earned,
-            "powerups_awarded": powerups_awarded,
-            "powerups_available": team.powerups_available,
-        }
     except HTTPException:
         raise
     except Exception as e:
@@ -479,13 +553,6 @@ async def request_hint_question(request: HintRequest):
     if request.team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    team = game_state.teams[request.team_name]
-
-    if team.hints_used_count >= 3:
-        raise HTTPException(
-            status_code=400, detail="Maximum hints (3) already used for this session"
-        )
-
     # Get the question
     question = question_manager.get_question(request.question_id)
     if not question:
@@ -494,17 +561,26 @@ async def request_hint_question(request: HintRequest):
     # Get hint
     hint_text = question_manager.get_hint(request.question_id)
 
-    # Increment hint counter
-    team.hints_used_count += 1
-    save_game_state()
+    with game_state_write_lock():
+        team = game_state.teams[request.team_name]
 
-    return {
-        "hint": hint_text,
-        "hints_used": team.hints_used_count,
-        "hints_remaining": max(0, 3 - team.hints_used_count),
-        "hint_penalty": settings.hint_penalty,
-        "penalty_applied_to_score": True,
-    }
+        if team.hints_used_count >= 3:
+            raise HTTPException(
+                status_code=400,
+                detail="Maximum hints (3) already used for this session",
+            )
+
+        # Increment hint counter
+        team.hints_used_count += 1
+        save_game_state()
+
+        return {
+            "hint": hint_text,
+            "hints_used": team.hints_used_count,
+            "hints_remaining": max(0, 3 - team.hints_used_count),
+            "hint_penalty": settings.hint_penalty,
+            "penalty_applied_to_score": True,
+        }
 
 
 @router.post("/certainty-check")

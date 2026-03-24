@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class Attendee(BaseModel):
@@ -128,12 +128,28 @@ class QuestionSubmission(BaseModel):
     time_taken: int  # seconds
     powerup_used: Optional[str] = None  # Which powerup was used with this answer
 
+    @validator("time_taken")
+    def validate_time_taken(cls, value):
+        if value < 0:
+            raise ValueError("time_taken must be >= 0")
+        if value > 3600:
+            raise ValueError("time_taken must be <= 3600 seconds")
+        return value
+
 
 class DialogueSubmission(BaseModel):
     team_name: str
     question_id: str
     answer: str
     time_taken: int
+
+    @validator("time_taken")
+    def validate_dialogue_time_taken(cls, value):
+        if value < 0:
+            raise ValueError("time_taken must be >= 0")
+        if value > 3600:
+            raise ValueError("time_taken must be <= 3600 seconds")
+        return value
 
 
 class HintRequest(BaseModel):

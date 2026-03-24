@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException
 
 from app.models import LoginRequest, LoginResponse
+from app.state_io import atomic_write_json
 
 router = APIRouter()
 
@@ -90,9 +91,7 @@ def _load_game_state_json():
 
 
 def _save_devices(devices_data: dict):
-    os.makedirs(os.path.dirname(DEVICES_FILE), exist_ok=True)
-    with open(DEVICES_FILE, "w") as f:
-        json.dump(devices_data, f, indent=2)
+    atomic_write_json(DEVICES_FILE, devices_data, indent=2)
 
 
 def _load_devices():

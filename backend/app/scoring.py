@@ -3,6 +3,9 @@ from typing import Dict
 from app.config import settings
 from app.models import Team
 
+MIN_TIME_TAKEN_SECONDS = 1
+MAX_TIME_TAKEN_SECONDS = 3600
+
 
 def calculate_speed_multiplier(time_taken: int, difficulty: str) -> float:
     """
@@ -21,6 +24,8 @@ def calculate_speed_multiplier(time_taken: int, difficulty: str) -> float:
         - If answered faster: bonus = 1 + (1 - time/baseline) * 0.5 (max 1.5x)
         - If answered slower: 1.0x
     """
+    time_taken = max(MIN_TIME_TAKEN_SECONDS, min(time_taken, MAX_TIME_TAKEN_SECONDS))
+
     # Baseline times in seconds by difficulty
     baseline_times = {
         "easy": 30,
@@ -53,6 +58,8 @@ def calculate_combo_multiplier(
     Returns:
         Combo multiplier between 1.0x and 3.0x
     """
+    time_taken = max(MIN_TIME_TAKEN_SECONDS, min(time_taken, MAX_TIME_TAKEN_SECONDS))
+
     if not previous_correct:
         return 1.0  # Break combo on wrong answer
 
