@@ -226,8 +226,9 @@ def calculate_final_score_questions(team: Team) -> int:
     score = 0
 
     # Sum question scores (already includes speed multiplier and hint deductions)
+    # New format stores "points"; keep "score" fallback for legacy records.
     for question_data in team.questions_completed:
-        score += question_data.get("score", 0)
+        score += question_data.get("points", question_data.get("score", 0))
 
     # Subtract tab violation penalties
     # Each tab switch after first 3 free switches costs 50 points

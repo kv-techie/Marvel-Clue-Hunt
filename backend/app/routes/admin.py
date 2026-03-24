@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from datetime import datetime
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -37,15 +38,41 @@ INFINITY_STONES = [
 
 # Get absolute path to data directory (works from any working directory)
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(APP_DIR, "data")
+DEFAULT_DATA_DIR = os.path.join(APP_DIR, "data")
+STATE_DATA_DIR = os.getenv("STATE_DATA_DIR", DEFAULT_DATA_DIR)
+os.makedirs(STATE_DATA_DIR, exist_ok=True)
 
-TEAMS_FILE = os.path.join(DATA_DIR, "teams.json")
-ATTENDANCE_FILE = os.path.join(DATA_DIR, "attendance.csv")
-GAME_STATE_FILE = os.path.join(DATA_DIR, "game_state.json")
-ADMIN_WHITELIST_FILE = os.path.join(DATA_DIR, "admin_whitelist.json")
-VOLUNTEER_WHITELIST_FILE = os.path.join(DATA_DIR, "volunteer_whitelist.json")
-ADMIN_CREDENTIALS_FILE = os.path.join(DATA_DIR, "admin_credentials.json")
-VOLUNTEER_CREDENTIALS_FILE = os.path.join(DATA_DIR, "volunteer_credentials.json")
+
+def _state_file(filename: str) -> str:
+    return os.path.join(STATE_DATA_DIR, filename)
+
+
+def _bootstrap_state_file(filename: str):
+    """Ensure state file exists in STATE_DATA_DIR by copying from bundled defaults once."""
+    source = os.path.join(DEFAULT_DATA_DIR, filename)
+    destination = _state_file(filename)
+    if not os.path.exists(destination) and os.path.exists(source):
+        shutil.copy2(source, destination)
+
+
+for _filename in [
+    "game_state.json",
+    "devices.json",
+    "teams.json",
+    "admin_whitelist.json",
+    "volunteer_whitelist.json",
+    "admin_credentials.json",
+    "volunteer_credentials.json",
+]:
+    _bootstrap_state_file(_filename)
+
+TEAMS_FILE = _state_file("teams.json")
+ATTENDANCE_FILE = _state_file("attendance.csv")
+GAME_STATE_FILE = _state_file("game_state.json")
+ADMIN_WHITELIST_FILE = _state_file("admin_whitelist.json")
+VOLUNTEER_WHITELIST_FILE = _state_file("volunteer_whitelist.json")
+ADMIN_CREDENTIALS_FILE = _state_file("admin_credentials.json")
+VOLUNTEER_CREDENTIALS_FILE = _state_file("volunteer_credentials.json")
 
 # In-memory game state
 game_state: GameState = GameState()
@@ -727,7 +754,7 @@ async def delete_pin(role: str, name: str):
 @router.get("/devices/{team_name}")
 async def list_devices(team_name: str):
     """List registered device IDs for a team"""
-    DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
+    DEVICES_FILE = _state_file("devices.json")
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
             devices = json.load(f)
@@ -741,7 +768,7 @@ async def list_devices(team_name: str):
 @router.delete("/devices/{team_name}/{device_id}")
 async def remove_device(team_name: str, device_id: str):
     """Remove a specific device id from a team's registered devices"""
-    DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
+    DEVICES_FILE = _state_file("devices.json")
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
             devices = json.load(f)
@@ -783,7 +810,7 @@ async def remove_device(team_name: str, device_id: str):
 @router.get("/teams-active-devices")
 async def get_teams_active_devices():
     """Get all teams with their currently active device information"""
-    DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
+    DEVICES_FILE = _state_file("devices.json")
 
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:

@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
@@ -10,15 +11,41 @@ router = APIRouter()
 
 # Get absolute path to data directory (works from any working directory)
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(APP_DIR, "data")
+DEFAULT_DATA_DIR = os.path.join(APP_DIR, "data")
+STATE_DATA_DIR = os.getenv("STATE_DATA_DIR", DEFAULT_DATA_DIR)
+os.makedirs(STATE_DATA_DIR, exist_ok=True)
 
-TEAMS_FILE = os.path.join(DATA_DIR, "teams.json")
-ADMIN_WHITELIST_FILE = os.path.join(DATA_DIR, "admin_whitelist.json")
-VOLUNTEER_WHITELIST_FILE = os.path.join(DATA_DIR, "volunteer_whitelist.json")
-DEVICES_FILE = os.path.join(DATA_DIR, "devices.json")
-GAME_STATE_FILE = os.path.join(DATA_DIR, "game_state.json")
-ADMIN_CREDENTIALS_FILE = os.path.join(DATA_DIR, "admin_credentials.json")
-VOLUNTEER_CREDENTIALS_FILE = os.path.join(DATA_DIR, "volunteer_credentials.json")
+
+def _state_file(filename: str) -> str:
+    return os.path.join(STATE_DATA_DIR, filename)
+
+
+def _bootstrap_state_file(filename: str):
+    """Ensure state file exists in STATE_DATA_DIR by copying from bundled defaults once."""
+    source = os.path.join(DEFAULT_DATA_DIR, filename)
+    destination = _state_file(filename)
+    if not os.path.exists(destination) and os.path.exists(source):
+        shutil.copy2(source, destination)
+
+
+for _filename in [
+    "game_state.json",
+    "devices.json",
+    "teams.json",
+    "admin_whitelist.json",
+    "volunteer_whitelist.json",
+    "admin_credentials.json",
+    "volunteer_credentials.json",
+]:
+    _bootstrap_state_file(_filename)
+
+TEAMS_FILE = _state_file("teams.json")
+ADMIN_WHITELIST_FILE = _state_file("admin_whitelist.json")
+VOLUNTEER_WHITELIST_FILE = _state_file("volunteer_whitelist.json")
+DEVICES_FILE = _state_file("devices.json")
+GAME_STATE_FILE = _state_file("game_state.json")
+ADMIN_CREDENTIALS_FILE = _state_file("admin_credentials.json")
+VOLUNTEER_CREDENTIALS_FILE = _state_file("volunteer_credentials.json")
 
 
 def load_admin_credentials():
