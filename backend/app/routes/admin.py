@@ -210,8 +210,14 @@ async def upload_attendance(file: UploadFile = File(...)):
         # Initialize game state with teams
         game_state.teams = {}
         for idx, (name, members) in enumerate(teams.items()):
-            assigned_stone = name if name in INFINITY_STONES else INFINITY_STONES[idx % len(INFINITY_STONES)]
-            game_state.teams[name] = Team(name=name, members=members, stone=assigned_stone)
+            assigned_stone = (
+                name
+                if name in INFINITY_STONES
+                else INFINITY_STONES[idx % len(INFINITY_STONES)]
+            )
+            game_state.teams[name] = Team(
+                name=name, members=members, stone=assigned_stone
+            )
 
         save_game_state()
 
@@ -821,7 +827,9 @@ async def get_teams_active_devices():
     current_team_names = set(game_state.teams.keys())
 
     # Prune stale teams from devices store to keep only current teams
-    stale_team_names = [name for name in devices_data.keys() if name not in current_team_names]
+    stale_team_names = [
+        name for name in devices_data.keys() if name not in current_team_names
+    ]
     if stale_team_names:
         for stale_team_name in stale_team_names:
             devices_data.pop(stale_team_name, None)
