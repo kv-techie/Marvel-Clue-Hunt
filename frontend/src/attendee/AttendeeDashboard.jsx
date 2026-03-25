@@ -92,8 +92,18 @@ const DisqualificationNotice = ({ teamStatus, onAcknowledge, acknowledging, ackM
 const TeamProgress = ({ teamStatus, currentQuestionIndex }) => {
   if (!teamStatus) return null
 
+  const questionResultMap = new Map(
+    (teamStatus.question_results || [])
+      .filter((item) => Number.isInteger(item.question_index))
+      .map((item) => [item.question_index + 1, item.correct])
+  )
+
   const getProgressStatus = (questionNum) => {
-    if (questionNum <= currentQuestionIndex) return { status: 'completed', text: '✅ Complete' }
+    if (questionResultMap.has(questionNum)) {
+      const isCorrect = questionResultMap.get(questionNum)
+      if (isCorrect) return { status: 'completed', text: '✅ Complete' }
+      return { status: 'incorrect', text: '❌ Wrong' }
+    }
     if (questionNum === currentQuestionIndex + 1) return { status: 'active', text: '⏳ Active' }
     return { status: 'locked', text: '🔒 Locked' }
   }

@@ -122,9 +122,7 @@ def ensure_active_team_device(team_name: str, device_id: str | None):
         )
 
     active_devices = [
-        d
-        for d in team_devices
-        if isinstance(d, dict) and d.get("is_active") is True
+        d for d in team_devices if isinstance(d, dict) and d.get("is_active") is True
     ]
 
     if active_devices:

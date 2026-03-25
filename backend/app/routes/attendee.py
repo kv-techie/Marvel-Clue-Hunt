@@ -165,6 +165,14 @@ async def get_team_status(
         if isinstance(start, datetime):
             elapsed_time = int((datetime.now() - start).total_seconds())
     is_auto_disqualified = check_auto_disqualification(team)
+    question_results = [
+        {
+            "question_index": item.get("question_index"),
+            "correct": bool(item.get("correct", False)),
+        }
+        for item in team.questions_completed
+        if isinstance(item, dict)
+    ]
 
     return {
         "team_name": team_name,
@@ -183,6 +191,7 @@ async def get_team_status(
         "disqualification_confirmed": team.disqualification_confirmed_by_admin,
         "total_deductions": calculate_total_deductions(team),
         "auto_disqualify_eligible": is_auto_disqualified,
+        "question_results": question_results,
     }
 
 

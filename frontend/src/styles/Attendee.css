@@ -102,6 +102,11 @@
   border: 1px solid #2ecc71;
 }
 
+.progress-step.incorrect {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid #e74c3c;
+}
+
 .progress-step.active {
   background: rgba(52, 152, 219, 0.2);
   border: 1px solid #3498db;
