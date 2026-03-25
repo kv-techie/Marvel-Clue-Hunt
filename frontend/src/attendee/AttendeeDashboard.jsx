@@ -5,6 +5,7 @@ import { getTeamStatus, getTeamStone, startTeamTimer, teamAcknowledgeDisqualific
 import { useTabFocusTracking } from '../hooks/useTabFocusTracking'
 import TeamTimer from './TeamTimer'
 import QuestionRound from './QuestionRound'
+import DisqualificationScreen from './DisqualifiationScreen'
 import StatusBanner from '../components/StatusBanner'
 import BadgeDisplay from '../components/BadgeDisplay'
 import StreakCounter from '../components/StreakCounter'
@@ -191,15 +192,13 @@ const KnowYourPowerups = ({ powerups = [], teamName, stone }) => {
 
 const AttendeeDashboard = () => {
   const { team } = useAuth()
-  const { startTimer, elapsedTime } = useTimer()
+  const { startTimer, stopTimer, elapsedTime } = useTimer()
   const { focusWarning, total_tab_left, switches_remaining, is_penalized, setFocusWarning } = useTabFocusTracking(team)
   const [teamStatus, setTeamStatus] = useState(null)
   const [stone, setStone] = useState(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [dashboardError, setDashboardError] = useState('')
-  const [acknowledging, setAcknowledging] = useState(false)
-  const [ackMessage, setAckMessage] = useState('')
   const [badges, setBadges] = useState([])
   const [currentStreak, setCurrentStreak] = useState(0)
   const [bestStreak, setBestStreak] = useState(0)
@@ -288,6 +287,13 @@ const AttendeeDashboard = () => {
     return () => clearInterval(interval)
   }, [team])
 
+  // Stop the timer immediately when disqualification is detected
+  useEffect(() => {
+    if (teamStatus?.disqualified) {
+      stopTimer()
+    }
+  }, [teamStatus?.disqualified])
+
   // Event handlers
   const handleQuestionComplete = (response) => {
     setTimeout(() => {
@@ -296,23 +302,6 @@ const AttendeeDashboard = () => {
       fetchTeamBadges()
       fetchTeamPowerups()
     }, 500)
-  }
-
-  const handleAcknowledgeDisqualification = async () => {
-    setAcknowledging(true)
-    setAckMessage('')
-
-    try {
-      await teamAcknowledgeDisqualification(team)
-      setAckMessage('✅ Disqualification acknowledged. Please see the admin panel.')
-      setTimeout(() => {
-        fetchTeamStatus()
-      }, 1500)
-    } catch (err) {
-      setAckMessage(`Error: ${err.response?.data?.detail || 'Failed to acknowledge'}`)
-    } finally {
-      setAcknowledging(false)
-    }
   }
 
   if (loading) {
@@ -336,6 +325,18 @@ const AttendeeDashboard = () => {
     )
   }
 
+  // If disqualified, show ONLY the disqualification screen — nothing else
+  if (teamStatus?.disqualified) {
+    return (
+      <div className="dashboard-grid">
+        <DisqualificationScreen
+          team={team}
+          reason={teamStatus.disqualification_reason}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="dashboard-grid">
       {/* Status and Notifications */}
@@ -346,13 +347,6 @@ const AttendeeDashboard = () => {
         isPenalized={is_penalized}
         switchesRemaining={switches_remaining}
         onDismiss={() => setFocusWarning(false)}
-      />
-      
-      <DisqualificationNotice
-        teamStatus={teamStatus}
-        onAcknowledge={handleAcknowledgeDisqualification}
-        acknowledging={acknowledging}
-        ackMessage={ackMessage}
       />
       
       {/* Timer */}
