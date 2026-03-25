@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { playHoverSound, playLockSound } from '../utils/audio';
+import { playHoverSound, playTypeSound } from '../utils/audio';
 import '../styles/CustomCursor.css';
 
 const CustomCursor = () => {
@@ -42,7 +42,7 @@ const CustomCursor = () => {
     const handleClick = (e) => {
       const target = e.target;
       if (target.closest('a') || target.closest('button')) {
-        playLockSound();
+        playTypeSound();
       }
     };
 
