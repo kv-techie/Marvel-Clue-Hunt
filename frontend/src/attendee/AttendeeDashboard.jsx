@@ -149,8 +149,9 @@ const CompletionMessage = ({ teamStatus, stone }) => {
 
 const KnowYourPowerups = ({ powerups = [], teamName, stone }) => {
   return (
-    <div className="card powerup-guide-card">
-      <h2>⚡ Know Your PowerUps</h2>
+    <details className="card powerup-guide-card powerup-guide-dropdown">
+      <summary className="powerup-guide-summary">⚡ Know Your PowerUps</summary>
+
       <p className="powerup-guide-intro">
         These are your <strong>{teamName}</strong> powerups{stone ? ` for ${stone}` : ''}. Each team gets a unique set based on its Infinity Stone.
       </p>
@@ -184,7 +185,7 @@ const KnowYourPowerups = ({ powerups = [], teamName, stone }) => {
           })}
         </div>
       )}
-    </div>
+    </details>
   )
 }
 

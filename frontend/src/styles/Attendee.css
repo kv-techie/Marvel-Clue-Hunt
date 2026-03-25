@@ -566,6 +566,35 @@
   background: linear-gradient(135deg, rgba(156, 39, 176, 0.14), rgba(98, 0, 238, 0.08));
 }
 
+.powerup-guide-dropdown {
+  padding: 12px 14px;
+}
+
+.powerup-guide-summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #f3e8ff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.powerup-guide-summary::-webkit-details-marker {
+  display: none;
+}
+
+.powerup-guide-summary::after {
+  content: '▾';
+  opacity: 0.9;
+  transition: transform 0.2s ease;
+}
+
+.powerup-guide-dropdown[open] .powerup-guide-summary::after {
+  transform: rotate(180deg);
+}
+
 .powerup-guide-intro {
   color: rgba(255, 255, 255, 0.88);
   margin: 8px 0;
@@ -651,6 +680,10 @@
 }
 
 @media (max-width: 480px) {
+  .powerup-guide-summary {
+    font-size: 1rem;
+  }
+
   .powerup-guide-header {
     flex-direction: column;
     align-items: flex-start;
