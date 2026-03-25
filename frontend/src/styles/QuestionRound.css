@@ -482,6 +482,33 @@
   }
 }
 
+/* Overcharge Visuals */
+.question-round-container.overcharged {
+  filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.4));
+  transition: filter 0.5s ease;
+}
+
+.question-round-container.overcharged .question-text {
+  text-shadow: 0 0 10px cyan, 0 0 20px cyan;
+}
+
+@keyframes hitShake {
+  0% { transform: translate(0,0); }
+  10% { transform: translate(-5px,-5px); }
+  20% { transform: translate(5px,5px); }
+  30% { transform: translate(-5px,5px); }
+  40% { transform: translate(5px,-5px); }
+  50% { transform: translate(-5px,0); }
+  60% { transform: translate(5px,0); }
+  70% { transform: translate(0,-5px); }
+  80% { transform: translate(0,5px); }
+  100% { transform: translate(0,0); }
+}
+
+.hit-shake {
+  animation: hitShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
 @media (max-width: 480px) {
   .question-round-container {
     padding: 10px;

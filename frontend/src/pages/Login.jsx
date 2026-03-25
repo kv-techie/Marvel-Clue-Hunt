@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { login } from '../api/client'
 import { getDeviceInfo } from '../utils/deviceInfo'
 import Tilt from 'react-parallax-tilt'
+import HackerText from '../components/HackerText'
+import MagneticButton from '../components/MagneticButton'
+import AnimatedBorder from '../components/AnimatedBorder'
 import '../styles/Login.css'
 
 const Login = () => {
@@ -105,8 +107,9 @@ const Login = () => {
         glarePosition="all"
         style={{ width: '100%', maxWidth: '450px' }}
       >
-        <div className="login-card">
-          <h1 className="login-title">🦸 Marvel Clue Hunt</h1>
+        <AnimatedBorder>
+        <div className="login-card" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+          <h1 className="login-title">🦸 <HackerText text="Marvel Clue Hunt" delay={200} /></h1>
           <p className="login-subtitle">Assemble your team and solve the mystery!</p>
           
           {isDisqualified ? (
@@ -194,9 +197,9 @@ const Login = () => {
 
               {error && <div className="error-message">{error}</div>}
 
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <MagneticButton type="submit" className="btn btn-primary" disabled={loading}>
                 {loading ? 'Logging in...' : 'Enter'}
-              </button>
+              </MagneticButton>
             </form>
           )}
 
@@ -213,6 +216,7 @@ const Login = () => {
             </div>
           )}
         </div>
+        </AnimatedBorder>
       </Tilt>
     </div>
   )

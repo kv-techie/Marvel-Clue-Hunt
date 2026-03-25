@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { playHoverSound, playLockSound } from '../utils/audio';
 import '../styles/CustomCursor.css';
 
 const CustomCursor = () => {
@@ -22,15 +23,39 @@ const CustomCursor = () => {
       // Check if hovering over clickable elements
       const target = e.target;
       const isClickable = target.closest('a') || target.closest('button') || target.closest('input') || target.closest('.hover-trigger');
-      setIsHovering(!!isClickable);
+      
+      if (isClickable) {
+        if (!target.dataset.hovered) {
+          playHoverSound();
+          target.dataset.hovered = "true";
+        }
+        setIsHovering(true);
+      } else {
+        setIsHovering(false);
+      }
+    };
+
+    const handleMouseOut = (e) => {
+      if (e.target) { e.target.removeAttribute('data-hovered'); }
+    };
+
+    const handleClick = (e) => {
+      const target = e.target;
+      if (target.closest('a') || target.closest('button')) {
+        playLockSound();
+      }
     };
 
     window.addEventListener('mousemove', updateMousePosition);
     window.addEventListener('mouseover', handleMouseOver);
+    window.addEventListener('mouseout', handleMouseOut);
+    window.addEventListener('click', handleClick);
 
     return () => {
       window.removeEventListener('mousemove', updateMousePosition);
       window.removeEventListener('mouseover', handleMouseOver);
+      window.removeEventListener('mouseout', handleMouseOut);
+      window.removeEventListener('click', handleClick);
     };
   }, []);
 

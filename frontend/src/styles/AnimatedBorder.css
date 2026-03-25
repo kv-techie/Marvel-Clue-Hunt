@@ -1,0 +1,58 @@
+.animated-border-wrapper {
+  position: relative;
+  border-radius: var(--radius-lg);
+  padding: 2px; /* Thickness of the laser border */
+  overflow: hidden;
+  z-index: 1;
+}
+
+.animated-border-box {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 75%,
+    var(--accent-secondary) 85%,
+    var(--accent-primary) 100%
+  );
+  animation: rotateBorder 4s linear infinite;
+  z-index: -2;
+}
+
+.animated-border-content {
+  background: var(--bg-glass-heavy);
+  border-radius: calc(var(--radius-lg) - 2px);
+  min-height: 100%;
+  width: 100%;
+  z-index: -1;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+  backdrop-filter: none; /* Let the parent handle the blur if needed, or rely on the heavy background */
+}
+
+@keyframes rotateBorder {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Overcharged State */
+.animated-border-wrapper.overcharged .animated-border-box {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 50%,
+    cyan 75%,
+    magenta 90%,
+    white 100%
+  );
+  animation: rotateBorder 1s linear infinite; /* 4x Speed */
+  filter: blur(2px) drop-shadow(0 0 15px cyan);
+}
+
+.animated-border-wrapper.overcharged {
+  padding: 3px;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+}

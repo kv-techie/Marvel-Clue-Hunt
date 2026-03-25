@@ -2,12 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTimer } from "../context/TimerContext";
 import * as client from "../api/client";
+import { playSuccessSound, playErrorSound, playTypeSound, playOverchargeHum, stopOverchargeHum, playStrikeSound, playSparkSound } from "../utils/audio";
 import Tilt from 'react-parallax-tilt';
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use';
+import HackerText from '../components/HackerText';
+import MagneticButton from '../components/MagneticButton';
+import AnimatedBorder from '../components/AnimatedBorder';
+import ElectricOverlay from '../components/ElectricOverlay';
 import "../styles/QuestionRound.css";
 
 const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const { user } = useAuth();
   const { elapsedTime } = useTimer();
+  const { width, height } = useWindowSize();
 
   const [question, setQuestion] = useState(null);
   const [answer, setAnswer] = useState("");
@@ -23,6 +31,20 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const [certaintyFeedback, setCertaintyFeedback] = useState(null);
   const [stone, setStone] = useState(null);
   const [showClue2, setShowClue2] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [isHitting, setIsHitting] = useState(false);
+
+  // Overcharge Logic
+  const isOvercharged = activePowerup || streak >= 3;
+
+  useEffect(() => {
+    if (isOvercharged) {
+      playOverchargeHum();
+    } else {
+      stopOverchargeHum();
+    }
+    return () => stopOverchargeHum();
+  }, [isOvercharged]);
 
   // Load current question on component mount or when question changes
   useEffect(() => {
@@ -57,6 +79,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       const stoneData = await client.getTeamStone(teamName);
       console.log("[QuestionRound] Stone data:", stoneData);
       setStone(stoneData.stone);
+      setStreak(stoneData.current_streak || 0);
 
       const powerupData = await client.getTeamPowerups(teamName);
       setTeamPowerups(powerupData.powerups || []);
@@ -90,6 +113,14 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       });
 
       if (response.correct) {
+        if (isOvercharged) {
+          playStrikeSound();
+          setIsHitting(true);
+          setTimeout(() => setIsHitting(false), 800);
+        } else {
+          playSuccessSound();
+        }
+        
         // Show success and load next question
         setSuccessMessage(`🎉 ${response.message} (Score: +${response.score_earned} points)`);
         
@@ -104,6 +135,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
         }
         if (onQuestionComplete) onQuestionComplete(response);
       } else {
+        playErrorSound();
         // Incorrect answer 
         setError(`❌ ${response.message}`);
         setAnswer(""); 
@@ -221,7 +253,9 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       glareColor="#3498db"
       glarePosition="all"
     >
-    <div className="question-round-container">
+    <AnimatedBorder isOvercharged={isOvercharged}>
+    <div className={`question-round-container ${isOvercharged ? 'overcharged' : ''} ${isHitting ? 'hit-shake' : ''}`} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+      {isOvercharged && <ElectricOverlay />}
       <div className="question-header">
         <div className="question-progress">
           Question {question.question_index + 1} of {question.total_questions}
@@ -237,7 +271,9 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       </div>
 
       <div className="question-content">
-        <h2 className="question-text">{question.question_text}</h2>
+        <h2 className="question-text">
+          <HackerText text={question.question_text} delay={300} />
+        </h2>
 
         <div className="clues-section">
           <div className="clue clue-1">
@@ -328,27 +364,29 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
       <div className="actions-section">
         <div className="actions-left">
-          <button
+          <MagneticButton
             className="hint-btn"
             onClick={handleRequestHint}
             disabled={hintsRemaining === 0 || submitting}
           >
             💭 Hint ({hintsRemaining}/3)
-          </button>
+          </MagneticButton>
         </div>
 
         <div className="actions-center">
-          <button
+          <MagneticButton
             className="submit-btn"
             onClick={handleSubmitAnswer}
             disabled={!answer.trim() || submitting}
           >
             {submitting ? "Submitting..." : "Submit Answer"}
-          </button>
+          </MagneticButton>
         </div>
 
         <div className="actions-right" />
       </div>
+
+      {successMessage && <Confetti width={width} height={height} recycle={false} numberOfPieces={400} gravity={0.2} style={{ position: 'fixed', top: 0, left: 0, zIndex: 1000, pointerEvents: 'none' }} />}
 
       {successMessage && <div className="question-success" style={{
         marginTop: '15px',
@@ -364,6 +402,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       
       {error && <div className="error-message">{error}</div>}
     </div>
+    </AnimatedBorder>
     </Tilt>
   );
 };
