@@ -206,7 +206,11 @@ const VolunteerDashboard = () => {
           </p>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+            <label htmlFor="volunteer-new-pin" className="sr-only">
+              New PIN
+            </label>
             <input
+              id="volunteer-new-pin"
               type="password"
               placeholder="Enter new PIN"
               value={newPin}
@@ -220,7 +224,11 @@ const VolunteerDashboard = () => {
                 fontSize: '16px'
               }}
             />
+            <label htmlFor="volunteer-confirm-pin" className="sr-only">
+              Confirm new PIN
+            </label>
             <input
+              id="volunteer-confirm-pin"
               type="password"
               placeholder="Confirm new PIN"
               value={confirmPin}
@@ -364,10 +372,11 @@ const VolunteerDashboard = () => {
           <h3>Adjust Points</h3>
           <form onSubmit={handleAdjustPoints}>
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>
+              <label htmlFor="selected-team-display" style={{ display: 'block', marginBottom: '5px' }}>
                 Selected Team
               </label>
               <input
+                id="selected-team-display"
                 type="text"
                 value={selectedTeam || ''}
                 disabled
@@ -384,10 +393,11 @@ const VolunteerDashboard = () => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>
+              <label htmlFor="adjustment-type" style={{ display: 'block', marginBottom: '5px' }}>
                 Adjustment Type
               </label>
               <select
+                id="adjustment-type"
                 value={adjustmentForm.adjustment_type}
                 onChange={(e) =>
                   setAdjustmentForm({ ...adjustmentForm, adjustment_type: e.target.value })
@@ -439,6 +449,7 @@ const VolunteerDashboard = () => {
               <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #444' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                   <input
+                    id="use-custom-reason"
                     type="checkbox"
                     checked={useCustomReason}
                     onChange={(e) => setUseCustomReason(e.target.checked)}
@@ -450,10 +461,11 @@ const VolunteerDashboard = () => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>
+              <label htmlFor="adjustment-amount" style={{ display: 'block', marginBottom: '5px' }}>
                 Amount
               </label>
               <input
+                id="adjustment-amount"
                 type="number"
                 min="1"
                 value={adjustmentForm.amount}
@@ -473,11 +485,12 @@ const VolunteerDashboard = () => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>
+              <label htmlFor={useCustomReason ? 'custom-reason' : 'selected-reason'} style={{ display: 'block', marginBottom: '5px' }}>
                 Reason {useCustomReason && '(Custom)'}
               </label>
               {useCustomReason ? (
                 <textarea
+                  id="custom-reason"
                   value={customReason}
                   onChange={(e) => setCustomReason(e.target.value)}
                   placeholder="Enter custom reason"
@@ -495,6 +508,7 @@ const VolunteerDashboard = () => {
                 />
               ) : (
                 <input
+                  id="selected-reason"
                   type="text"
                   value={adjustmentForm.reason}
                   disabled

@@ -65,7 +65,9 @@ const GlobalTimerControl = () => {
       <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: '250px' }}>
           <h3>Schedule Start Time</h3>
+          <label htmlFor="scheduled-start-time" className="sr-only">Scheduled start time</label>
           <input 
+            id="scheduled-start-time"
             type="datetime-local" 
             value={scheduledTime}
             onChange={(e) => setScheduledTime(e.target.value)}

@@ -101,6 +101,54 @@ def _load_devices():
     return {}
 
 
+def ensure_active_team_device(team_name: str, device_id: str | None):
+    """Ensure request is coming from the currently active device for a team.
+
+    Backward compatibility behavior:
+    - If a team has no registered devices yet, allow the request.
+    - If old device records exist without explicit active flags, allow matching device_id.
+    """
+
+    devices = _load_devices()
+    team_devices = devices.get(team_name, [])
+
+    if not team_devices:
+        return
+
+    if not device_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Device validation failed. Please login again from your active device.",
+        )
+
+    active_devices = [
+        d
+        for d in team_devices
+        if isinstance(d, dict) and d.get("is_active") is True
+    ]
+
+    if active_devices:
+        if any(d.get("device_id") == device_id for d in active_devices):
+            return
+
+        raise HTTPException(
+            status_code=403,
+            detail="This device is not active for your team. Please login again from the active device.",
+        )
+
+    # Legacy fallback: no explicit active flags present, allow if registered
+    for device in team_devices:
+        if isinstance(device, str) and device == device_id:
+            return
+        if isinstance(device, dict) and device.get("device_id") == device_id:
+            return
+
+    raise HTTPException(
+        status_code=403,
+        detail="This device is not registered for your team. Please login again.",
+    )
+
+
 def _get_device_id(device_entry):
     """Extract device_id from both old format (string) and new format (dict)"""
     if isinstance(device_entry, str):

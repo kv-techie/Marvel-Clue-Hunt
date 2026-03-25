@@ -60,7 +60,10 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       setTeamPowerups(powerupData.powerups || []);
     } catch (err) {
       console.error("[QuestionRound] Error loading question:", err);
-      setError("Failed to load question: " + err.message);
+      setError(
+        err.response?.data?.detail ||
+          "Failed to load question: " + err.message
+      );
     } finally {
       setLoading(false);
     }
@@ -129,7 +132,10 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       setHintsRemaining(response.hints_remaining);
       setError(null);
     } catch (err) {
-      setError("Failed to get hint: " + err.message);
+      setError(
+        "Failed to get hint: " +
+          (err.response?.data?.detail || err.message)
+      );
     }
   };
 
@@ -149,7 +155,10 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       setCertaintyFeedback(response.feedback);
       setActivePowerup("Certainty Check");
     } catch (err) {
-      setError("Certainty Check failed: " + err.message);
+      setError(
+        "Certainty Check failed: " +
+          (err.response?.data?.detail || err.message)
+      );
     }
   };
 
@@ -226,7 +235,11 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
         )}
 
         <div className="answer-input-section">
+          <label htmlFor="question-answer-input" className="sr-only">
+            Answer input
+          </label>
           <input
+            id="question-answer-input"
             type="text"
             className={`answer-input ${error ? 'error' : ''}`}
             placeholder="Type your answer here..."

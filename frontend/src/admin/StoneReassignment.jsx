@@ -64,10 +64,11 @@ const StoneReassignment = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '1rem', marginTop: '1.5rem' }}>
         {/* Team Selection */}
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label htmlFor="reassign-team" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
             Select Team
           </label>
           <select
+            id="reassign-team"
             value={selectedTeam}
             onChange={(e) => setSelectedTeam(e.target.value)}
             style={{
@@ -92,10 +93,11 @@ const StoneReassignment = () => {
 
         {/* Stone Selection */}
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label htmlFor="reassign-stone" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
             Select Stone
           </label>
           <select
+            id="reassign-stone"
             value={selectedStone}
             onChange={(e) => setSelectedStone(e.target.value)}
             style={{

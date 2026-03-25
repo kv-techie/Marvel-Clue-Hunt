@@ -11,6 +11,15 @@ const api = axios.create({
   },
 })
 
+api.interceptors.request.use((config) => {
+  const deviceId = sessionStorage.getItem('deviceId')
+  if (deviceId) {
+    config.headers = config.headers || {}
+    config.headers['X-Device-Id'] = deviceId
+  }
+  return config
+})
+
 // Auto-unwrap response data
 api.interceptors.response.use(
   (response) => {

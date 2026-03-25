@@ -29,6 +29,8 @@ from app.timer_manager import timer_manager
 
 router = APIRouter()
 
+GAME_INACTIVE_MESSAGE = "Game has not started, kindly wait for admin to start"
+
 INFINITY_STONES = [
     "Mind Stone",
     "Power Stone",
@@ -131,6 +133,10 @@ def save_game_state():
     """Save game state to file"""
     atomic_write_json(GAME_STATE_FILE, game_state.dict(), default=str, indent=2)
     print(f"💾 Saved game state to: {os.path.abspath(GAME_STATE_FILE)}")
+
+
+def is_game_currently_active() -> bool:
+    return bool(game_state.game_active and timer_manager.is_game_active())
 
 
 def load_admin_whitelist():
@@ -516,6 +522,12 @@ async def start_game():
     """Start the game immediately"""
 
     now = datetime.now()
+
+    # Ensure old timers from previous sessions don't leak into a new run.
+    timer_manager.reset_team_timers()
+    for team in game_state.teams.values():
+        team.timer_started = None
+
     timer_manager.set_global_start_time(now)
     game_state.global_start_time = now
     game_state.game_active = True
@@ -559,6 +571,11 @@ async def get_team_tab_switches(team_name: str):
 async def stop_game():
     """Stop the game"""
 
+    timer_manager.reset_all()
+    for team in game_state.teams.values():
+        team.timer_started = None
+
+    game_state.global_start_time = None
     game_state.game_active = False
     save_game_state()
 
@@ -582,6 +599,7 @@ async def delete_participant_data():
     game_state.teams = {}
     game_state.global_start_time = None
     game_state.game_active = False
+    timer_manager.reset_all()
     save_game_state()
 
     # Delete/reset data files
@@ -619,6 +637,9 @@ async def get_admin_leaderboard():
 async def award_enactment_bonus(team_name: str, request: BonusRequest):
     """Award enactment bonus to a team"""
 
+    if not is_game_currently_active():
+        raise HTTPException(status_code=403, detail=GAME_INACTIVE_MESSAGE)
+
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
@@ -645,7 +666,7 @@ async def get_game_status():
     """Get overall game status"""
 
     return {
-        "game_active": game_state.game_active and timer_manager.is_game_active(),
+        "game_active": is_game_currently_active(),
         "global_start_time": game_state.global_start_time.isoformat()
         if game_state.global_start_time
         else None,
@@ -928,6 +949,9 @@ async def adjust_points(
     team_name: str, adjusted_by: str, request: PointsAdjustmentRequest
 ):
     """Adjust points for a team with reason and auditing"""
+
+    if not is_game_currently_active():
+        raise HTTPException(status_code=403, detail=GAME_INACTIVE_MESSAGE)
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")

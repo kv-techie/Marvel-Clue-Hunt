@@ -7,9 +7,18 @@ class TimerManager:
         self.global_start_time: Optional[datetime] = None
         self.team_timers: Dict[str, datetime] = {}
 
-    def set_global_start_time(self, start_time: datetime):
+    def set_global_start_time(self, start_time: Optional[datetime]):
         """Set the global event start time"""
         self.global_start_time = start_time
+
+    def reset_team_timers(self):
+        """Clear all team timers."""
+        self.team_timers.clear()
+
+    def reset_all(self):
+        """Reset global timer and all team timers."""
+        self.global_start_time = None
+        self.team_timers.clear()
 
     def is_game_active(self) -> bool:
         """Check if game has started based on global time"""

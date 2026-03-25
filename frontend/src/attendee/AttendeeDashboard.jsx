@@ -145,6 +145,7 @@ const AttendeeDashboard = () => {
   const [stone, setStone] = useState(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [dashboardError, setDashboardError] = useState('')
   const [acknowledging, setAcknowledging] = useState(false)
   const [ackMessage, setAckMessage] = useState('')
   const [badges, setBadges] = useState([])
@@ -157,8 +158,10 @@ const AttendeeDashboard = () => {
     try {
       const response = await getTeamStatus(team)
       setTeamStatus(response)
+      setDashboardError('')
     } catch (err) {
       console.error('Failed to fetch team status:', err)
+      setDashboardError(err.response?.data?.detail || 'Failed to fetch team status')
     }
   }
 
@@ -171,8 +174,10 @@ const AttendeeDashboard = () => {
       console.log("[AttendeeDashboard] Set currentQuestionIndex to:", response.current_question_index);
       setCurrentStreak(response.current_streak || 0)
       setBestStreak(response.best_streak || 0)
+      setDashboardError('')
     } catch (err) {
       console.error('Failed to fetch team stone:', err)
+      setDashboardError(err.response?.data?.detail || 'Failed to fetch team details')
     } finally {
       setLoading(false)
     }
@@ -202,6 +207,7 @@ const AttendeeDashboard = () => {
         await fetchTeamBadges()
       } catch (err) {
         console.error('Failed to initialize:', err)
+        setDashboardError(err.response?.data?.detail || 'Failed to initialize team session')
         setLoading(false)
       }
     }
@@ -249,6 +255,17 @@ const AttendeeDashboard = () => {
       <div className="dashboard-grid">
         <div className="card">
           <h2>Loading...</h2>
+        </div>
+      </div>
+    )
+  }
+
+  if (dashboardError) {
+    return (
+      <div className="dashboard-grid">
+        <div className="card">
+          <h2>⚠️ Access Notice</h2>
+          <p>{dashboardError}</p>
         </div>
       </div>
     )

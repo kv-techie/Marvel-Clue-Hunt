@@ -13,6 +13,33 @@ body {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: #ffffff;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .container {
@@ -109,4 +136,25 @@ input:focus, textarea:focus {
 
 .leaderboard-table tr:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 480px) {
+  .container,
+  .card {
+    padding: 12px;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .timer {
+    font-size: 36px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1440px;
+  }
 }

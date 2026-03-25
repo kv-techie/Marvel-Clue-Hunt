@@ -1,14 +1,21 @@
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 
 from app.achievement_manager import evaluate_achievements, get_badge_details
 from app.config import settings
 from app.leaderboard_manager import update_team_stats
 from app.models import HintRequest, QuestionSubmission, TabSwitchLog
 from app.question_manager import question_manager
-from app.routes.admin import game_state, game_state_write_lock, save_game_state
+from app.routes.admin import (
+    GAME_INACTIVE_MESSAGE,
+    game_state,
+    game_state_write_lock,
+    is_game_currently_active,
+    save_game_state,
+)
+from app.routes.common import ensure_active_team_device
 from app.scoring import (
     calculate_combo_multiplier,
     calculate_final_score,
@@ -86,16 +93,28 @@ def _get_authoritative_time_taken(team_name: str, team, client_time_taken: int) 
     return server_time_taken
 
 
+def _enforce_active_access(team_name: str, x_device_id: str | None):
+    ensure_active_team_device(team_name, x_device_id)
+
+
+def _enforce_game_active():
+    if not is_game_currently_active():
+        raise HTTPException(status_code=403, detail=GAME_INACTIVE_MESSAGE)
+
+
 @router.post("/start-timer/{team_name}")
-async def start_team_timer(team_name: str):
+async def start_team_timer(
+    team_name: str,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Start timer when first team member logs in"""
     from app.powerup_manager import powerup_manager
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    if not timer_manager.is_game_active():
-        raise HTTPException(status_code=400, detail="Game has not started yet")
+    _enforce_active_access(team_name, x_device_id)
+    _enforce_game_active()
 
     team = game_state.teams[team_name]
 
@@ -120,11 +139,16 @@ async def start_team_timer(team_name: str):
 
 
 @router.get("/team-status/{team_name}")
-async def get_team_status(team_name: str):
+async def get_team_status(
+    team_name: str,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Get current status for a team"""
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
+
+    _enforce_active_access(team_name, x_device_id)
 
     team = game_state.teams[team_name]
     # Prefer in-memory timer for accuracy; fall back to persisted team.timer_started
@@ -241,11 +265,17 @@ async def log_tab_switch(request: TabSwitchLog):
 
 
 @router.get("/current-question/{team_name}")
-async def get_current_question(team_name: str):
+async def get_current_question(
+    team_name: str,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Get the current question for a team (based on their stone and progress)"""
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
+
+    _enforce_active_access(team_name, x_device_id)
+    _enforce_game_active()
 
     team = game_state.teams[team_name]
 
@@ -290,15 +320,14 @@ async def get_current_question(team_name: str):
 
 
 @router.post("/submit-question")
-async def submit_question(submission: QuestionSubmission):
+async def submit_question(
+    submission: QuestionSubmission,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Submit answer to current question"""
     try:
-        # Block submissions if game has been stopped by admin
-        if not game_state.game_active:
-            raise HTTPException(
-                status_code=403,
-                detail="Game has been stopped by admin. No more answers accepted.",
-            )
+        _enforce_active_access(submission.team_name, x_device_id)
+        _enforce_game_active()
 
         if submission.team_name not in game_state.teams:
             raise HTTPException(status_code=404, detail="Team not found")
@@ -514,12 +543,17 @@ async def submit_question(submission: QuestionSubmission):
 
 
 @router.get("/team-powerups/{team_name}")
-async def get_team_powerups(team_name: str):
+async def get_team_powerups(
+    team_name: str,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Get powerup information for a team"""
     from app.powerup_manager import powerup_manager
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
+
+    _enforce_active_access(team_name, x_device_id)
 
     team = game_state.teams[team_name]
 
@@ -547,11 +581,17 @@ async def get_team_powerups(team_name: str):
 
 
 @router.post("/request-hint-question")
-async def request_hint_question(request: HintRequest):
+async def request_hint_question(
+    request: HintRequest,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Request a hint for current question (max 3 per session)"""
 
     if request.team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
+
+    _enforce_active_access(request.team_name, x_device_id)
+    _enforce_game_active()
 
     # Get the question
     question = question_manager.get_question(request.question_id)
@@ -584,11 +624,19 @@ async def request_hint_question(request: HintRequest):
 
 
 @router.post("/certainty-check")
-async def certainty_check(team_name: str, question_id: str, submitted_answer: str):
+async def certainty_check(
+    team_name: str,
+    question_id: str,
+    submitted_answer: str,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Reality Stone PowerUp: Check answer confidence before submitting"""
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
+
+    _enforce_active_access(team_name, x_device_id)
+    _enforce_game_active()
 
     team = game_state.teams[team_name]
 
@@ -612,11 +660,16 @@ async def certainty_check(team_name: str, question_id: str, submitted_answer: st
 
 
 @router.get("/team-stone/{team_name}")
-async def get_team_stone(team_name: str):
+async def get_team_stone(
+    team_name: str,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Get the Infinity Stone assigned to a team"""
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
+
+    _enforce_active_access(team_name, x_device_id)
 
     team = game_state.teams[team_name]
 
@@ -645,11 +698,16 @@ async def get_available_stones():
 
 
 @router.get("/team-badges/{team_name}")
-async def get_team_badges(team_name: str):
+async def get_team_badges(
+    team_name: str,
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+):
     """Get badges and achievements for a team"""
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
+
+    _enforce_active_access(team_name, x_device_id)
 
     team = game_state.teams[team_name]
 

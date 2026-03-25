@@ -77,9 +77,12 @@ def seeded_question_game(monkeypatch):
     import app.powerup_manager as powerup_module
     import app.routes.admin as admin_module
     import app.routes.attendee as attendee_module
+    from app.timer_manager import timer_manager
 
     now = datetime.now()
     admin_module.game_state.game_active = True
+    admin_module.game_state.global_start_time = now
+    timer_manager.set_global_start_time(now)
     admin_module.game_state.teams = {
         "Team A": Team(
             name="Team A",

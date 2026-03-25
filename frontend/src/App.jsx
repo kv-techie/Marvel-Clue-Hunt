@@ -1,5 +1,5 @@
 import React from 'react'
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { TeamProvider } from './context/TeamContext'
 import { TimerProvider } from './context/TimerContext'
@@ -11,7 +11,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <AuthProvider>
         <TeamProvider>
           <TimerProvider>
@@ -46,7 +46,7 @@ function App() {
           </TimerProvider>
         </TeamProvider>
       </AuthProvider>
-    </HashRouter>
+    </BrowserRouter>
   )
 }
 

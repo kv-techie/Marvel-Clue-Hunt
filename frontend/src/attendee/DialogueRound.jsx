@@ -96,7 +96,11 @@ const DialogueRound = ({ teamName, dialogueNumber, elapsedTime, onComplete }) =>
       </div>
 
       <form onSubmit={handleSubmit} className="answer-section">
+        <label htmlFor="dialogue-answer-input" className="sr-only">
+          Dialogue answer input
+        </label>
         <input
+          id="dialogue-answer-input"
           type="text"
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
