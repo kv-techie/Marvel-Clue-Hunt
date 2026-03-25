@@ -98,32 +98,16 @@ const Login = () => {
         
         {isDisqualified ? (
           // Disqualification message
-          <div style={{
-            padding: '30px',
-            backgroundColor: 'rgba(231, 76, 60, 0.15)',
-            border: '3px solid #e74c3c',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '20px' }}>⛔</div>
-            <h2 style={{ color: '#e74c3c', marginBottom: '15px', fontSize: '24px' }}>
-              Team Disqualified
-            </h2>
-            <p style={{ fontSize: '16px', marginBottom: '15px', color: '#ddd' }}>
+          <div className="disqualification-panel">
+            <div className="disqualification-icon">⛔</div>
+            <h2 className="disqualification-heading">Team Disqualified</h2>
+            <p className="disqualification-text">
               Your team has been removed from the game.
             </p>
-            <p style={{
-              fontSize: '18px',
-              color: '#e74c3c',
-              fontWeight: '600',
-              marginBottom: '20px',
-              padding: '15px',
-              backgroundColor: 'rgba(231, 76, 60, 0.25)',
-              borderRadius: '6px'
-            }}>
+            <p className="disqualification-reason-box">
               <strong>Reason:</strong> {disqualificationReason}
             </p>
-            <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)' }}>
+            <p className="disqualification-contact">
               Please contact the game administrators for more information.
             </p>
             <button
@@ -133,7 +117,6 @@ const Login = () => {
                 setTeamName('')
               }}
               className="btn btn-primary"
-              style={{ marginTop: '20px' }}
             >
               Try Another Team
             </button>
