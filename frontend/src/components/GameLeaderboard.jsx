@@ -10,14 +10,20 @@ const GameLeaderboard = ({ teamName, autoRefresh = true, refreshInterval = 3000 
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchLeaderboardData = async () => {
+    let isMounted = true
+
+    const fetchLeaderboardData = async (isInitial = false) => {
       try {
-        setLoading(true)
+        // Only show loading spinner on the very first fetch
+        if (isInitial) setLoading(true)
+
         const [leaderData, rankData, statsData] = await Promise.all([
           getLeaderboardData(sortBy),
           getTeamRank(teamName, sortBy),
           getLeaderboardStats()
         ])
+
+        if (!isMounted) return
 
         setLeaderboard(leaderData.leaderboard || [])
         setTeamRank(rankData)
@@ -26,15 +32,20 @@ const GameLeaderboard = ({ teamName, autoRefresh = true, refreshInterval = 3000 
         console.warn('Leaderboard fetch warning:', err.message)
         // Don't throw - leaderboard is optional for gameplay
       } finally {
-        setLoading(false)
+        if (isMounted && isInitial) setLoading(false)
       }
     }
 
-    fetchLeaderboardData()
+    fetchLeaderboardData(true)
 
+    let interval
     if (autoRefresh) {
-      const interval = setInterval(fetchLeaderboardData, refreshInterval)
-      return () => clearInterval(interval)
+      interval = setInterval(() => fetchLeaderboardData(false), refreshInterval)
+    }
+
+    return () => {
+      isMounted = false
+      if (interval) clearInterval(interval)
     }
   }, [teamName, sortBy, autoRefresh, refreshInterval])
 
