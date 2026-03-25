@@ -70,3 +70,35 @@
   border-radius: 5px;
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .login-card {
+    padding: 24px 16px;
+    border-radius: 14px;
+    max-width: 100%;
+  }
+
+  .login-title {
+    font-size: 28px;
+  }
+
+  .login-subtitle {
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-title {
+    font-size: 24px;
+  }
+
+  .login-form {
+    gap: 14px;
+  }
+}

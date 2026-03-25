@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTimer } from '../context/TimerContext'
-import { getTeamStatus, getTeamStone, startTeamTimer, teamAcknowledgeDisqualification, getTeamBadges } from '../api/client'
+import { getTeamStatus, getTeamStone, startTeamTimer, teamAcknowledgeDisqualification, getTeamBadges, getTeamPowerups } from '../api/client'
 import { useTabFocusTracking } from '../hooks/useTabFocusTracking'
 import TeamTimer from './TeamTimer'
 import QuestionRound from './QuestionRound'
@@ -147,6 +147,47 @@ const CompletionMessage = ({ teamStatus, stone }) => {
   )
 }
 
+const KnowYourPowerups = ({ powerups = [], teamName, stone }) => {
+  return (
+    <div className="card powerup-guide-card">
+      <h2>⚡ Know Your PowerUps</h2>
+      <p className="powerup-guide-intro">
+        These are your <strong>{teamName}</strong> powerups{stone ? ` for ${stone}` : ''}. Each team gets a unique set based on its Infinity Stone.
+      </p>
+      <p className="powerup-guide-intro">
+        Use them from the question screen when they become available.
+      </p>
+
+      {powerups.length === 0 ? (
+        <p className="powerup-guide-empty">No powerups assigned yet. Keep solving questions to unlock them.</p>
+      ) : (
+        <div className="powerup-guide-list">
+          {powerups.map((item) => {
+            const statusText = item.used ? 'Used' : item.available ? 'Available now' : 'Locked'
+            const statusClass = item.used ? 'used' : item.available ? 'available' : 'locked'
+
+            return (
+              <div key={item.id} className={`powerup-guide-item ${statusClass}`}>
+                <div className="powerup-guide-header">
+                  <h3>{item.name}</h3>
+                  <span className={`powerup-status ${statusClass}`}>{statusText}</span>
+                </div>
+                <p className="powerup-guide-description">{item.description || 'No description available.'}</p>
+                {item.effect && (
+                  <p className="powerup-guide-effect"><strong>Effect:</strong> {item.effect}</p>
+                )}
+                <p className="powerup-guide-usage">
+                  <strong>How to use:</strong> Open the active question card, then tap this powerup in the PowerUps bar before submitting your answer.
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const AttendeeDashboard = () => {
   const { team } = useAuth()
   const { startTimer, elapsedTime } = useTimer()
@@ -162,6 +203,7 @@ const AttendeeDashboard = () => {
   const [currentStreak, setCurrentStreak] = useState(0)
   const [bestStreak, setBestStreak] = useState(0)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [teamPowerups, setTeamPowerups] = useState([])
 
   // Data fetching functions
   const fetchTeamStatus = async () => {
@@ -204,6 +246,15 @@ const AttendeeDashboard = () => {
     }
   }
 
+  const fetchTeamPowerups = async () => {
+    try {
+      const response = await getTeamPowerups(team)
+      setTeamPowerups(response.powerups || [])
+    } catch (err) {
+      console.error('Failed to fetch team powerups:', err)
+    }
+  }
+
   useEffect(() => {
     const initializeTeam = async () => {
       try {
@@ -215,6 +266,7 @@ const AttendeeDashboard = () => {
         await fetchTeamStatus()
         await fetchTeamStone()
         await fetchTeamBadges()
+        await fetchTeamPowerups()
       } catch (err) {
         console.error('Failed to initialize:', err)
         setDashboardError(err.response?.data?.detail || 'Failed to initialize team session')
@@ -229,6 +281,7 @@ const AttendeeDashboard = () => {
       fetchTeamStatus()
       fetchTeamStone()
       fetchTeamBadges()
+      fetchTeamPowerups()
     }, 2000)
 
     return () => clearInterval(interval)
@@ -240,6 +293,7 @@ const AttendeeDashboard = () => {
       fetchTeamStatus()
       fetchTeamStone()
       fetchTeamBadges()
+      fetchTeamPowerups()
     }, 500)
   }
 
@@ -313,6 +367,9 @@ const AttendeeDashboard = () => {
 
       {/* Gamification - Badges */}
       {badges.length > 0 && <BadgeDisplay badges={badges} />}
+
+      {/* PowerUp Guide */}
+      <KnowYourPowerups powerups={teamPowerups} teamName={team} stone={stone} />
 
       {/* Leaderboard Toggle Button */}
       <div className="leaderboard-toggle">
