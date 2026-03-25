@@ -2,7 +2,6 @@ import React from 'react'
 import AdminDashboard from './AdminDashboard'
 import TeamDistribution from './TeamDistribution'
 import GlobalTimerControl from './GlobalTimerControl'
-import StoneReassignment from './StoneReassignment'
 import AuditLog from './AuditLog'
 
 const GameOperations = () => {
@@ -14,10 +13,6 @@ const GameOperations = () => {
 
       <section className="admin-section">
         <TeamDistribution />
-      </section>
-
-      <section className="admin-section">
-        <StoneReassignment />
       </section>
 
       <section className="admin-section">
