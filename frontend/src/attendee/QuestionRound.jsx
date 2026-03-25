@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTimer } from "../context/TimerContext";
 import * as client from "../api/client";
+import Tilt from 'react-parallax-tilt';
 import "../styles/QuestionRound.css";
 
 const QuestionRound = ({ teamName, onQuestionComplete }) => {
@@ -209,6 +210,17 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   }
 
   return (
+    <Tilt
+      tiltMaxAngleX={3}
+      tiltMaxAngleY={3}
+      perspective={1000}
+      transitionSpeed={3000}
+      scale={1.01}
+      glareEnable={true}
+      glareMaxOpacity={0.05}
+      glareColor="#3498db"
+      glarePosition="all"
+    >
     <div className="question-round-container">
       <div className="question-header">
         <div className="question-progress">
@@ -352,6 +364,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       
       {error && <div className="error-message">{error}</div>}
     </div>
+    </Tilt>
   );
 };
 

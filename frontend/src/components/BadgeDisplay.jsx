@@ -1,5 +1,23 @@
 import React from 'react'
+import { motion } from 'framer-motion'
 import '../styles/BadgeDisplay.css'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { 
+    opacity: 1, 
+    scale: 1,
+    transition: { type: 'spring', damping: 12, stiffness: 120 }
+  }
+}
 
 const BadgeDisplay = ({ badges = [] }) => {
   if (!badges || badges.length === 0) {
@@ -8,9 +26,15 @@ const BadgeDisplay = ({ badges = [] }) => {
 
   return (
     <div className="badge-display">
-      <div className="badges-container">
+      <motion.div 
+        className="badges-container"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {badges.map((badge) => (
-          <div
+          <motion.div
+            variants={itemVariants}
             key={badge.id}
             className="badge-card"
             title={badge.details?.name}
@@ -20,9 +44,9 @@ const BadgeDisplay = ({ badges = [] }) => {
               <div className="badge-name">{badge.details?.name}</div>
               <div className="badge-description">{badge.details?.description}</div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   )
 }

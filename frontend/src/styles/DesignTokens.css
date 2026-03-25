@@ -12,6 +12,10 @@
   --bg-glass-heavy: rgba(10, 14, 25, 0.85);
   --bg-glass-light: rgba(255, 255, 255, 0.03);
   
+  /* Typography */
+  --font-body: 'Inter', sans-serif;
+  --font-display: 'Orbitron', 'Inter', sans-serif;
+  
   /* Accents */
   --accent-primary: #e74c3c;      /* Marvel red */
   --accent-secondary: #3498db;    /* shield blue */

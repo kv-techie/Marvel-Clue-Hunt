@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { getLeaderboardData, getTeamRank, getLeaderboardStats } from '../api/client'
 import '../styles/GameLeaderboard.css'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: { type: 'spring', damping: 15, stiffness: 100 }
+  }
+}
 
 const GameLeaderboard = ({ teamName, autoRefresh = true, refreshInterval = 3000 }) => {
   const [leaderboard, setLeaderboard] = useState([])
@@ -85,9 +103,15 @@ const GameLeaderboard = ({ teamName, autoRefresh = true, refreshInterval = 3000 
       {/* Top 5 Rankings */}
       <div className="top-rankings">
         <h3 className="rankings-title">Top Performers</h3>
-        <div className="rankings-list">
+        <motion.div 
+          className="rankings-list"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {topTeams.map((team, idx) => (
-            <div
+            <motion.div
+              variants={itemVariants}
               key={team.team_name}
               className={`ranking-item ${team.team_name === teamName ? 'user-team' : ''}`}
             >
@@ -112,9 +136,9 @@ const GameLeaderboard = ({ teamName, autoRefresh = true, refreshInterval = 3000 
                   <span className="stat-value">{team.best_streak} 🔥</span>
                 )}
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* User's Team Rank */}

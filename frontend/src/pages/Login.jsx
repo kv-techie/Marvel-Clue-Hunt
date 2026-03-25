@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { login } from '../api/client'
 import { getDeviceInfo } from '../utils/deviceInfo'
+import Tilt from 'react-parallax-tilt'
 import '../styles/Login.css'
 
 const Login = () => {
@@ -92,114 +93,127 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <h1 className="login-title">🦸 Marvel Clue Hunt</h1>
-        <p className="login-subtitle">Assemble your team and solve the mystery!</p>
-        
-        {isDisqualified ? (
-          // Disqualification message
-          <div className="disqualification-panel">
-            <div className="disqualification-icon">⛔</div>
-            <h2 className="disqualification-heading">Team Disqualified</h2>
-            <p className="disqualification-text">
-              Your team has been removed from the game.
-            </p>
-            <p className="disqualification-reason-box">
-              <strong>Reason:</strong> {disqualificationReason}
-            </p>
-            <p className="disqualification-contact">
-              Please contact the game administrators for more information.
-            </p>
-            <button
-              onClick={() => {
-                setIsDisqualified(false)
-                setError('')
-                setTeamName('')
-              }}
-              className="btn btn-primary"
-            >
-              Try Another Team
-            </button>
-          </div>
-        ) : (
-          // Login form
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="checkbox-group">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={isAdminLogin}
-                  onChange={(e) => setIsAdminLogin(e.target.checked)}
-                />
-                <span>Admin/Volunteer Login (Authorized Users Only)</span>
-              </label>
+      <Tilt 
+        tiltMaxAngleX={5} 
+        tiltMaxAngleY={5} 
+        perspective={1000} 
+        transitionSpeed={2500} 
+        scale={1.02} 
+        glareEnable={true} 
+        glareMaxOpacity={0.15} 
+        glareColor="#e74c3c" 
+        glarePosition="all"
+        style={{ width: '100%', maxWidth: '450px' }}
+      >
+        <div className="login-card">
+          <h1 className="login-title">🦸 Marvel Clue Hunt</h1>
+          <p className="login-subtitle">Assemble your team and solve the mystery!</p>
+          
+          {isDisqualified ? (
+            // Disqualification message
+            <div className="disqualification-panel">
+              <div className="disqualification-icon">⛔</div>
+              <h2 className="disqualification-heading">Team Disqualified</h2>
+              <p className="disqualification-text">
+                Your team has been removed from the game.
+              </p>
+              <p className="disqualification-reason-box">
+                <strong>Reason:</strong> {disqualificationReason}
+              </p>
+              <p className="disqualification-contact">
+                Please contact the game administrators for more information.
+              </p>
+              <button
+                onClick={() => {
+                  setIsDisqualified(false)
+                  setError('')
+                  setTeamName('')
+                }}
+                className="btn btn-primary"
+              >
+                Try Another Team
+              </button>
             </div>
-
-            {!isAdminLogin && (
-              <div className="form-group">
-                <label htmlFor="team">Enter Your Team Name</label>
-                <input
-                  id="team"
-                  type="text"
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                  placeholder="Team Avengers"
-                  required
-                />
-                <small className="form-hint">
-                  💡 Your device will be registered automatically (max 3 devices per team)
-                </small>
+          ) : (
+            // Login form
+            <form onSubmit={handleSubmit} className="login-form">
+              <div className="checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={isAdminLogin}
+                    onChange={(e) => setIsAdminLogin(e.target.checked)}
+                  />
+                  <span>Admin/Volunteer Login (Authorized Users Only)</span>
+                </label>
               </div>
-            )}
 
-            {isAdminLogin && (
-              <>
+              {!isAdminLogin && (
                 <div className="form-group">
-                  <label htmlFor="name">Enter Your Name</label>
+                  <label htmlFor="team">Enter Your Team Name</label>
                   <input
-                    id="name"
+                    id="team"
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Kedhar Vinod"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="Team Avengers"
                     required
                   />
+                  <small className="form-hint">
+                    💡 Your device will be registered automatically (max 3 devices per team)
+                  </small>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="pin">Enter PIN</label>
-                  <input
-                    id="pin"
-                    type="password"
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value)}
-                    placeholder="Enter your PIN"
-                    required
-                  />
-                </div>
-              </>
-            )}
+              )}
 
-            {error && <div className="error-message">{error}</div>}
+              {isAdminLogin && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="name">Enter Your Name</label>
+                    <input
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Kedhar Vinod"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="pin">Enter PIN</label>
+                    <input
+                      id="pin"
+                      type="password"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      placeholder="Enter your PIN"
+                      required
+                    />
+                  </div>
+                </>
+              )}
 
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Logging in...' : 'Enter'}
-            </button>
-          </form>
-        )}
+              {error && <div className="error-message">{error}</div>}
 
-        {!isAdminLogin && (
-          <div className="device-info-note">
-            <p><strong>Device Registration & Activation:</strong></p>
-            <ul>
-              <li>Your device is automatically registered on first login</li>
-              <li>Each team can register up to 3 different devices</li>
-              <li>⚡ <strong>Only 1 device can be active at a time</strong> - prevents simultaneous access</li>
-              <li>If one device has issues, switch to a fallback device immediately</li>
-              <li>Logging in from another device will automatically deactivate the previous one</li>
-            </ul>
-          </div>
-        )}
-      </div>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? 'Logging in...' : 'Enter'}
+              </button>
+            </form>
+          )}
+
+          {!isAdminLogin && (
+            <div className="device-info-note">
+              <p><strong>Device Registration & Activation:</strong></p>
+              <ul>
+                <li>Your device is automatically registered on first login</li>
+                <li>Each team can register up to 3 different devices</li>
+                <li>⚡ <strong>Only 1 device can be active at a time</strong> - prevents simultaneous access</li>
+                <li>If one device has issues, switch to a fallback device immediately</li>
+                <li>Logging in from another device will automatically deactivate the previous one</li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </Tilt>
     </div>
   )
 }

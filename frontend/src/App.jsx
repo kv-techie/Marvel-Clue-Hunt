@@ -8,10 +8,15 @@ import Admin from './pages/Admin'
 import Attendee from './pages/Attendee'
 import Volunteer from './pages/Volunteer'
 import ProtectedRoute from './components/ProtectedRoute'
+import ParticleBackground from './components/ParticleBackground'
+import CustomCursor from './components/CustomCursor'
 
 function App() {
   return (
-    <HashRouter>
+    <>
+      <CustomCursor />
+      <ParticleBackground />
+      <HashRouter>
       <AuthProvider>
         <TeamProvider>
           <TimerProvider>
@@ -47,6 +52,7 @@ function App() {
         </TeamProvider>
       </AuthProvider>
     </HashRouter>
+    </>
   )
 }
 
