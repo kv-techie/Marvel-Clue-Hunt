@@ -13,6 +13,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [showHint, setShowHint] = useState(false);
   const [hintsRemaining, setHintsRemaining] = useState(3);
   const [powerupsAvailable, setPowerupsAvailable] = useState({});
@@ -89,7 +90,9 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
       if (response.correct) {
         // Show success and load next question
-        alert(`🎉 ${response.message}\nScore: +${response.score_earned} points`);
+        setSuccessMessage(`🎉 ${response.message} (Score: +${response.score_earned} points)`);
+        
+        setTimeout(() => setSuccessMessage(null), 4000);
         if (response.next_question_ready) {
           loadCurrentQuestion();
         } else {
@@ -299,6 +302,18 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
         <div className="actions-right" />
       </div>
 
+      {successMessage && <div className="question-success" style={{
+        marginTop: '15px',
+        padding: '12px',
+        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+        border: '1px solid rgba(46, 204, 113, 0.4)',
+        borderRadius: '8px',
+        color: 'var(--accent-green, #2ecc71)',
+        textAlign: 'center',
+        fontWeight: '500',
+        animation: 'fadeIn 0.3s ease-out'
+      }}>{successMessage}</div>}
+      
       {error && <div className="error-message">{error}</div>}
 
       <div className="powerup-bar">
