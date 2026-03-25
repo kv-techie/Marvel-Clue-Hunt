@@ -3,6 +3,19 @@ import { logout as logoutAPI } from '../api/client'
 
 const AuthContext = createContext(null)
 
+const getStoredValue = (key) =>
+  sessionStorage.getItem(key) ?? localStorage.getItem(key)
+
+const setStoredValue = (key, value) => {
+  sessionStorage.setItem(key, value)
+  localStorage.setItem(key, value)
+}
+
+const removeStoredValue = (key) => {
+  sessionStorage.removeItem(key)
+  localStorage.removeItem(key)
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -12,12 +25,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true) // Add loading state
 
   useEffect(() => {
-    // Load from sessionStorage on mount (per-tab sessions)
-    const savedUser = sessionStorage.getItem('user')
-    const savedIsAdmin = sessionStorage.getItem('isAdmin') === 'true'
-    const savedIsVolunteer = sessionStorage.getItem('isVolunteer') === 'true'
-    const savedTeam = sessionStorage.getItem('team')
-    const savedDeviceId = sessionStorage.getItem('deviceId')
+    const savedUser = getStoredValue('user')
+    const savedIsAdmin = getStoredValue('isAdmin') === 'true'
+    const savedIsVolunteer = getStoredValue('isVolunteer') === 'true'
+    const savedTeam = getStoredValue('team')
+    const savedDeviceId = getStoredValue('deviceId')
 
     if (savedUser) {
       setUser(savedUser)
@@ -37,14 +49,14 @@ export const AuthProvider = ({ children }) => {
     setTeam(teamName)
     setDeviceId(deviceId)
 
-    sessionStorage.setItem('user', name)
-    sessionStorage.setItem('isAdmin', isAdminFlag)
-    sessionStorage.setItem('isVolunteer', isVolunteerFlag)
+    setStoredValue('user', name)
+    setStoredValue('isAdmin', String(isAdminFlag))
+    setStoredValue('isVolunteer', String(isVolunteerFlag))
     if (teamName) {
-      sessionStorage.setItem('team', teamName)
+      setStoredValue('team', teamName)
     }
     if (deviceId) {
-      sessionStorage.setItem('deviceId', deviceId)
+      setStoredValue('deviceId', deviceId)
     }
   }
 
@@ -65,7 +77,11 @@ export const AuthProvider = ({ children }) => {
     setIsVolunteer(false)
     setTeam(null)
     setDeviceId(null)
-    sessionStorage.clear()
+    removeStoredValue('user')
+    removeStoredValue('isAdmin')
+    removeStoredValue('isVolunteer')
+    removeStoredValue('team')
+    removeStoredValue('deviceId')
   }
 
   return (

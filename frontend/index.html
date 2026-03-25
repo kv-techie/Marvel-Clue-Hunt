@@ -20,6 +20,17 @@
     <meta name="twitter:image" content="/vite.svg" />
     <title>Marvel Clue Hunt</title>
 
+    <script>
+      (function () {
+        var path = window.location.pathname
+        var knownRoutes = ['/admin', '/attendee', '/volunteer']
+        if (!window.location.hash && knownRoutes.indexOf(path) !== -1) {
+          var target = window.location.origin + '/#' + path + window.location.search
+          window.location.replace(target)
+        }
+      })()
+    </script>
+
     <script type="module">
       if (import.meta.env.DEV) {
         const script = document.createElement('script')

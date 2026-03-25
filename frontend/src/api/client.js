@@ -12,7 +12,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const deviceId = sessionStorage.getItem('deviceId')
+  const deviceId = sessionStorage.getItem('deviceId') || localStorage.getItem('deviceId')
   if (deviceId) {
     config.headers = config.headers || {}
     config.headers['X-Device-Id'] = deviceId
