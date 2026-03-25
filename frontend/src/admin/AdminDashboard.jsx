@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { getGameStatus } from '../api/client'
+import '../styles/AdminComponents.css'
 
 const AdminDashboard = () => {
   const [status, setStatus] = useState(null)
@@ -29,23 +30,23 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <h2>📊 Game Overview</h2>
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-        <div className="stat-card card">
+      <h2 className="admin-section-title">📊 Game Overview</h2>
+      <div className="admin-stat-grid">
+        <div className="admin-stat-card">
           <h3>Game Status</h3>
-          <p style={{ fontSize: '24px', color: status?.game_active ? '#2ecc71' : '#e74c3c' }}>
+          <p className={`admin-stat-value ${status?.game_active ? 'success' : 'danger'}`}>
             {status?.game_active ? '🟢 Active' : '🔴 Inactive'}
           </p>
         </div>
         
-        <div className="stat-card card">
+        <div className="admin-stat-card">
           <h3>Total Teams</h3>
-          <p style={{ fontSize: '24px', color: '#3498db' }}>{status?.total_teams || 0}</p>
+          <p className="admin-stat-value info">{status?.total_teams || 0}</p>
         </div>
         
-        <div className="stat-card card">
+        <div className="admin-stat-card">
           <h3>Active Teams</h3>
-          <p style={{ fontSize: '24px', color: '#f39c12' }}>{status?.teams_active || 0}</p>
+          <p className="admin-stat-value warning">{status?.teams_active || 0}</p>
         </div>
       </div>
     </div>

@@ -1,0 +1,307 @@
+/* AdminComponents.css */
+
+/* admin-section-title */
+.admin-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent-primary);
+  margin-bottom: 20px;
+  margin-top: 0;
+}
+
+/* admin-form-panel */
+.admin-form-panel {
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+}
+
+.admin-form-panel h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+/* admin-input-group */
+.admin-input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-input-group input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+.admin-input-group input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(231, 76, 60, 0.3);
+}
+
+/* admin-btn */
+.admin-btn {
+  padding: 10px 20px;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.admin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-btn.primary {
+  background-color: var(--accent-primary);
+}
+
+.admin-btn.primary:hover:not(:disabled) {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+}
+
+.admin-btn.secondary {
+  background-color: var(--accent-secondary);
+}
+
+.admin-btn.secondary:hover:not(:disabled) {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+.admin-btn.success {
+  background-color: var(--accent-green);
+}
+
+.admin-btn.success:hover:not(:disabled) {
+  background-color: #27ae60;
+  transform: translateY(-2px);
+}
+
+.admin-btn.outline-warning {
+  background-color: transparent;
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+  padding: 8px 16px;
+}
+
+.admin-btn.outline-warning:hover:not(:disabled) {
+  background-color: rgba(243, 156, 18, 0.1);
+}
+
+.admin-btn.outline-info {
+  background-color: transparent;
+  color: var(--accent-secondary);
+  border: 1px solid var(--accent-secondary);
+  padding: 8px 16px;
+}
+
+.admin-btn.outline-info:hover:not(:disabled) {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.admin-btn.outline-danger {
+  background-color: transparent;
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  padding: 8px 16px;
+}
+
+.admin-btn.outline-danger:hover:not(:disabled) {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+.admin-btn.outline-muted {
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--text-muted);
+  padding: 8px 16px;
+}
+
+.admin-btn.outline-muted:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.admin-btn.lg {
+  padding: 12px 24px;
+  font-size: 16px;
+}
+
+/* admin-message */
+.admin-message {
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.admin-message.success {
+  background-color: rgba(46, 204, 113, 0.2);
+  color: var(--accent-green);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.admin-message.error {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: var(--accent-primary);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.admin-message.info {
+  background-color: rgba(52, 152, 219, 0.2);
+  color: var(--accent-secondary);
+  border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.admin-message.warning {
+  background-color: rgba(243, 156, 18, 0.2);
+  color: var(--accent-gold);
+  border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+/* admin-list */
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-list-item {
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+}
+
+.admin-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.admin-list-item.active {
+  border-left: 4px solid var(--accent-green);
+}
+
+.admin-list-item.danger {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-left: 4px solid var(--accent-primary);
+}
+
+.admin-list-title {
+  font-weight: bold;
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-list-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-list-text {
+  font-size: 14px;
+  margin: 5px 0;
+  line-height: 1.4;
+}
+
+.admin-list-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-badge {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.admin-badge.success {
+  background-color: rgba(46, 204, 113, 0.3);
+  color: var(--accent-green);
+}
+
+.admin-badge.danger {
+  background-color: rgba(231, 76, 60, 0.3);
+  color: var(--accent-primary);
+}
+
+.admin-badge.warning {
+  background-color: rgba(243, 156, 18, 0.3);
+  color: var(--accent-gold);
+}
+
+.admin-badge.info {
+  background-color: rgba(52, 152, 219, 0.3);
+  color: var(--accent-secondary);
+}
+
+/* Stat Cards for Dashboard */
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.admin-stat-card {
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-stat-card h3 {
+  margin: 0 0 10px 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.admin-stat-value {
+  margin: 0;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.admin-stat-value.success { color: var(--accent-green); }
+.admin-stat-value.danger { color: var(--accent-primary); }
+.admin-stat-value.info { color: var(--accent-secondary); }
+.admin-stat-value.warning { color: var(--accent-gold); }
+
+/* Utility Classes */
+.admin-text-danger { color: var(--accent-primary); }
+.admin-text-success { color: var(--accent-green); }
+.admin-text-warning { color: var(--accent-gold); }
+.admin-text-info { color: var(--accent-secondary); }
+.admin-text-muted { color: var(--text-secondary); }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { getAllTeams, getTeamTabSwitches, getTeamsActiveDevices } from '../api/client'
+import '../styles/ElectronicsMonitoring.css'
 
 const ElectronicsMonitoring = () => {
   const [teams, setTeams] = useState([])
@@ -79,8 +80,8 @@ const ElectronicsMonitoring = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2>⏳ Loading Electronics Monitoring Data...</h2>
+      <div className="em-container" style={{ textAlign: 'center', paddingTop: '40px' }}>
+        <h2 className="em-text-info">⏳ Loading Electronics Monitoring Data...</h2>
       </div>
     )
   }
@@ -91,55 +92,24 @@ const ElectronicsMonitoring = () => {
   )
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="em-container">
       <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ color: '#2c3e50', marginBottom: '10px' }}>
-          📱 Electronics Monitoring Dashboard
-        </h1>
-        <p style={{ color: '#7f8c8d', marginBottom: '20px' }}>
-          Track device activity and tab switches during the game
-        </p>
+        <div className="em-header">
+          <h1>📱 Electronics Monitoring Dashboard</h1>
+          <p>Track device activity and tab switches during the game</p>
+        </div>
 
         {/* View Toggle */}
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          padding: '12px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          border: '1px solid #e0e0e0',
-          marginBottom: '20px',
-          flexWrap: 'wrap'
-        }}>
+        <div className="em-view-toggle">
           <button
             onClick={() => setShowDevicesView(false)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: !showDevicesView ? '#e74c3c' : '#e0e0e0',
-              color: !showDevicesView ? 'white' : '#2c3e50',
-              fontWeight: !showDevicesView ? '600' : '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '13px'
-            }}
+            className={`em-toggle-btn ${!showDevicesView ? 'active switches' : 'inactive'}`}
           >
             📊 Tab Switch Violations
           </button>
           <button
             onClick={() => setShowDevicesView(true)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: showDevicesView ? '#3498db' : '#e0e0e0',
-              color: showDevicesView ? 'white' : '#2c3e50',
-              fontWeight: showDevicesView ? '600' : '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '13px'
-            }}
+            className={`em-toggle-btn ${showDevicesView ? 'active devices' : 'inactive'}`}
           >
             📱 Active Devices
           </button>
@@ -148,129 +118,68 @@ const ElectronicsMonitoring = () => {
         {/* Active Devices View */}
         {showDevicesView && (
           <div style={{ marginBottom: '30px' }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '20px',
-              marginBottom: '20px'
-            }}>
-              <div style={{
-                padding: '20px',
-                borderRadius: '8px',
-                backgroundColor: '#e3f2fd',
-                border: '2px solid #2196f3'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1565c0' }}>Total Teams</h3>
-                <p style={{ margin: '0', fontSize: '32px', fontWeight: 'bold', color: '#1976d2' }}>
-                  {activeDevicesData.length}
-                </p>
+            <div className="em-summary-grid">
+              <div className="em-summary-card em-card-info">
+                <h3>Total Teams</h3>
+                <p className="em-summary-value">{activeDevicesData.length}</p>
               </div>
 
-              <div style={{
-                padding: '20px',
-                borderRadius: '8px',
-                backgroundColor: '#c8e6c9',
-                border: '2px solid #4caf50'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#2e7d32' }}>With Active Device</h3>
-                <p style={{ margin: '0', fontSize: '32px', fontWeight: 'bold', color: '#388e3c' }}>
+              <div className="em-summary-card em-card-success">
+                <h3>With Active Device</h3>
+                <p className="em-summary-value">
                   {activeDevicesData.filter(t => t.has_active).length}
                 </p>
               </div>
 
-              <div style={{
-                padding: '20px',
-                borderRadius: '8px',
-                backgroundColor: '#fff3e0',
-                border: '2px solid #ff9800'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#e65100' }}>No Active Device</h3>
-                <p style={{ margin: '0', fontSize: '32px', fontWeight: 'bold', color: '#f57c00' }}>
+              <div className="em-summary-card em-card-warning">
+                <h3>No Active Device</h3>
+                <p className="em-summary-value">
                   {activeDevicesData.filter(t => !t.has_active).length}
                 </p>
               </div>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-              gap: '20px'
-            }}>
+            <div className="em-list-grid">
               {activeDevicesData.map(team => (
                 <div
                   key={team.team_name}
-                  style={{
-                    padding: '16px',
-                    borderRadius: '8px',
-                    backgroundColor: team.has_active ? '#f0f7ff' : '#fff5f5',
-                    border: `2px solid ${team.has_active ? '#2196f3' : '#ff6b6b'}`,
-                    borderLeft: team.has_active ? '6px solid #4caf50' : '6px solid #ff6b6b'
-                  }}
+                  className={`em-list-card ${team.has_active ? 'active' : 'offline'}`}
                 >
-                  <div style={{ marginBottom: '12px' }}>
-                    <h3 style={{ margin: '0 0 4px 0', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {team.team_name}
-                      {team.has_active && (
-                        <span style={{
-                          padding: '2px 8px',
-                          backgroundColor: '#4caf50',
-                          color: '#fff',
-                          borderRadius: '3px',
-                          fontSize: '11px',
-                          fontWeight: 'bold'
-                        }}>
-                          🟢 ACTIVE
-                        </span>
-                      )}
-                      {!team.has_active && (
-                        <span style={{
-                          padding: '2px 8px',
-                          backgroundColor: '#ff6b6b',
-                          color: '#fff',
-                          borderRadius: '3px',
-                          fontSize: '11px',
-                          fontWeight: 'bold'
-                        }}>
-                          ⚠️ OFFLINE
-                        </span>
-                      )}
-                    </h3>
-                    <p style={{ margin: '0', color: '#7f8c8d', fontSize: '12px' }}>
-                      {team.members_count} members • {team.registered_devices_count} registered devices
-                    </p>
+                  <div className="em-card-header">
+                    <div style={{ flex: 1 }}>
+                      <h3>
+                        {team.team_name}
+                        {team.has_active ? (
+                          <span className="em-switches-badge success" style={{ padding: '2px 8px', fontSize: '11px', marginLeft: '8px' }}>
+                            🟢 ACTIVE
+                          </span>
+                        ) : (
+                          <span className="em-switches-badge danger" style={{ padding: '2px 8px', fontSize: '11px', marginLeft: '8px' }}>
+                            ⚠️ OFFLINE
+                          </span>
+                        )}
+                      </h3>
+                      <p>
+                        {team.members_count} members • {team.registered_devices_count} registered devices
+                      </p>
+                    </div>
                   </div>
 
                   {team.has_active && team.active_device ? (
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                      borderRadius: '6px',
-                      border: '1px solid #4caf50'
-                    }}>
-                      <div style={{ marginBottom: '8px' }}>
-                        <p style={{ margin: '0', fontWeight: '600', color: '#2c3e50' }}>
-                          {team.active_device.device_name || 'Unknown Device'}
-                        </p>
+                    <div className="em-device-info active">
+                      <div className="em-device-name">
+                        {team.active_device.device_name || 'Unknown Device'}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#555' }}>
-                        <p style={{ margin: '4px 0' }}>📱 {team.active_device.browser} • {team.active_device.os}</p>
-                        <p style={{ margin: '4px 0' }}>🖥️ {team.active_device.screen_resolution}</p>
+                      <div className="em-text-muted" style={{ fontSize: '12px' }}>
+                        <p>📱 {team.active_device.browser} • {team.active_device.os}</p>
+                        <p>🖥️ {team.active_device.screen_resolution}</p>
                         {team.active_device.last_login && (
-                          <p style={{ margin: '4px 0', color: '#7f8c8d' }}>
-                            ⏱️ Last: {new Date(team.active_device.last_login).toLocaleTimeString()}
-                          </p>
+                          <p>⏱️ Last: {new Date(team.active_device.last_login).toLocaleTimeString()}</p>
                         )}
                       </div>
                     </div>
                   ) : (
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                      borderRadius: '6px',
-                      border: '1px solid #ff6b6b',
-                      textAlign: 'center',
-                      color: '#ff6b6b'
-                    }}>
+                    <div className="em-device-info inactive">
                       No device currently active
                     </div>
                   )}
@@ -283,311 +192,140 @@ const ElectronicsMonitoring = () => {
         {/* Tab Switches View */}
         {!showDevicesView && (
           <>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '20px',
-          marginBottom: '30px'
-        }}>
-          {/* Summary Cards */}
-          <div style={{
-            padding: '20px',
-            borderRadius: '8px',
-            backgroundColor: '#ecf0f1',
-            border: '2px solid #95a5a6'
-          }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>Total Teams</h3>
-            <p style={{ margin: '0', fontSize: '32px', fontWeight: 'bold', color: '#3498db' }}>
-              {teams.length}
-            </p>
-          </div>
-
-          <div style={{
-            padding: '20px',
-            borderRadius: '8px',
-            backgroundColor: '#ffe6e6',
-            border: '2px solid #e74c3c'
-          }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#c0392b' }}>Teams with Penalty</h3>
-            <p style={{
-              margin: '0',
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: '#e74c3c'
-            }}>
-              {Object.values(tabSwitchData).filter(team => (team.total_tab_left || 0) > 3).length}
-            </p>
-          </div>
-
-          <div style={{
-            padding: '20px',
-            borderRadius: '8px',
-            backgroundColor: '#fff3cd',
-            border: '2px solid #ffc107'
-          }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#856404' }}>Warned (Not Penalized)</h3>
-            <p style={{
-              margin: '0',
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: '#f39c12'
-            }}>
-              {Object.values(tabSwitchData).filter(team => (team.total_tab_left || 0) > 0 && (team.total_tab_left || 0) <= 3).length}
-            </p>
-          </div>
-
-          <div style={{
-            padding: '20px',
-            borderRadius: '8px',
-            backgroundColor: '#fff5f5',
-            border: '2px solid #e67e22'
-          }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#d35400' }}>Total Points Deducted</h3>
-            <p style={{
-              margin: '0',
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: '#e74c3c'
-            }}>
-              -{Object.values(tabSwitchData).reduce((sum, team) => sum + (team.total_deductions_from_switches || 0), 0)}
-            </p>
-          </div>
-        </div>
-
-        {/* Sort Controls */}
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          padding: '16px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          border: '1px solid #e0e0e0',
-          alignItems: 'center',
-          flexWrap: 'wrap'
-        }}>
-          <span style={{ fontWeight: '600', color: '#2c3e50', fontSize: '14px' }}>
-            Sort by:
-          </span>
-          <button
-            onClick={() => setSortBy('switches')}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: sortBy === 'switches' ? '#e74c3c' : '#e0e0e0',
-              color: sortBy === 'switches' ? 'white' : '#2c3e50',
-              fontWeight: sortBy === 'switches' ? '600' : '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '13px'
-            }}
-            onMouseEnter={(e) => {
-              if (sortBy !== 'switches') {
-                e.target.style.backgroundColor = '#d0d0d0'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (sortBy !== 'switches') {
-                e.target.style.backgroundColor = '#e0e0e0'
-              }
-            }}
-          >
-            📊 Violations (High to Low)
-          </button>
-          <button
-            onClick={() => setSortBy('name')}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: sortBy === 'name' ? '#3498db' : '#e0e0e0',
-              color: sortBy === 'name' ? 'white' : '#2c3e50',
-              fontWeight: sortBy === 'name' ? '600' : '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '13px'
-            }}
-            onMouseEnter={(e) => {
-              if (sortBy !== 'name') {
-                e.target.style.backgroundColor = '#d0d0d0'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (sortBy !== 'name') {
-                e.target.style.backgroundColor = '#e0e0e0'
-              }
-            }}
-          >
-            🔤 Team Name
-          </button>
-        </div>
-
-        {/* Teams List - only for tab switches view */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-          gap: '20px',
-          marginTop: '20px'
-        }}>
-          {sortedTeams.map(team => {
-            const switchCount = tabSwitchData[team.name]?.total_tab_left || 0
-            const isSuspicious = switchCount > 3
-            const penaltyAmount = Math.max(0, switchCount - 3) * 50
-
-            return (
-              <div
-                key={team.name}
-                onClick={() => setSelectedTeam(selectedTeam === team.name ? null : team.name)}
-                style={{
-                  padding: '16px',
-                  borderRadius: '8px',
-                  backgroundColor: isSuspicious ? '#fff5f5' : '#f8f9fa',
-                  border: `2px solid ${isSuspicious ? '#e74c3c' : '#bdc3c7'}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div>
-                  <h3 style={{ margin: '0 0 4px 0', color: '#2c3e50' }}>
-                    {team.name}
-                  </h3>
-                  <p style={{ margin: '0', color: '#7f8c8d', fontSize: '12px' }}>
-                    {team.members.length} members
-                  </p>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                  textAlign: 'right'
-                }}>
-                  <div style={{
-                    padding: '8px 12px',
-                    borderRadius: '20px',
-                    backgroundColor: isSuspicious ? '#e74c3c' : switchCount === 0 ? '#27ae60' : '#f39c12',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    minWidth: '60px'
-                  }}>
-                    {switchCount} switches
-                  </div>
-                  {isSuspicious && (
-                    <div style={{
-                      padding: '6px 10px',
-                      borderRadius: '4px',
-                      backgroundColor: '#c0392b',
-                      color: 'white',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}>
-                      -${penaltyAmount} pts
-                    </div>
-                  )}
-                </div>
+            <div className="em-summary-grid">
+              <div className="em-summary-card em-card-info">
+                <h3>Total Teams</h3>
+                <p className="em-summary-value">{teams.length}</p>
               </div>
 
-              {switchCount === 0 ? (
-                <p style={{ margin: '0', color: '#27ae60', fontSize: '14px', fontWeight: 'bold' }}>
-                  ✅ Clean - No violations
+              <div className="em-summary-card em-card-danger">
+                <h3>Teams with Penalty</h3>
+                <p className="em-summary-value">
+                  {Object.values(tabSwitchData).filter(team => (team.total_tab_left || 0) > 3).length}
                 </p>
-              ) : switchCount <= 3 ? (
-                <p style={{
-                  margin: '0',
-                  color: '#f39c12',
-                  fontSize: '14px',
-                  fontWeight: 'bold'
-                }}>
-                  ⚠️ Warned - {3 - switchCount} free switches remaining
-                </p>
-              ) : (
-                <>
-                  <p style={{
-                    margin: '0 0 8px 0',
-                    color: '#c0392b',
-                    fontSize: '14px',
-                    fontWeight: 'bold'
-                  }}>
-                    🚨 PENALIZED: {switchCount - 3} violation(s)
-                  </p>
-                  <p style={{
-                    margin: '0',
-                    color: '#c0392b',
-                    fontSize: '12px'
-                  }}>
-                    Points deducted: -{penaltyAmount}
-                  </p>
-                </>
-              )}
+              </div>
 
-              {selectedTeam === team.name && (
-                <div style={{
-                  marginTop: '12px',
-                  paddingTop: '12px',
-                  borderTop: '1px solid #ddd',
-                  maxHeight: '200px',
-                  overflowY: 'auto'
-                }}>
-                  <table style={{ width: '100%', fontSize: '12px' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #ddd' }}>
-                        <th style={{ textAlign: 'left', padding: '4px' }}>Event</th>
-                        <th style={{ textAlign: 'left', padding: '4px' }}>Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(tabSwitchData[team.name]?.events || []).map((event, idx) => {
-                        const switchNumber = (tabSwitchData[team.name]?.events || [])
-                          .filter(e => e.event_type === 'tab_left')
-                          .indexOf(event) + 1;
-                        const hasPenalty = event.event_type === 'tab_left' && switchNumber > 3;
-                        
-                        return (
-                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ 
-                              padding: '4px', 
-                              color: hasPenalty ? '#c0392b' : '#2c3e50',
-                              fontWeight: hasPenalty ? 'bold' : 'normal'
-                            }}>
-                              {event.event_type === 'tab_left' ? (
-                                <>{hasPenalty ? '🚨' : '❌'} Left #{switchNumber}</> 
-                              ) : (
-                                '✅ Returned'
-                              )}
-                            </td>
-                            <td style={{ padding: '4px', color: '#7f8c8d', fontSize: '11px' }}>
-                              {new Date(event.timestamp).toLocaleTimeString()}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="em-summary-card em-card-warning">
+                <h3>Warned (Not Penalized)</h3>
+                <p className="em-summary-value">
+                  {Object.values(tabSwitchData).filter(team => (team.total_tab_left || 0) > 0 && (team.total_tab_left || 0) <= 3).length}
+                </p>
+              </div>
+
+              <div className="em-summary-card em-card-danger" style={{ borderColor: '#d35400', backgroundColor: 'rgba(211, 84, 0, 0.1)' }}>
+                <h3 style={{ color: '#d35400' }}>Total Points Deducted</h3>
+                <p className="em-summary-value" style={{ color: '#e74c3c' }}>
+                  -{Object.values(tabSwitchData).reduce((sum, team) => sum + (team.total_deductions_from_switches || 0), 0)}
+                </p>
+              </div>
             </div>
-          )
-        })}
-        </div>
 
-        {teamsWithViolations.length === 0 && (
-          <div style={{
-            padding: '40px',
-            textAlign: 'center',
-            borderRadius: '8px',
-            backgroundColor: '#d4edda',
-            border: '2px solid #28a745',
-            marginTop: '30px'
-          }}>
-            <h2 style={{ color: '#155724', margin: '0 0 10px 0' }}>
-              ✅ All Teams Playing Fair!
-            </h2>
-            <p style={{ color: '#155724', margin: '0' }}>
-              No tab switches detected from any team.
-            </p>
-          </div>
-        )}
-        </>
+            {/* Sort Controls */}
+            <div className="em-sort-controls">
+              <span className="em-sort-label">Sort by:</span>
+              <button
+                onClick={() => setSortBy('switches')}
+                className={`em-toggle-btn ${sortBy === 'switches' ? 'active switches' : 'inactive'}`}
+              >
+                📊 Violations (High to Low)
+              </button>
+              <button
+                onClick={() => setSortBy('name')}
+                className={`em-toggle-btn ${sortBy === 'name' ? 'active switches' : 'inactive'}`}
+                style={{ backgroundColor: sortBy === 'name' ? 'var(--accent-secondary)' : '' }}
+              >
+                🔤 Team Name
+              </button>
+            </div>
+
+            {/* Teams List */}
+            <div className="em-list-grid">
+              {sortedTeams.map(team => {
+                const switchCount = tabSwitchData[team.name]?.total_tab_left || 0
+                const isSuspicious = switchCount > 3
+                const penaltyAmount = Math.max(0, switchCount - 3) * 50
+
+                return (
+                  <div
+                    key={team.name}
+                    onClick={() => setSelectedTeam(selectedTeam === team.name ? null : team.name)}
+                    className={`em-list-card clickable ${isSuspicious ? 'suspicious' : 'clean'}`}
+                  >
+                    <div className="em-card-header">
+                      <div>
+                        <h3 className="em-device-name">{team.name}</h3>
+                        <p>{team.members.length} members</p>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                        <div className={`em-switches-badge ${isSuspicious ? 'danger' : switchCount === 0 ? 'success' : 'warning'}`}>
+                          {switchCount} switches
+                        </div>
+                        {isSuspicious && (
+                          <div className="em-penalty-badge">
+                            -${penaltyAmount} pts
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {switchCount === 0 ? (
+                      <p className="em-text-success" style={{ margin: 0, fontSize: '14px' }}>✅ Clean - No violations</p>
+                    ) : switchCount <= 3 ? (
+                      <p className="em-text-warning" style={{ margin: 0, fontSize: '14px' }}>⚠️ Warned - {3 - switchCount} free switches remaining</p>
+                    ) : (
+                      <>
+                        <p className="em-text-danger" style={{ margin: '0 0 8px 0', fontSize: '14px' }}>🚨 PENALIZED: {switchCount - 3} violation(s)</p>
+                        <p className="em-text-danger" style={{ margin: 0, fontSize: '12px' }}>Points deducted: -{penaltyAmount}</p>
+                      </>
+                    )}
+
+                    {selectedTeam === team.name && (
+                      <div className="em-details">
+                        <table className="em-table">
+                          <thead>
+                            <tr>
+                              <th>Event</th>
+                              <th>Time</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(tabSwitchData[team.name]?.events || []).map((event, idx) => {
+                              const switchNumber = (tabSwitchData[team.name]?.events || [])
+                                .filter(e => e.event_type === 'tab_left')
+                                .indexOf(event) + 1;
+                              const hasPenalty = event.event_type === 'tab_left' && switchNumber > 3;
+                              
+                              return (
+                                <tr key={idx}>
+                                  <td className={hasPenalty ? 'em-text-danger' : 'em-text-primary'}>
+                                    {event.event_type === 'tab_left' ? (
+                                      <>{hasPenalty ? '🚨' : '❌'} Left #{switchNumber}</> 
+                                    ) : (
+                                      '✅ Returned'
+                                    )}
+                                  </td>
+                                  <td className="em-text-muted" style={{ fontSize: '11px' }}>
+                                    {new Date(event.timestamp).toLocaleTimeString()}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {teamsWithViolations.length === 0 && (
+              <div className="em-alert">
+                <h2>✅ All Teams Playing Fair!</h2>
+                <p>No tab switches detected from any team.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

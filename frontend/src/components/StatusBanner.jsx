@@ -5,31 +5,31 @@ const StatusBanner = ({ teamStatus, currentQuestionIndex = 0 }) => {
 
   return (
     <div className="status-banner">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px', textAlign: 'center' }}>
-        <div>
+      <div className="status-grid">
+        <div className="status-item">
           <h3>Current Score</h3>
-          <p style={{ fontSize: '32px', color: teamStatus.current_score < 0 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>
+          <p className={`status-score ${teamStatus.current_score < 0 ? 'negative' : 'positive'}`}>
             {teamStatus.current_score}
           </p>
         </div>
         
-        <div>
+        <div className="status-item">
           <h3>Question Progress</h3>
-          <p style={{ fontSize: '32px', color: '#3498db', fontWeight: 'bold' }}>
+          <p className="status-progress">
             {currentQuestionIndex}/10
           </p>
         </div>
         
-        <div>
+        <div className="status-item">
           <h3>Hints Used</h3>
-          <p style={{ fontSize: '32px', color: '#f39c12', fontWeight: 'bold' }}>
+          <p className="status-hints">
             {teamStatus.hints_used_count || 0}/3
           </p>
         </div>
         
-        <div>
+        <div className="status-item">
           <h3>Status</h3>
-          <p style={{ fontSize: '24px', color: teamStatus.qualified ? '#2ecc71' : '#e74c3c', fontWeight: 'bold' }}>
+          <p className={`status-qualification ${teamStatus.qualified ? 'qualified' : 'in-progress'}`}>
             {teamStatus.qualified ? '✅ Qualified' : '⏳ In Progress'}
           </p>
         </div>

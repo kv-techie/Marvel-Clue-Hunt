@@ -40,6 +40,37 @@
   text-align: center;
 }
 
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  align-items: center;
+}
+
+.status-item h3 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-item p {
+  margin: 0;
+  font-weight: bold;
+}
+
+.status-score { font-size: 32px; }
+.status-score.positive { color: var(--accent-green); text-shadow: 0 0 10px rgba(46, 204, 113, 0.4); }
+.status-score.negative { color: var(--accent-primary); text-shadow: 0 0 10px rgba(231, 76, 60, 0.4); }
+
+.status-progress { font-size: 32px; color: var(--accent-secondary); text-shadow: 0 0 10px rgba(52, 152, 219, 0.4); }
+.status-hints { font-size: 32px; color: var(--accent-gold); text-shadow: 0 0 10px rgba(243, 156, 18, 0.4); }
+
+.status-qualification { font-size: 24px; }
+.status-qualification.qualified { color: var(--accent-green); }
+.status-qualification.in-progress { color: var(--accent-primary); }
+
 .dialogue-section {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);

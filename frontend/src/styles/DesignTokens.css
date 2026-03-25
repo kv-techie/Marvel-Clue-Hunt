@@ -1,0 +1,35 @@
+/* Design Tokens */
+:root {
+  /* Backgrounds */
+  --bg-primary: #0f0f1a;          /* deep space */
+  --bg-secondary: #1a1a2e;        /* dark navy */
+  --bg-surface: #16213e;          /* card surface */
+  --bg-elevated: #1e2d4a;         /* elevated cards */
+
+  /* Accents */
+  --accent-primary: #e74c3c;      /* Marvel red */
+  --accent-secondary: #3498db;    /* shield blue */
+  --accent-gold: #f39c12;         /* infinity gold */
+  --accent-green: #2ecc71;        /* success */
+  --accent-purple: #9c27b0;       /* powerup purple */
+
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-muted: rgba(255, 255, 255, 0.5);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-accent: rgba(231, 76, 60, 0.3);
+
+  /* Border Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
+}

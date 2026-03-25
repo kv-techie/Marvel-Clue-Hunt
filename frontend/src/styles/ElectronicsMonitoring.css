@@ -1,0 +1,323 @@
+/* ElectronicsMonitoring.css */
+
+.em-container {
+  padding: 20px;
+}
+
+.em-header h1 {
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.em-header p {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.em-view-toggle {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.05); /* Dark mode fix from #f8f9fa */
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.em-toggle-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.em-toggle-btn.active.switches {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+.em-toggle-btn.active.devices {
+  background-color: var(--accent-secondary);
+  color: white;
+}
+
+.em-toggle-btn.inactive {
+  background-color: rgba(255, 255, 255, 0.1); 
+  color: var(--text-secondary); 
+}
+
+.em-toggle-btn.inactive:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Summary Grid */
+.em-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.em-summary-card {
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  border-width: 2px;
+  border-style: solid;
+}
+
+.em-summary-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+}
+
+.em-summary-card .em-summary-value {
+  margin: 0;
+  font-size: 32px;
+  font-weight: bold;
+}
+
+/* Card Variations (Dark Mode Fixed) */
+.em-card-info {
+  background-color: rgba(52, 152, 219, 0.1);
+  border-color: rgba(52, 152, 219, 0.5);
+}
+.em-card-info h3 { color: var(--accent-secondary); }
+.em-card-info .em-summary-value { color: var(--accent-secondary); }
+
+.em-card-success {
+  background-color: rgba(46, 204, 113, 0.1);
+  border-color: rgba(46, 204, 113, 0.5);
+}
+.em-card-success h3 { color: var(--accent-green); }
+.em-card-success .em-summary-value { color: var(--accent-green); }
+
+.em-card-danger {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-color: rgba(231, 76, 60, 0.5);
+}
+.em-card-danger h3 { color: var(--accent-primary); }
+.em-card-danger .em-summary-value { color: var(--accent-primary); }
+
+.em-card-warning {
+  background-color: rgba(243, 156, 18, 0.1);
+  border-color: rgba(243, 156, 18, 0.5);
+}
+.em-card-warning h3 { color: var(--accent-gold); }
+.em-card-warning .em-summary-value { color: var(--accent-gold); }
+
+/* Sort Controls */
+.em-sort-controls {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background-color: rgba(255, 255, 255, 0.05); /* Dark mode fix */
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.em-sort-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* Device/Team List Grid */
+.em-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.em-list-card {
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.em-list-card.clickable {
+  cursor: pointer;
+}
+
+.em-list-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+  border-color: var(--border-accent);
+}
+
+.em-list-card.clean {
+  background-color: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+.em-list-card.suspicious,
+.em-list-card.offline {
+  background-color: rgba(231, 76, 60, 0.05); /* Dark mode fix from #fff5f5 */
+  border-color: rgba(231, 76, 60, 0.4);
+}
+
+.em-list-card.active {
+  background-color: rgba(52, 152, 219, 0.05); /* Dark mode fix from #f0f7ff */
+  border-color: rgba(52, 152, 219, 0.4);
+  border-left: 6px solid var(--accent-green);
+}
+
+.em-list-card.offline {
+  border-left: 6px solid var(--accent-primary);
+}
+
+/* Switches Details */
+.em-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.em-card-header h3 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.em-card-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.em-switches-badge {
+  padding: 8px 12px;
+  border-radius: 20px;
+  color: white;
+  font-weight: bold;
+  min-width: 60px;
+  text-align: center;
+}
+
+.em-switches-badge.danger { background-color: var(--accent-primary); }
+.em-switches-badge.success { background-color: var(--accent-green); }
+.em-switches-badge.warning { background-color: var(--accent-gold); }
+
+.em-penalty-badge {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background-color: #c0392b; /* Even darker red for contrast inside alert */
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Tables / Details */
+.em-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-default);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Custom Scrollbar for details */
+.em-details::-webkit-scrollbar {
+  width: 6px;
+}
+.em-details::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+
+.em-table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+.em-table th {
+  text-align: left;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+
+.em-table td {
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.em-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.em-text-danger {
+  color: var(--accent-primary) !important;
+  font-weight: bold;
+}
+.em-text-success {
+  color: var(--accent-green) !important;
+  font-weight: bold;
+}
+.em-text-warning {
+  color: var(--accent-gold) !important;
+  font-weight: bold;
+}
+.em-text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.em-device-info {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+}
+.em-device-info.active {
+  background-color: rgba(46, 204, 113, 0.1);
+  border-color: var(--accent-green);
+}
+.em-device-info.inactive {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-color: var(--accent-primary);
+  text-align: center;
+  color: var(--accent-primary);
+}
+
+.em-device-info p {
+  margin: 4px 0;
+}
+
+.em-device-name {
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  margin-bottom: 8px;
+}
+
+/* Alert Box */
+.em-alert {
+  padding: 40px;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background-color: rgba(46, 204, 113, 0.1); /* Dark mode fix from #d4edda */
+  border: 2px solid var(--accent-green);
+  margin-top: 30px;
+}
+
+.em-alert h2 {
+  color: var(--accent-green);
+  margin: 0 0 10px 0;
+}
+
+.em-alert p {
+  color: rgba(46, 204, 113, 0.8);
+  margin: 0;
+}

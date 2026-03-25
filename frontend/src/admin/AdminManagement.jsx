@@ -6,6 +6,7 @@ import {
   getDevices,
   removeDevice
 } from '../api/client'
+import '../styles/AdminComponents.css'
 
 const AdminManagement = () => {
   // Admin state
@@ -46,6 +47,7 @@ const AdminManagement = () => {
   const getMaskedPin = (pin, username) => {
     return visiblePins[username] ? pin : '•'.repeat(pin.length)
   }
+
   const fetchUsersWithPins = async () => {
     try {
       const pinsResponse = await getPins()
@@ -227,44 +229,23 @@ const AdminManagement = () => {
   }
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div>
       {/* ==================== ADMIN MANAGEMENT ==================== */}
       <div style={{ marginBottom: '40px' }}>
-        <h2 style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '10px',
-          color: '#e74c3c',
-          marginBottom: '20px'
-        }}>
+        <h2 className="admin-section-title">
           👤 Admin Management
         </h2>
         
         {/* Add New Admin */}
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '20px', 
-          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-          borderRadius: '8px',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}>
-          <h3 style={{ marginTop: 0, color: '#fff' }}>Add New Admin</h3>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+        <div className="admin-form-panel">
+          <h3>Add New Admin</h3>
+          <div className="admin-input-group">
             <input
               type="text"
               placeholder="Enter name"
               value={newAdminName}
               onChange={(e) => setNewAdminName(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddAdmin()}
-              style={{
-                flex: 1,
-                minWidth: '200px',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #444',
-                backgroundColor: '#222',
-                color: '#fff'
-              }}
             />
             <input
               type="text"
@@ -272,41 +253,13 @@ const AdminManagement = () => {
               value={newAdminPin}
               onChange={(e) => setNewAdminPin(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddAdmin()}
-              style={{
-                flex: 1,
-                minWidth: '200px',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #444',
-                backgroundColor: '#222',
-                color: '#fff'
-              }}
             />
-            <button 
-              onClick={handleAddAdmin} 
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#e74c3c',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
+            <button className="admin-btn primary" onClick={handleAddAdmin}>
               Add Admin
             </button>
           </div>
           {adminMessage && (
-            <div style={{
-              padding: '10px',
-              borderRadius: '4px',
-              backgroundColor: adminMessage.includes('✅') 
-                ? 'rgba(46, 204, 113, 0.2)' 
-                : 'rgba(231, 76, 60, 0.2)',
-              color: adminMessage.includes('✅') ? '#2ecc71' : '#e74c3c',
-              border: `1px solid ${adminMessage.includes('✅') ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`
-            }}>
+            <div className={`admin-message ${adminMessage.includes('✅') ? 'success' : 'error'}`}>
               {adminMessage}
             </div>
           )}
@@ -314,28 +267,20 @@ const AdminManagement = () => {
 
         {/* Current Admins List */}
         <div>
-          <h3 style={{ color: '#fff' }}>Current Admins ({adminUsers.length})</h3>
+          <h3 style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>Current Admins ({adminUsers.length})</h3>
           {adminUsers.length === 0 ? (
-            <p style={{ color: '#888' }}>No admins registered yet</p>
+            <p className="admin-text-muted">No admins registered yet</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="admin-list">
               {adminUsers.map((admin) => (
-                <div
-                  key={admin.username}
-                  style={{
-                    padding: '15px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '6px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                  }}
-                >
+                <div key={admin.username} className="admin-list-item">
                   {editingUser?.username === admin.username && editingUser?.role === 'admin' ? (
                     // Edit PIN Mode
-                    <div>
-                      <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#fff', marginBottom: '10px' }}>
+                    <div style={{ width: '100%' }}>
+                      <div className="admin-list-title" style={{ marginBottom: '10px' }}>
                         🔐 Change PIN for {admin.username}
                       </div>
-                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div className="admin-input-group">
                         <input
                           type="text"
                           placeholder="Enter new PIN"
@@ -343,98 +288,40 @@ const AdminManagement = () => {
                           onChange={(e) => setNewPinValue(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && handleChangePin(admin.username, 'admin')}
                           autoFocus
-                          style={{
-                            flex: 1,
-                            minWidth: '150px',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            border: '1px solid #444',
-                            backgroundColor: '#222',
-                            color: '#fff'
-                          }}
                         />
-                        <button
-                          onClick={() => handleChangePin(admin.username, 'admin')}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#2ecc71',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold'
-                          }}
-                        >
+                        <button className="admin-btn success" onClick={() => handleChangePin(admin.username, 'admin')}>
                           Save
                         </button>
-                        <button
-                          onClick={cancelEditingPin}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: 'transparent',
-                            color: '#888',
-                            border: '1px solid #888',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                          }}
-                        >
+                        <button className="admin-btn outline-muted" onClick={cancelEditingPin}>
                           Cancel
                         </button>
                       </div>
                     </div>
                   ) : (
                     // Display Mode
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                       <div>
-                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#fff' }}>
+                        <div className="admin-list-title">
                           👤 {admin.username}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#888', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="admin-list-subtitle">
                           <span>PIN: {getMaskedPin(admin.pin, admin.username)}</span>
                           <button
                             onClick={() => togglePinVisibility(admin.username)}
                             title={visiblePins[admin.username] ? 'Hide PIN' : 'Show PIN'}
-                            style={{
-                              padding: '4px 8px',
-                              backgroundColor: 'transparent',
-                              color: visiblePins[admin.username] ? '#2ecc71' : '#f39c12',
-                              border: `1px solid ${visiblePins[admin.username] ? '#2ecc71' : '#f39c12'}`,
-                              borderRadius: '3px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              fontWeight: 'bold'
-                            }}
+                            className={`admin-badge ${visiblePins[admin.username] ? 'success' : 'warning'}`}
+                            style={{ cursor: 'pointer', border: 'none' }}
                           >
                             {visiblePins[admin.username] ? '👁️ Hide' : '👁️ Show'}
                           </button>
                           <span style={{ marginLeft: '10px' }}>Created: {new Date(admin.created_at).toLocaleString()}</span>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => startEditingPin(admin.username, 'admin')}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: 'transparent',
-                            color: '#f39c12',
-                            border: '1px solid #f39c12',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                          }}
-                        >
+                      <div className="admin-list-actions">
+                        <button className="admin-btn outline-warning" onClick={() => startEditingPin(admin.username, 'admin')}>
                           Change PIN
                         </button>
-                        <button
-                          onClick={() => handleRemoveAdmin(admin.username)}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: 'transparent',
-                            color: '#3498db',
-                            border: '1px solid #3498db',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                          }}
-                        >
+                        <button className="admin-btn outline-info" onClick={() => handleRemoveAdmin(admin.username)}>
                           Remove
                         </button>
                       </div>
@@ -449,41 +336,20 @@ const AdminManagement = () => {
 
       {/* ==================== VOLUNTEER MANAGEMENT ==================== */}
       <div style={{ marginBottom: '40px' }}>
-        <h2 style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '10px',
-          color: '#e74c3c',
-          marginBottom: '20px'
-        }}>
+        <h2 className="admin-section-title">
           👥 Volunteer Management
         </h2>
         
         {/* Add New Volunteer */}
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '20px', 
-          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-          borderRadius: '8px',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}>
-          <h3 style={{ marginTop: 0, color: '#fff' }}>Add New Volunteer</h3>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+        <div className="admin-form-panel">
+          <h3>Add New Volunteer</h3>
+          <div className="admin-input-group">
             <input
               type="text"
               placeholder="Enter name"
               value={newVolunteerName}
               onChange={(e) => setNewVolunteerName(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddVolunteer()}
-              style={{
-                flex: 1,
-                minWidth: '200px',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #444',
-                backgroundColor: '#222',
-                color: '#fff'
-              }}
             />
             <input
               type="text"
@@ -491,41 +357,13 @@ const AdminManagement = () => {
               value={newVolunteerPin}
               onChange={(e) => setNewVolunteerPin(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddVolunteer()}
-              style={{
-                flex: 1,
-                minWidth: '200px',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #444',
-                backgroundColor: '#222',
-                color: '#fff'
-              }}
             />
-            <button 
-              onClick={handleAddVolunteer} 
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#e74c3c',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
+            <button className="admin-btn primary" onClick={handleAddVolunteer}>
               Add Volunteer
             </button>
           </div>
           {volunteerMessage && (
-            <div style={{
-              padding: '10px',
-              borderRadius: '4px',
-              backgroundColor: volunteerMessage.includes('✅') 
-                ? 'rgba(46, 204, 113, 0.2)' 
-                : 'rgba(231, 76, 60, 0.2)',
-              color: volunteerMessage.includes('✅') ? '#2ecc71' : '#e74c3c',
-              border: `1px solid ${volunteerMessage.includes('✅') ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`
-            }}>
+            <div className={`admin-message ${volunteerMessage.includes('✅') ? 'success' : 'error'}`}>
               {volunteerMessage}
             </div>
           )}
@@ -533,28 +371,20 @@ const AdminManagement = () => {
 
         {/* Current Volunteers List */}
         <div>
-          <h3 style={{ color: '#fff' }}>Current Volunteers ({volunteerUsers.length})</h3>
+          <h3 style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>Current Volunteers ({volunteerUsers.length})</h3>
           {volunteerUsers.length === 0 ? (
-            <p style={{ color: '#888' }}>No volunteers registered yet</p>
+            <p className="admin-text-muted">No volunteers registered yet</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="admin-list">
               {volunteerUsers.map((volunteer) => (
-                <div
-                  key={volunteer.username}
-                  style={{
-                    padding: '15px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '6px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                  }}
-                >
+                <div key={volunteer.username} className="admin-list-item">
                   {editingUser?.username === volunteer.username && editingUser?.role === 'volunteer' ? (
                     // Edit PIN Mode
-                    <div>
-                      <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#fff', marginBottom: '10px' }}>
+                    <div style={{ width: '100%' }}>
+                      <div className="admin-list-title" style={{ marginBottom: '10px' }}>
                         🔐 Change PIN for {volunteer.username}
                       </div>
-                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div className="admin-input-group">
                         <input
                           type="text"
                           placeholder="Enter new PIN"
@@ -562,98 +392,40 @@ const AdminManagement = () => {
                           onChange={(e) => setNewPinValue(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && handleChangePin(volunteer.username, 'volunteer')}
                           autoFocus
-                          style={{
-                            flex: 1,
-                            minWidth: '150px',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            border: '1px solid #444',
-                            backgroundColor: '#222',
-                            color: '#fff'
-                          }}
                         />
-                        <button
-                          onClick={() => handleChangePin(volunteer.username, 'volunteer')}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#2ecc71',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold'
-                          }}
-                        >
+                        <button className="admin-btn success" onClick={() => handleChangePin(volunteer.username, 'volunteer')}>
                           Save
                         </button>
-                        <button
-                          onClick={cancelEditingPin}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: 'transparent',
-                            color: '#888',
-                            border: '1px solid #888',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                          }}
-                        >
+                        <button className="admin-btn outline-muted" onClick={cancelEditingPin}>
                           Cancel
                         </button>
                       </div>
                     </div>
                   ) : (
                     // Display Mode
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                       <div>
-                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#fff' }}>
+                        <div className="admin-list-title">
                           👥 {volunteer.username}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#888', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="admin-list-subtitle">
                           <span>PIN: {getMaskedPin(volunteer.pin, volunteer.username)}</span>
                           <button
                             onClick={() => togglePinVisibility(volunteer.username)}
                             title={visiblePins[volunteer.username] ? 'Hide PIN' : 'Show PIN'}
-                            style={{
-                              padding: '4px 8px',
-                              backgroundColor: 'transparent',
-                              color: visiblePins[volunteer.username] ? '#2ecc71' : '#f39c12',
-                              border: `1px solid ${visiblePins[volunteer.username] ? '#2ecc71' : '#f39c12'}`,
-                              borderRadius: '3px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              fontWeight: 'bold'
-                            }}
+                            className={`admin-badge ${visiblePins[volunteer.username] ? 'success' : 'warning'}`}
+                            style={{ cursor: 'pointer', border: 'none' }}
                           >
                             {visiblePins[volunteer.username] ? '👁️ Hide' : '👁️ Show'}
                           </button>
                           <span style={{ marginLeft: '10px' }}>Created: {new Date(volunteer.created_at).toLocaleString()}</span>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => startEditingPin(volunteer.username, 'volunteer')}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: 'transparent',
-                            color: '#f39c12',
-                            border: '1px solid #f39c12',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                          }}
-                        >
+                      <div className="admin-list-actions">
+                        <button className="admin-btn outline-warning" onClick={() => startEditingPin(volunteer.username, 'volunteer')}>
                           Change PIN
                         </button>
-                        <button
-                          onClick={() => handleRemoveVolunteer(volunteer.username)}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: 'transparent',
-                            color: '#3498db',
-                            border: '1px solid #3498db',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                          }}
-                        >
+                        <button className="admin-btn outline-info" onClick={() => handleRemoveVolunteer(volunteer.username)}>
                           Remove
                         </button>
                       </div>
@@ -668,127 +440,59 @@ const AdminManagement = () => {
 
       {/* ==================== DEVICE MANAGEMENT ==================== */}
       <div>
-        <h2 style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '10px',
-          color: '#e74c3c',
-          marginBottom: '20px'
-        }}>
+        <h2 className="admin-section-title">
           📱 Device Management
         </h2>
         
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '20px', 
-          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-          borderRadius: '8px',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+        <div className="admin-form-panel">
+          <div className="admin-input-group">
             <input
               type="text"
               placeholder="Team name (e.g., Team Avengers)"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleFetchDevices()}
-              style={{
-                flex: 1,
-                minWidth: '250px',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #444',
-                backgroundColor: '#222',
-                color: '#fff'
-              }}
             />
-            <button 
-              onClick={handleFetchDevices}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#e74c3c',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
+            <button className="admin-btn primary" onClick={handleFetchDevices}>
               Fetch Devices
             </button>
           </div>
           
           {deviceMessage && (
-            <div style={{
-              padding: '10px',
-              borderRadius: '4px',
-              marginBottom: '10px',
-              backgroundColor: deviceMessage.includes('❌') 
-                ? 'rgba(231, 76, 60, 0.2)' 
-                : 'rgba(52, 152, 219, 0.2)',
-              color: deviceMessage.includes('❌') ? '#e74c3c' : '#3498db',
-              border: `1px solid ${deviceMessage.includes('❌') ? 'rgba(231, 76, 60, 0.3)' : 'rgba(52, 152, 219, 0.3)'}`
-            }}>
+            <div className={`admin-message ${deviceMessage.includes('❌') ? 'error' : 'info'}`}>
               {deviceMessage}
             </div>
           )}
 
           {devices.length > 0 && (
             <div style={{ marginTop: '15px' }}>
-              <h4 style={{ marginBottom: '10px', color: '#fff' }}>Registered Devices:</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <h4 style={{ marginBottom: '10px', color: 'var(--text-primary)' }}>Registered Devices:</h4>
+              <div className="admin-list">
                 {devices.map((device, index) => (
                   <div
                     key={index}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                      borderRadius: '4px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderLeft: typeof device === 'object' && device.is_active ? '4px solid #2ecc71' : '4px solid transparent'
-                    }}
+                    className={`admin-list-item ${typeof device === 'object' && device.is_active ? 'active' : ''}`}
                   >
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="admin-list-title">
                         {getDeviceDisplayName(device)}
                         {typeof device === 'object' && device.is_active && (
-                          <span style={{
-                            padding: '2px 8px',
-                            backgroundColor: 'rgba(46, 204, 113, 0.3)',
-                            color: '#2ecc71',
-                            borderRadius: '3px',
-                            fontSize: '11px',
-                            fontWeight: 'bold'
-                          }}>
+                          <span className="admin-badge success" style={{ marginLeft: '10px' }}>
                             🟢 ACTIVE
                           </span>
                         )}
                       </div>
                       {typeof device === 'object' && (
-                        <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
+                        <div className="admin-list-subtitle">
                           {device.browser} • {device.os} • {device.screen_resolution}
                           {device.last_login && ` • Last: ${new Date(device.last_login).toLocaleString()}`}
                         </div>
                       )}
-                      <div style={{ fontSize: '11px', color: '#666', marginTop: '3px', fontFamily: 'monospace' }}>
+                      <div className="admin-list-text admin-text-muted" style={{ fontSize: '11px', fontFamily: 'monospace' }}>
                         ID: {getDeviceId(device)}
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleRemoveDevice(getDeviceId(device))}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: 'transparent',
-                        color: '#e74c3c',
-                        border: '1px solid #e74c3c',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '13px'
-                      }}
-                    >
+                    <button className="admin-btn outline-danger" onClick={() => handleRemoveDevice(getDeviceId(device))}>
                       Remove
                     </button>
                   </div>
