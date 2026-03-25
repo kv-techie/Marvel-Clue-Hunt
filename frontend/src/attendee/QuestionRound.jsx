@@ -250,6 +250,29 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
           </div>
         )}
 
+        <div className="powerup-bar">
+          <div className="powerups-label">⚡ PowerUps ({stone}):</div>
+          <div className="powerups-list">
+            {teamPowerups.map((powerup) => (
+              <button
+                key={powerup.id}
+                className={`powerup-button ${
+                  powerupsAvailable[powerup.id] ? "available" : "used"
+                } ${activePowerup === powerup.id ? "active" : ""}`}
+                onClick={() =>
+                  powerupsAvailable[powerup.id] && handleUsePowerup(powerup.id)
+                }
+                disabled={!powerupsAvailable[powerup.id]}
+                title={`${powerup.name}${
+                  !powerupsAvailable[powerup.id] ? " (locked/used)" : ""
+                }`}
+              >
+                {powerup.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="answer-input-section">
           <label htmlFor="question-answer-input" className="sr-only">
             Answer input
@@ -328,29 +351,6 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       }}>{successMessage}</div>}
       
       {error && <div className="error-message">{error}</div>}
-
-      <div className="powerup-bar">
-        <div className="powerups-label">⚡ PowerUps ({stone}):</div>
-        <div className="powerups-list">
-          {teamPowerups.map((powerup) => (
-            <button
-              key={powerup.id}
-              className={`powerup-button ${
-                powerupsAvailable[powerup.id] ? "available" : "used"
-              } ${activePowerup === powerup.id ? "active" : ""}`}
-              onClick={() =>
-                powerupsAvailable[powerup.id] && handleUsePowerup(powerup.id)
-              }
-              disabled={!powerupsAvailable[powerup.id]}
-              title={`${powerup.name}${
-                !powerupsAvailable[powerup.id] ? " (locked/used)" : ""
-              }`}
-            >
-              {powerup.name}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

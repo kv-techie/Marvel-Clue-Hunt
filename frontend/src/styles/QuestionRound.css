@@ -376,9 +376,9 @@
 }
 
 .powerups-list {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
 }
 
 .powerup-button {
@@ -457,14 +457,14 @@
 
   .hint-btn,
   .submit-btn,
-  .powerup-btn,
-  .powerup-button {
+  .powerup-btn {
     width: 100%;
     padding: 10px 12px;
   }
 
   .powerups-list {
-    gap: 6px;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
   }
 }
 
