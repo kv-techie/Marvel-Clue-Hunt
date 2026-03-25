@@ -162,9 +162,11 @@ const VolunteerDashboard = () => {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '15px',
         marginBottom: '20px'
       }}>
-        <h2>📋 Volunteer Panel</h2>
+        <h2 style={{ margin: 0 }}>📋 Volunteer Panel</h2>
         
         {/* Change PIN Button */}
         <button
@@ -327,7 +329,12 @@ const VolunteerDashboard = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+        gap: '20px', 
+        marginBottom: '30px' 
+      }}>
         {/* Leaderboard */}
         <div>
           <h3>Live Leaderboard</h3>

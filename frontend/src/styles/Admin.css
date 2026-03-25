@@ -143,7 +143,7 @@
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 850px) {
   .admin-header {
     flex-direction: column;
     gap: 15px;
@@ -153,7 +153,10 @@
   .admin-user-info {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
   }
+
   
   .admin-nav-tabs {
     flex-wrap: wrap;
