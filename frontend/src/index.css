@@ -36,10 +36,23 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-primary);
+  background: linear-gradient(-45deg, var(--bg-primary), var(--bg-secondary), var(--bg-tertiary), #000000);
+  background-size: 400% 400%;
+  animation: gradientBG 25s ease infinite;
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 #root {
@@ -75,32 +88,46 @@ canvas {
 }
 
 .btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
+  padding: 12px 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 16px;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  color: white;
+  background: rgba(231, 76, 60, 0.15);
+  color: #ff8a80;
+  border-color: var(--border-accent);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+  background: var(--accent-primary);
+  color: #fff;
+  box-shadow: var(--glow-primary);
+  border-color: var(--accent-primary);
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
+  background: rgba(52, 152, 219, 0.15);
+  color: #82b1ff;
+  border-color: var(--border-glow);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+  background: var(--accent-secondary);
+  color: #fff;
+  box-shadow: var(--glow-secondary);
+  border-color: var(--accent-secondary);
 }
 
 .btn:disabled {
@@ -126,12 +153,17 @@ input:focus, textarea:focus {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 20px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 24px;
   margin: 20px 0;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-glass);
+  animation: fadeIn 0.6s ease-out;
 }
 
 .timer {

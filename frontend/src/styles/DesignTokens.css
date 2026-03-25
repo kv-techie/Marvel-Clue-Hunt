@@ -1,11 +1,17 @@
 /* Design Tokens */
 :root {
   /* Backgrounds */
-  --bg-primary: #0f0f1a;          /* deep space */
-  --bg-secondary: #1a1a2e;        /* dark navy */
-  --bg-surface: #16213e;          /* card surface */
-  --bg-elevated: #1e2d4a;         /* elevated cards */
-
+  --bg-primary: #05050a;          /* deep abyss */
+  --bg-secondary: #0d111f;        /* dark tech blue */
+  --bg-tertiary: #140d21;         /* deep purple space */
+  --bg-surface: #16213e;          /* solid card surface */
+  --bg-elevated: #1e2d4a;         /* solid elevated */
+  
+  /* Glassmorphism */
+  --bg-glass: rgba(16, 22, 38, 0.6);
+  --bg-glass-heavy: rgba(10, 14, 25, 0.85);
+  --bg-glass-light: rgba(255, 255, 255, 0.03);
+  
   /* Accents */
   --accent-primary: #e74c3c;      /* Marvel red */
   --accent-secondary: #3498db;    /* shield blue */
@@ -19,9 +25,12 @@
   --text-muted: rgba(255, 255, 255, 0.5);
 
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-default: rgba(255, 255, 255, 0.12);
-  --border-accent: rgba(231, 76, 60, 0.3);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-highlight: rgba(255, 255, 255, 0.2);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(231, 76, 60, 0.4);
+  --border-glow: rgba(52, 152, 219, 0.5);
 
   /* Border Radii */
   --radius-sm: 6px;
@@ -30,6 +39,14 @@
   --radius-xl: 20px;
 
   /* Shadows */
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
-  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-elevated: 0 12px 48px rgba(0, 0, 0, 0.8);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  
+  /* Glows */
+  --glow-primary: 0 0 15px rgba(231, 76, 60, 0.4), 0 0 30px rgba(231, 76, 60, 0.2);
+  --glow-secondary: 0 0 15px rgba(52, 152, 219, 0.4), 0 0 30px rgba(52, 152, 219, 0.2);
+  --glow-gold: 0 0 15px rgba(243, 156, 18, 0.4), 0 0 30px rgba(243, 156, 18, 0.2);
+  --glow-purple: 0 0 15px rgba(156, 39, 176, 0.4), 0 0 30px rgba(156, 39, 176, 0.2);
 }
