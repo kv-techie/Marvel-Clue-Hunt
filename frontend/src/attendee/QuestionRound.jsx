@@ -103,13 +103,26 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
         }
         if (onQuestionComplete) onQuestionComplete(response);
       } else {
-        // Incorrect answer - allow retry with cleared input
+        // Incorrect answer 
         setError(`❌ ${response.message}`);
-        setAnswer(""); // Clear input field for another attempt
-        // Focus back on input for easy retry
-        setTimeout(() => {
-          document.querySelector('.answer-input')?.focus();
-        }, 100);
+        setAnswer(""); 
+        
+        // If backend moved us to the next question, process it after a short delay
+        if (response.next_question_ready !== undefined) {
+          setTimeout(() => {
+            setError(null);
+            if (response.next_question_ready) {
+              loadCurrentQuestion();
+            } else {
+              setQuestion({ completed: true, message: "All questions completed!" });
+            }
+          }, 2500);
+        } else {
+          // Fallback if it's just a validation failure
+          setTimeout(() => {
+            document.querySelector('.answer-input')?.focus();
+          }, 100);
+        }
       }
     } catch (err) {
       console.error("[QuestionRound] Submit answer error:", err);
