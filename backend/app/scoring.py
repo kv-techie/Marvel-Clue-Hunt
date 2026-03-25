@@ -176,13 +176,34 @@ def calculate_final_score(team: Team) -> int:
 
 
 def check_qualification(team: Team) -> bool:
-    """Check if team qualifies (completed enough questions)"""
-    # Check if team has completed at least 2 questions (or a threshold defined in settings)
-    questions_completed = (
-        len(team.questions_completed) if team.questions_completed else 0
-    )
-    qualification_threshold = getattr(settings, "qualification_threshold", 2)
-    return questions_completed >= qualification_threshold
+    """
+    Check if team qualifies based on difficulty ratio.
+    A team qualifies when they have correctly answered:
+      - At least 1 easy question
+      - At least 2 medium questions
+      - At least 3 hard questions
+    (Ratio 1:2:3 for easy:medium:hard)
+    """
+    easy_count = 0
+    medium_count = 0
+    hard_count = 0
+
+    for question_data in (team.questions_completed or []):
+        difficulty = (
+            question_data.get("difficulty", "")
+            if isinstance(question_data, dict)
+            else getattr(question_data, "difficulty", "")
+        )
+        difficulty = difficulty.lower() if difficulty else ""
+        if difficulty == "easy":
+            easy_count += 1
+        elif difficulty in ("medium", "hard"):
+            # medium counts toward the medium-hard bucket
+            medium_count += 1
+        if difficulty == "hard" or difficulty == "extreme":
+            hard_count += 1
+
+    return easy_count >= 1 and medium_count >= 2 and hard_count >= 2
 
 
 def calculate_total_deductions(team: Team) -> int:

@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     dialogue_rounds: int = 3
     qualification_threshold: int = 2
     disqualification_deduction_threshold: int = (
-        200  # Auto-disqualify if deductions exceed this
+        500  # Auto-disqualify if deductions exceed this
     )
 
     # Scoring thresholds (in seconds) - 90 minute event duration

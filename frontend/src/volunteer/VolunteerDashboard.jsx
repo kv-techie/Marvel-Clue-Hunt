@@ -17,7 +17,7 @@ const PENALTY_CATEGORIES = {
     { label: '🗣️ Unauthorized Discussion - Major', value: 'Unauthorized Discussion - Major', points: 75 },
     { label: '❌ Rule Violation (General)', value: 'Rule Violation (General)', points: 30 },
     { label: '⚠️ Unsportsmanlike Conduct', value: 'Unsportsmanlike Conduct', points: 50 },
-    { label: '🚫 Disqualification Offense', value: 'Disqualification Offense', points: 200 }
+    { label: '🚫 Disqualification Offense', value: 'Disqualification Offense', points: 500 }
   ]
 }
 

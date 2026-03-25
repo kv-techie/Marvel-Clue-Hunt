@@ -184,7 +184,7 @@ const DisqualificationManager = () => {
 
       <div className="admin-message info" style={{ marginTop: '20px' }}>
         <p style={{ fontSize: '12px', margin: 0 }}>
-          <strong>ℹ️ System automatically flags teams when their total deductions exceed 200 points.
+          <strong>ℹ️ System automatically flags teams when their total deductions exceed 500 points.
           Admin must confirm to officially disqualify. Teams will be notified and must acknowledge.
           Administrators can reverse disqualification by clicking the 🔄 Reverse button.</strong>
         </p>
