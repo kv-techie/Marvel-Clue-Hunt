@@ -53,6 +53,22 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
   const isOvercharged = activePowerup || streak >= 3;
 
+  const normalizePowerupEffect = (powerup) => {
+    if (!powerup) return null;
+    if (powerup.id === "truth_manifestation") return "certainty_check";
+    return powerup.effect;
+  };
+
+  const getPowerupEffect = (powerupId) => {
+    return normalizePowerupEffect(teamPowerups.find((p) => p.id === powerupId));
+  };
+
+  const activeEffect = activePowerup ? getPowerupEffect(activePowerup) : null;
+  const revealClue2 =
+    showClue2 || activeEffect === "extra_clue" || activeEffect === "reveal_all_clues";
+  const revealBonusHint = showHint || activeEffect === "reveal_all_clues";
+  const revealFirstLetter = activeEffect === "reveal_first_letter";
+
   // Evaluate Keyboard Visibility (Responsive Footer)
   useEffect(() => {
     const handleResize = () => {
@@ -121,7 +137,6 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
         answer
       );
       setCertaintyFeedback(response.feedback);
-      setActivePowerup("Certainty Check");
     } catch (err) {
       triggerError("Certainty Check failed: " + (err.response?.data?.detail || err.message));
     }
@@ -131,7 +146,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
     if (e) e.preventDefault();
     if (!answer.trim() || submitting) return;
 
-    if (activePowerup === "Certainty Check" && !certaintyFeedback) {
+    if (activeEffect === "certainty_check" && !certaintyFeedback) {
       await handleCertaintyCheck();
       return;
     }
@@ -305,7 +320,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
               </div>
               
               <AnimatePresence>
-                {showClue2 && (
+                {revealClue2 && (
                   <motion.div 
                     initial={{ height: 0, opacity: 0 }} 
                     animate={{ height: 'auto', opacity: 1 }} 
@@ -317,15 +332,21 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
                 )}
               </AnimatePresence>
               
-              {!showClue2 && (
+              {!revealClue2 && (
                 <button className="qr-action-btn" onClick={() => setShowClue2(true)}>
                   Reveal Hint 2 <span>▼</span>
                 </button>
               )}
 
+              {revealFirstLetter && question.hint_text && (
+                <div className="qr-clue-item" style={{ borderLeftColor: 'var(--accent-secondary)' }}>
+                  <strong style={{color: 'var(--accent-secondary)'}}>First Letter:</strong> {question.hint_text.trim().charAt(0)}
+                </div>
+              )}
+
               {/* Hints Drawer */}
               <AnimatePresence>
-                {showHint && (
+                {revealBonusHint && (
                   <motion.div 
                     initial={{ height: 0, opacity: 0 }} 
                     animate={{ height: 'auto', opacity: 1 }}
@@ -337,7 +358,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
                 )}
               </AnimatePresence>
 
-              {!showHint && (
+              {!revealBonusHint && (
                 <button 
                   className="qr-action-btn qr-hint-btn" 
                   onClick={handleRequestHint} 
@@ -375,7 +396,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
           )}
 
           {/* Certainty Check Display */}
-          {certaintyFeedback && activePowerup === "Certainty Check" && (
+          {certaintyFeedback && activeEffect === "certainty_check" && (
             <motion.div initial={{opacity: 0}} animate={{opacity: 1}} className="qr-certainty-wrap">
               <div className="qr-certainty-label">
                 <span style={{ color: certaintyFeedback.similarity_percent > 80 ? '#2ecc71' : '#f59e0b' }}>

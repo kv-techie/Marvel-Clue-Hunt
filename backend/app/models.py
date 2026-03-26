@@ -62,6 +62,7 @@ class Team(BaseModel):
     current_combo: float = (
         1.0  # Combo multiplier for consecutive fast answers (starts at 1x)
     )
+    combo_cap_bonus: float = 0.0  # Permanent bonus to combo cap (Power Stone)
     last_answer_time: Optional[int] = None  # Time of last answer in seconds
 
     # Gamification - Badges & Achievements
@@ -196,3 +197,9 @@ class TabSwitchLog(BaseModel):
     team_name: str
     event_type: str  # "tab_left" or "tab_returned"
     timestamp: datetime
+
+
+class PowerupActivateRequest(BaseModel):
+    team_name: str
+    question_id: str
+    powerup_id: str

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter, Header, HTTPException
 
@@ -93,7 +94,32 @@ def _get_authoritative_time_taken(team_name: str, team, client_time_taken: int) 
     return server_time_taken
 
 
-def _enforce_active_access(team_name: str, x_device_id: str | None):
+def _normalize_powerup_effect(powerup_info):
+    if not powerup_info:
+        return None
+    if powerup_info.get("id") == "truth_manifestation":
+        return "certainty_check"
+    return powerup_info.get("effect")
+
+
+def _apply_time_powerup(time_taken: int, effect: Optional[str]) -> int:
+    if effect == "add_time":
+        return max(MIN_TIME_TAKEN_SECONDS, time_taken - 30)
+    if effect == "slow_timer":
+        return max(MIN_TIME_TAKEN_SECONDS, int(time_taken * 0.5))
+    return time_taken
+
+
+def _upgrade_difficulty(difficulty: str) -> str:
+    order = ["easy", "medium", "hard"]
+    try:
+        idx = order.index(difficulty)
+    except ValueError:
+        return difficulty
+    return order[min(idx + 1, len(order) - 1)]
+
+
+def _enforce_active_access(team_name: str, x_device_id: Optional[str]):
     ensure_active_team_device(team_name, x_device_id)
 
 
@@ -105,7 +131,7 @@ def _enforce_game_active():
 @router.post("/start-timer/{team_name}")
 async def start_team_timer(
     team_name: str,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Start timer when first team member logs in"""
     from app.powerup_manager import powerup_manager
@@ -141,7 +167,7 @@ async def start_team_timer(
 @router.get("/team-status/{team_name}")
 async def get_team_status(
     team_name: str,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get current status for a team"""
 
@@ -276,7 +302,7 @@ async def log_tab_switch(request: TabSwitchLog):
 @router.get("/current-question/{team_name}")
 async def get_current_question(
     team_name: str,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get the current question for a team (based on their stone and progress)"""
 
@@ -331,7 +357,7 @@ async def get_current_question(
 @router.post("/submit-question")
 async def submit_question(
     submission: QuestionSubmission,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Submit answer to current question"""
     try:
@@ -353,13 +379,68 @@ async def submit_question(
 
         with game_state_write_lock():
             team = game_state.teams[submission.team_name]
+            powerup_info = None
+            powerup_effect = None
+            if submission.powerup_used:
+                from app.powerup_manager import powerup_manager
+
+                powerup_info = powerup_manager.get_powerup_info(
+                    submission.team_name, submission.powerup_used
+                )
+                powerup_effect = _normalize_powerup_effect(powerup_info)
+
+                if not team.powerups_available.get(submission.powerup_used, False):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Selected powerup is not available.",
+                    )
+
+            if powerup_effect in ("skip_question", "skip_penalty_free"):
+                team.questions_completed.append(
+                    {
+                        "question_id": submission.question_id,
+                        "question_index": team.current_question_index,
+                        "correct": True,
+                        "time_taken": 0,
+                        "points": 0,
+                        "combo_multiplier": team.current_combo,
+                        "powerup_used": submission.powerup_used,
+                        "hints_used": 0,
+                        "skipped": True,
+                    }
+                )
+                team.powerups_used.append(submission.powerup_used)
+                team.powerups_available[submission.powerup_used] = False
+                team.current_question_index += 1
+                save_game_state()
+
+                return {
+                    "correct": True,
+                    "skipped": True,
+                    "message": "Question skipped without penalty.",
+                    "current_question_index": team.current_question_index,
+                    "questions_completed": team.current_question_index,
+                    "next_question_ready": team.current_question_index < 10,
+                    "powerup_used": submission.powerup_used,
+                    "powerups_available": team.powerups_available,
+                }
+
             authoritative_time_taken = _get_authoritative_time_taken(
                 submission.team_name, team, submission.time_taken
             )
+            adjusted_time_taken = _apply_time_powerup(
+                authoritative_time_taken, powerup_effect
+            )
+
+            similarity_threshold = 0.85
+            if powerup_effect in ("fuzzy_match_boost", "typo_correction"):
+                similarity_threshold = 0.7
 
             # Check if answer is correct
             is_correct = question_manager.validate_answer(
-                submission.question_id, submission.answer
+                submission.question_id,
+                submission.answer,
+                similarity_threshold=similarity_threshold,
             )
 
             if not is_correct:
@@ -368,7 +449,7 @@ async def submit_question(
                     "question_id": submission.question_id,
                     "question_index": team.current_question_index,
                     "correct": False,
-                    "time_taken": authoritative_time_taken,
+                    "time_taken": adjusted_time_taken,
                     "points": 0,
                     "combo_multiplier": 1.0,
                     "powerup_used": submission.powerup_used,
@@ -376,9 +457,20 @@ async def submit_question(
                 }
                 team.questions_completed.append(question_data)
 
-                # Break the streak on wrong answer
-                team.current_streak = 0
-                team.current_combo = 1.0
+                preserve_streak = powerup_effect == "prevent_streak_break"
+                preserve_combo = powerup_effect == "preserve_combo"
+
+                if not preserve_streak:
+                    team.current_streak = 0
+                if not preserve_combo:
+                    team.current_combo = 1.0
+
+                if submission.powerup_used:
+                    team.powerups_used.append(submission.powerup_used)
+                    team.powerups_available[submission.powerup_used] = False
+
+                if powerup_effect == "restore_hint":
+                    team.hints_used_count = max(0, team.hints_used_count - 1)
 
                 # Move to next question anyway (quiz doesn't lock you on wrong answers)
                 team.current_question_index += 1
@@ -394,7 +486,7 @@ async def submit_question(
                     "streak_broken": True,
                     "current_streak": team.current_streak,
                     "current_total_score": calculate_final_score_questions(team),
-                    "time_taken_used": authoritative_time_taken,
+                    "time_taken_used": adjusted_time_taken,
                     "client_time_taken": submission.time_taken,
                 }
 
@@ -403,37 +495,40 @@ async def submit_question(
                 team.questions_completed
             ) > 0 and team.questions_completed[-1].get("correct", False)
             combo_mult = calculate_combo_multiplier(
-                authoritative_time_taken, previous_correct
+                adjusted_time_taken, previous_correct
             )
 
             # Update streak on correct answer
             team.current_streak += 1
             team.best_streak = max(team.best_streak, team.current_streak)
 
-            # Update combo multiplier (cap at 3x)
-            team.current_combo = min(team.current_combo * combo_mult, 3.0)
+            # Update combo multiplier (cap at 3x + bonuses)
+            if powerup_effect == "combo_boost":
+                team.combo_cap_bonus += 0.5
+            combo_cap = 3.0 + team.combo_cap_bonus
+            team.current_combo = min(team.current_combo * combo_mult, combo_cap)
 
             # Calculate score with speed multiplier and combo
+            difficulty_for_score = question["difficulty"]
+            if powerup_effect == "difficulty_reduction":
+                difficulty_for_score = _upgrade_difficulty(difficulty_for_score)
+
             question_score = calculate_question_score(
                 base_points=question["base_points"],
-                time_taken=authoritative_time_taken,
-                difficulty=question["difficulty"],
+                time_taken=adjusted_time_taken,
+                difficulty=difficulty_for_score,
                 hints_used=0,  # Hint deductions handled separately
                 combo_multiplier=team.current_combo,
             )
 
             # Apply powerup bonus if used
-            if submission.powerup_used:
-                if "Power" in submission.powerup_used:  # Power Stone powerups
-                    if "Surge" in submission.powerup_used:
-                        question_score *= 2  # 2x points
-                    elif "Jeopardy" in submission.powerup_used:
-                        question_score *= 2  # 2x points (risk/reward)
-                    elif "Multiplier" in submission.powerup_used:
-                        # This one applies to next 3 answers - handled as active effect
-                        pass
+            if powerup_effect in ("score_multiplier_2x", "points_multiplier_2x"):
+                question_score *= 2
 
-                # Mark powerup as used
+            if powerup_effect == "restore_hint":
+                team.hints_used_count = max(0, team.hints_used_count - 1)
+
+            if submission.powerup_used:
                 team.powerups_used.append(submission.powerup_used)
                 team.powerups_available[submission.powerup_used] = False
 
@@ -442,7 +537,7 @@ async def submit_question(
                 "question_id": submission.question_id,
                 "question_index": team.current_question_index,
                 "correct": True,
-                "time_taken": authoritative_time_taken,
+                "time_taken": adjusted_time_taken,
                 "points": question_score,
                 "combo_multiplier": team.current_combo,
                 "powerup_used": submission.powerup_used,
@@ -463,7 +558,7 @@ async def submit_question(
 
                 # Award for lightning speed (< 10 seconds) - Unlock 1st powerup
                 if (
-                    authoritative_time_taken < 10
+                    adjusted_time_taken < 10
                     and not team.powerups_available.get(powerup_1_id, False)
                     and powerup_1_id not in team.powerups_used
                 ):
@@ -509,6 +604,21 @@ async def submit_question(
                 {"id": b, "data": get_badge_details(b)} for b in new_badges
             ]
 
+            if powerup_effect == "global_point_share" and question_score > 0:
+                share_amount = int(question_score * 0.15)
+                for other_name, other_team in game_state.teams.items():
+                    if other_name == submission.team_name:
+                        continue
+                    other_team.manual_adjustments.append(
+                        {
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "adjusted_by": "SYSTEM",
+                            "amount": share_amount,
+                            "reason": f"Soul Bond share from {submission.team_name}",
+                            "adjustment_type": "reward",
+                        }
+                    )
+
             # Update team stats for leaderboard (now works with both dict and Pydantic)
             update_team_stats(team)
 
@@ -526,7 +636,7 @@ async def submit_question(
                 ),
                 "score_earned": question_score,
                 "speed_multiplier": calculate_speed_multiplier(
-                    authoritative_time_taken, question["difficulty"]
+                    adjusted_time_taken, difficulty_for_score
                 ),
                 "combo_multiplier": team.current_combo,
                 "current_streak": team.current_streak,
@@ -538,7 +648,7 @@ async def submit_question(
                 "all_badges": team.badges_earned,
                 "powerups_awarded": powerups_awarded,
                 "powerups_available": team.powerups_available,
-                "time_taken_used": authoritative_time_taken,
+                "time_taken_used": adjusted_time_taken,
                 "client_time_taken": submission.time_taken,
             }
     except HTTPException:
@@ -554,7 +664,7 @@ async def submit_question(
 @router.get("/team-powerups/{team_name}")
 async def get_team_powerups(
     team_name: str,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get powerup information for a team"""
     from app.powerup_manager import powerup_manager
@@ -592,7 +702,7 @@ async def get_team_powerups(
 @router.post("/request-hint-question")
 async def request_hint_question(
     request: HintRequest,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Request a hint for current question (max 3 per session)"""
 
@@ -637,7 +747,7 @@ async def certainty_check(
     team_name: str,
     question_id: str,
     submitted_answer: str,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Reality Stone PowerUp: Check answer confidence before submitting"""
 
@@ -649,11 +759,22 @@ async def certainty_check(
 
     team = game_state.teams[team_name]
 
-    if "Certainty Check" not in team.powerups_available:
+    from app.powerup_manager import powerup_manager
+
+    team_powerups = powerup_manager.get_team_powerups(team_name)
+    certainty_powerup = next(
+        (p for p in team_powerups if _normalize_powerup_effect(p) == "certainty_check"),
+        None,
+    )
+
+    if not certainty_powerup:
         raise HTTPException(status_code=400, detail="Certainty Check not available")
 
-    # If powerup already used, reject
-    if "Certainty Check" in team.powerups_used:
+    powerup_id = certainty_powerup["id"]
+    if not team.powerups_available.get(powerup_id, False):
+        raise HTTPException(status_code=400, detail="Certainty Check not available")
+
+    if powerup_id in team.powerups_used:
         raise HTTPException(status_code=400, detail="Certainty Check already used")
 
     # Get feedback on answer
@@ -663,7 +784,7 @@ async def certainty_check(
 
     return {
         "feedback": feedback,
-        "powerup_name": "Certainty Check",
+        "powerup_name": certainty_powerup["name"],
         "can_revise": True,
     }
 
@@ -671,7 +792,7 @@ async def certainty_check(
 @router.get("/team-stone/{team_name}")
 async def get_team_stone(
     team_name: str,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get the Infinity Stone assigned to a team"""
 
@@ -709,7 +830,7 @@ async def get_available_stones():
 @router.get("/team-badges/{team_name}")
 async def get_team_badges(
     team_name: str,
-    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get badges and achievements for a team"""
 

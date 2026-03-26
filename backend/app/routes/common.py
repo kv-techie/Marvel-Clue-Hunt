@@ -2,8 +2,7 @@ import json
 import os
 import shutil
 from datetime import datetime
-
-from fastapi import APIRouter, HTTPException
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -104,7 +103,7 @@ def _load_devices():
     return {}
 
 
-def ensure_active_team_device(team_name: str, device_id: str | None):
+def ensure_active_team_device(team_name: str, device_id: Optional[str]):
     """Ensure request is coming from the currently active device for a team.
 
     Backward compatibility behavior:
@@ -654,11 +653,11 @@ async def health_check():
 
 class ErrorLogRequest(BaseModel):
     message: str
-    stack: str | None = None
-    componentStack: str | None = None
-    teamId: str | None = None
-    timestamp: str | None = None
-    userAgent: str | None = None
+    stack: Optional[str] = None
+    componentStack: Optional[str] = None
+    teamId: Optional[str] = None
+    timestamp: Optional[str] = None
+    userAgent: Optional[str] = None
 
 @router.post("/log-error")
 async def log_error(request: ErrorLogRequest):

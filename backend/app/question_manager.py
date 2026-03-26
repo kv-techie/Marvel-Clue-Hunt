@@ -79,7 +79,11 @@ class QuestionManager:
         }
 
     def validate_answer(
-        self, question_id: str, submitted_answer: str, ignore_case: bool = True
+        self,
+        question_id: str,
+        submitted_answer: str,
+        ignore_case: bool = True,
+        similarity_threshold: float = 0.85,
     ) -> bool:
         """
         Validate if submitted answer matches correct answer.
@@ -109,9 +113,9 @@ class QuestionManager:
         if submitted_answer == correct:
             return True
 
-        # Fuzzy match (>85% similarity)
+        # Fuzzy match
         similarity = SequenceMatcher(None, submitted_answer, correct).ratio()
-        return similarity > 0.85
+        return similarity > similarity_threshold
 
     def get_hint(self, question_id: str) -> Optional[str]:
         """Get hint text for a question"""

@@ -1,0 +1,16 @@
+/* ParticleField — ambient canvas background */
+
+.particle-field {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle-field canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: auto;
+}

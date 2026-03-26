@@ -1,30 +1,128 @@
+/* MarvelLoader — Infinity Stone Orbit Loader */
+
 .marvel-loader {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: #0a0a1e;
-  gap: 1.5rem;
+  background: #050510;
+  gap: 2.5rem;
+  position: relative;
+  overflow: hidden;
 }
 
-.infinity-stone-spinner {
+/* Ambient background radial glow */
+.ml-ambient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(100, 60, 200, 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Orbit container — the stage */
+.ml-orbit-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  perspective: 600px;
+}
+
+/* Glowing core */
+.ml-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(200, 180, 255, 0.6) 40%, transparent 70%);
+  box-shadow:
+    0 0 20px rgba(200, 180, 255, 0.8),
+    0 0 60px rgba(150, 120, 255, 0.4),
+    0 0 100px rgba(100, 60, 200, 0.2);
+  animation: ml-core-pulse 2s ease-in-out infinite;
+}
+
+.ml-core-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 50px;
   height: 50px;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, #2ecc71 0%, transparent 70%);
-  box-shadow: 0 0 30px #2ecc71, 0 0 60px rgba(46, 204, 113, 0.4);
-  animation: pulse-stone 1.2s ease-in-out infinite;
+  border: 1px solid rgba(200, 180, 255, 0.2);
+  animation: ml-ring-pulse 2s ease-in-out infinite alternate;
 }
 
-@keyframes pulse-stone {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); opacity: 0.6; }
+@keyframes ml-core-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50%      { transform: translate(-50%, -50%) scale(1.4); opacity: 0.7; }
 }
 
-.loader-text {
-  color: #b0b0b0;
-  font-size: 0.9rem;
+@keyframes ml-ring-pulse {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}
+
+/* Individual stone orbit */
+.ml-stone-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  animation: ml-orbit 2.4s linear infinite;
+  animation-delay: var(--orbit-delay);
+}
+
+@keyframes ml-orbit {
+  0%   { transform: rotateZ(0deg) rotateX(65deg); }
+  100% { transform: rotateZ(360deg) rotateX(65deg); }
+}
+
+/* The stone itself — positioned at edge of orbit */
+.ml-stone {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--stone-color);
+  box-shadow:
+    0 0 8px var(--stone-color),
+    0 0 20px var(--stone-color),
+    0 0 40px color-mix(in srgb, var(--stone-color) 50%, transparent);
+}
+
+/* Particle trail */
+.ml-stone-trail {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 2px;
+  transform: translate(-100%, -50%);
+  background: linear-gradient(to left, var(--stone-color), transparent);
+  border-radius: 2px;
+  opacity: 0.6;
+  filter: blur(1px);
+}
+
+/* Loading text */
+.ml-text {
+  color: rgba(200, 190, 230, 0.7);
+  font-size: 0.85rem;
   letter-spacing: 2px;
   text-transform: uppercase;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  z-index: 1;
 }

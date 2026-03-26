@@ -3,12 +3,13 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  margin: 1.5rem 0;
+   margin: 0;
   padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(255, 100, 50, 0.1) 0%, rgba(255, 50, 0, 0.1) 100%);
-  border: 2px solid rgba(255, 100, 0, 0.4);
+  background: linear-gradient(135deg, rgba(255, 120, 84, 0.12) 0%, rgba(255, 155, 84, 0.12) 100%);
+  border: 1px solid rgba(255, 120, 84, 0.4);
   border-radius: 12px;
   backdrop-filter: blur(10px);
+   box-shadow: var(--shadow-glass);
 }
 
 .streak-section {
@@ -26,7 +27,7 @@
 .streak-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(255, 200, 100, 1);
+   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -34,8 +35,8 @@
 .streak-value {
   font-size: 2rem;
   font-weight: bold;
-  color: #ffaa00;
-  text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+   color: var(--accent-gold);
+   text-shadow: 0 0 10px rgba(242, 193, 78, 0.5);
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -45,12 +46,12 @@
   background: rgba(0, 0, 0, 0.3);
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255, 100, 0, 0.3);
+  border: 1px solid rgba(255, 120, 84, 0.3);
 }
 
 .streak-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ffaa00 0%, #ff4444 100%);
+  background: linear-gradient(90deg, #f2c14e 0%, #ff6b55 100%);
   border-radius: 12px;
   transition: width 0.3s ease;
   box-shadow: 0 0 15px currentColor;
@@ -60,8 +61,8 @@
   text-align: center;
   font-size: 1rem;
   font-weight: 600;
-  color: #ffaa00;
-  text-shadow: 0 0 8px rgba(255, 170, 0, 0.4);
+   color: var(--accent-gold);
+   text-shadow: 0 0 8px rgba(242, 193, 78, 0.4);
   min-height: 1.5rem;
   animation: fadeInMessage 0.5s ease;
 }
@@ -69,14 +70,14 @@
 .streak-stat {
   text-align: center;
   padding: 0.5rem;
-  background: rgba(255, 100, 50, 0.1);
+  background: rgba(255, 120, 84, 0.12);
   border-radius: 8px;
-  border: 1px solid rgba(255, 100, 0, 0.3);
+  border: 1px solid rgba(255, 120, 84, 0.3);
 }
 
 .streak-stat-text {
   font-size: 1rem;
-  color: #ffdd00;
+   color: var(--accent-gold);
   font-weight: 600;
 }
 

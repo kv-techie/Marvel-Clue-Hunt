@@ -13,6 +13,23 @@
   100% { transform: translateY(0px); box-shadow: 0 0 40px rgba(231, 76, 60, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02); }
 }
 
+/* ---- Staggered entrance for card children ---- */
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(231, 76, 60, 0.5)); }
+  50% { filter: drop-shadow(0 0 18px rgba(243, 156, 18, 0.7)); }
+}
+
 .login-card {
   background: var(--bg-glass-heavy);
   border: 1px solid var(--border-accent);
@@ -25,6 +42,22 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   animation: floatCard 6s ease-in-out infinite, fadeIn 0.8s ease-out;
+}
+
+/* Stagger children inside the card */
+.login-card > * {
+  opacity: 0;
+  animation: slideUpFadeIn 0.5s ease-out forwards;
+}
+.login-card > *:nth-child(1) { animation-delay: 0.1s; }
+.login-card > *:nth-child(2) { animation-delay: 0.2s; }
+.login-card > *:nth-child(3) { animation-delay: 0.35s; }
+.login-card > *:nth-child(4) { animation-delay: 0.5s; }
+
+/* ---- Hero icon pulse ---- */
+.hero-icon {
+  display: inline-block;
+  animation: heroPulse 3s ease-in-out infinite;
 }
 
 .login-title {
@@ -52,14 +85,19 @@
   gap: 20px;
 }
 
+/* ---- Floating-label form group ---- */
 .form-group {
   width: 100%;
+  position: relative;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.25s ease;
 }
 
 .form-group input {
@@ -71,13 +109,20 @@
   padding: 14px;
   color: var(--text-primary);
   transition: all 0.3s ease;
+  font-size: 15px;
 }
 
 .form-group input:focus {
   background: rgba(0, 0, 0, 0.6);
   border-color: var(--accent-primary);
-  box-shadow: var(--glow-primary);
+  box-shadow: var(--glow-primary), inset 0 0 12px rgba(231, 76, 60, 0.06);
   outline: none;
+}
+
+/* Focus changes label color */
+.form-group input:focus + .form-hint,
+.form-group:focus-within label {
+  color: var(--accent-gold);
 }
 
 .form-hint {
@@ -88,6 +133,72 @@
   line-height: 1.4;
 }
 
+/* ---- Toggle Switch (replaces checkbox) ---- */
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 0;
+}
+
+.toggle-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  flex-shrink: 0;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-group input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.toggle-group input[type="checkbox"]:checked + .toggle-track {
+  background: rgba(231, 76, 60, 0.3);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(231, 76, 60, 0.25);
+}
+
+.toggle-group input[type="checkbox"]:checked + .toggle-track::after {
+  transform: translateX(20px);
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+}
+
+.toggle-label {
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s;
+}
+
+.toggle-group input[type="checkbox"]:checked ~ .toggle-label {
+  color: #ff8a80;
+}
+
+/* Keep the old checkbox-group styles as fallback */
 .checkbox-group {
   display: flex;
   align-items: center;
@@ -110,6 +221,7 @@
   flex-shrink: 0;
 }
 
+/* ---- Error message ---- */
 .error-message {
   background: rgba(231, 76, 60, 0.2);
   border: 1px solid #e74c3c;
@@ -118,9 +230,92 @@
   border-radius: 5px;
   text-align: center;
   word-break: break-word;
+  animation: slideUpFadeIn 0.3s ease-out;
 }
 
-/* Device info note section */
+/* ---- Loading spinner (inline button spinner) ---- */
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.65s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* ---- Collapsible Device Info Accordion ---- */
+.device-info-accordion {
+  margin-top: 24px;
+}
+
+.device-info-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.device-info-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.device-info-chevron {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.device-info-accordion.open .device-info-chevron {
+  transform: rotate(180deg);
+}
+
+.device-info-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease;
+  opacity: 0;
+  padding: 0 16px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+}
+
+.device-info-accordion.open .device-info-content {
+  max-height: 200px;
+  padding: 12px 16px;
+  opacity: 1;
+}
+
+.device-info-content ul {
+  padding-left: 18px;
+  margin: 4px 0 0 0;
+}
+
+.device-info-content li {
+  margin-bottom: 4px;
+}
+
+/* Legacy device-info-note (keep for backward compat) */
 .device-info-note {
   margin-top: 24px;
   padding: 16px;
@@ -226,8 +421,21 @@
     font-size: 16px;
   }
 
+  .toggle-label {
+    font-size: 13px;
+  }
+
   .checkbox-group label {
     font-size: 13px;
+  }
+
+  .device-info-toggle {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+
+  .device-info-content {
+    font-size: 12px;
   }
 
   .device-info-note {
@@ -327,13 +535,22 @@
     margin-bottom: 16px;
   }
 
+  .toggle-label {
+    font-size: 12px;
+  }
+
   .checkbox-group label {
     font-size: 12px;
     gap: 8px;
+  }
+
+  .device-info-toggle {
+    font-size: 11px;
+    padding: 8px 10px;
   }
 
   .device-info-note {
     font-size: 11px;
     padding: 10px;
   }
-}
+}

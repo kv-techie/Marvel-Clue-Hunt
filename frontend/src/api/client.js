@@ -99,9 +99,11 @@ export const getAdjustmentsLog = () => api.get('/admin/adjustments-log')
 
 export const getVolunteerList = () => api.get('/admin/volunteers')
 
-export const addVolunteer = (name) => api.post(`/admin/volunteers/${name}`)
+export const addVolunteer = (name) =>
+  api.post(`/admin/volunteers/${encodeURIComponent(name)}`)
 
-export const removeVolunteer = (name) => api.delete(`/admin/volunteers/${name}`)
+export const removeVolunteer = (name) =>
+  api.delete(`/admin/volunteers/${encodeURIComponent(name)}`)
 
 // PIN management
 export const setPin = (role, name, pin) =>

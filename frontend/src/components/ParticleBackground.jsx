@@ -40,7 +40,7 @@ const ParticleBackground = ({ density = 60 }) => {
         },
         particles: {
           color: {
-            value: ["#e74c3c", "#3498db", "#9c27b0", "#f39c12"],
+            value: ["#e74c3c", "#ff7a59", "#9c27b0", "#f39c12"],
           },
           links: {
             color: "rgba(255,255,255,0.15)",

@@ -205,7 +205,7 @@ const Leaderboard = () => {
           style={{
             padding: '10px 20px',
             marginRight: '10px',
-            backgroundColor: activeTab === 'active' ? '#3498db' : '#555',
+            backgroundColor: activeTab === 'active' ? 'var(--accent-secondary)' : '#555',
             color: 'white',
             border: 'none',
             cursor: 'pointer',
@@ -340,7 +340,7 @@ const Leaderboard = () => {
                     style={{
                       padding: '10px 20px',
                       marginLeft: '15px',
-                      background: 'linear-gradient(135deg, #3498db, #2980b9)',
+                      background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',

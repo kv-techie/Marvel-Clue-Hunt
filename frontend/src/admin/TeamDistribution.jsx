@@ -149,11 +149,11 @@ const TeamDistribution = () => {
             <div style={{
               marginTop: '15px',
               padding: '12px',
-              backgroundColor: 'rgba(52, 152, 219, 0.1)',
+              backgroundColor: 'rgba(255, 120, 84, 0.1)',
               borderRadius: '4px',
               fontSize: '12px',
-              color: '#3498db',
-              border: '1px solid rgba(52, 152, 219, 0.3)'
+              color: 'var(--accent-secondary)',
+              border: '1px solid rgba(255, 120, 84, 0.3)'
             }}>
               <strong>Example format:</strong>
               <pre style={{ 
@@ -178,7 +178,7 @@ Charlie Brown`}
           disabled={!attendeesFile || loading}
           style={{
             padding: '12px 24px',
-            backgroundColor: attendeesFile && !loading ? '#3498db' : '#555',
+            backgroundColor: attendeesFile && !loading ? 'var(--accent-secondary)' : '#555',
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
@@ -190,12 +190,12 @@ Charlie Brown`}
           }}
           onMouseEnter={(e) => {
             if (attendeesFile && !loading) {
-              e.target.style.backgroundColor = '#2980b9'
+              e.target.style.backgroundColor = 'var(--accent-primary)'
             }
           }}
           onMouseLeave={(e) => {
             if (attendeesFile && !loading) {
-              e.target.style.backgroundColor = '#3498db'
+              e.target.style.backgroundColor = 'var(--accent-secondary)'
             }
           }}
         >
@@ -222,12 +222,12 @@ Charlie Brown`}
           }}>
             <div style={{
               padding: '15px',
-              backgroundColor: 'rgba(52, 152, 219, 0.1)',
+              backgroundColor: 'rgba(255, 120, 84, 0.1)',
               borderRadius: '6px',
               textAlign: 'center',
-              border: '1px solid rgba(52, 152, 219, 0.3)'
+              border: '1px solid rgba(255, 120, 84, 0.3)'
             }}>
-              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#3498db' }}>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--accent-secondary)' }}>
                 {result.total_teams}
               </div>
               <div style={{ fontSize: '14px', color: '#aaa' }}>Total Teams</div>
@@ -296,12 +296,12 @@ Charlie Brown`}
                 key={idx}
                 style={{
                   padding: '15px',
-                  backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    backgroundColor: 'rgba(255, 120, 84, 0.1)',
                   borderRadius: '6px',
-                  border: `1px solid rgba(52, 152, 219, 0.3)`
+                    border: `1px solid rgba(255, 120, 84, 0.3)`
                 }}
               >
-                <h4 style={{ color: '#3498db', marginTop: 0, marginBottom: '8px' }}>{team.name}</h4>
+                  <h4 style={{ color: 'var(--accent-secondary)', marginTop: 0, marginBottom: '8px' }}>{team.name}</h4>
                 <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '12px', fontWeight: 'bold' }}>
                   {team.members.length} team member{team.members.length !== 1 ? 's' : ''}
                 </div>
@@ -318,7 +318,7 @@ Charlie Brown`}
                         marginBottom: '6px',
                         backgroundColor: 'rgba(255, 255, 255, 0.08)',
                         borderRadius: '4px',
-                        borderLeft: '3px solid #3498db'
+                        borderLeft: '3px solid var(--accent-secondary)'
                       }}>
                         {member}
                       </div>

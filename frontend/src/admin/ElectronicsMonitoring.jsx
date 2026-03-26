@@ -12,7 +12,13 @@ const ElectronicsMonitoring = () => {
   const [showDevicesView, setShowDevicesView] = useState(false)
 
   useEffect(() => {
+    let isFetching = false
+
     const fetchData = async (isInitialLoad = false) => {
+      if (isFetching) {
+        return
+      }
+      isFetching = true
       try {
         if (isInitialLoad) {
           setLoading(true)
@@ -35,31 +41,33 @@ const ElectronicsMonitoring = () => {
           setActiveDevicesData([])
         }
 
-        // Fetch tab switch logs for each team
-        const switchData = {}
-        for (const team of teamsList) {
-          try {
-            const response = await getTeamTabSwitches(team.name)
-            switchData[team.name] = response
-          } catch (err) {
-            switchData[team.name] = { total_tab_left: 0, events: [] }
-          }
-        }
-        setTabSwitchData(switchData)
+        // Fetch tab switch logs for each team in parallel
+        const switchResults = await Promise.all(
+          teamsList.map(async (team) => {
+            try {
+              const response = await getTeamTabSwitches(team.name)
+              return [team.name, response]
+            } catch (err) {
+              return [team.name, { total_tab_left: 0, events: [] }]
+            }
+          })
+        )
+        setTabSwitchData(Object.fromEntries(switchResults))
       } catch (err) {
         console.error('Failed to fetch monitoring data:', err)
       } finally {
         if (isInitialLoad) {
           setLoading(false)
         }
+        isFetching = false
       }
     }
 
     // Initial fetch
     fetchData(true)
     
-    // Poll for updates every 3 seconds
-    const intervalId = setInterval(() => fetchData(false), 3000)
+    // Poll for updates every 1 second
+    const intervalId = setInterval(() => fetchData(false), 1000)
     
     // Cleanup interval on unmount
     return () => clearInterval(intervalId)

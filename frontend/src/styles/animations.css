@@ -1,0 +1,104 @@
+/* ============================================
+   Global Animation Keyframes — Marvel Clue Hunt
+   Import once in App.jsx for universal access
+   ============================================ */
+
+/* Neon glow pulse */
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--glow-color, #00d4ff),
+                0 0 15px var(--glow-color, #00d4ff),
+                0 0 30px color-mix(in srgb, var(--glow-color, #00d4ff) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--glow-color, #00d4ff),
+                0 0 30px var(--glow-color, #00d4ff),
+                0 0 60px color-mix(in srgb, var(--glow-color, #00d4ff) 60%, transparent);
+  }
+}
+
+/* Gentle vertical float */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+/* Glitch — RGB split + position jitter */
+@keyframes glitch {
+  0%   { transform: translate(0); filter: hue-rotate(0deg); }
+  10%  { transform: translate(-3px, 2px); filter: hue-rotate(90deg); }
+  20%  { transform: translate(3px, -1px); filter: hue-rotate(180deg); }
+  30%  { transform: translate(0); filter: hue-rotate(0deg); }
+  100% { transform: translate(0); filter: hue-rotate(0deg); }
+}
+
+/* Horizontal scanline sweep */
+@keyframes scan-line {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* Diagonal shine sweep (for holographic cards) */
+@keyframes shine-sweep {
+  0%   { transform: translateX(-100%) rotate(25deg); }
+  100% { transform: translateX(200%) rotate(25deg); }
+}
+
+/* Error shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%      { transform: translateX(-6px); }
+  20%      { transform: translateX(6px); }
+  30%      { transform: translateX(-4px); }
+  40%      { transform: translateX(4px); }
+  50%      { transform: translateX(-2px); }
+  60%      { transform: translateX(2px); }
+  70%      { transform: translateX(0); }
+}
+
+/* Quick scale bounce */
+@keyframes scale-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Fade in from below */
+@keyframes fade-up {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Border gradient rotation */
+@keyframes border-rotate {
+  0%   { --border-angle: 0deg; }
+  100% { --border-angle: 360deg; }
+}
+
+/* Pulse ring expand */
+@keyframes ring-expand {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* Text glow pulse */
+@keyframes text-glow {
+  0%, 100% {
+    text-shadow: 0 0 5px var(--glow-color, #00d4ff),
+                 0 0 15px color-mix(in srgb, var(--glow-color, #00d4ff) 40%, transparent);
+  }
+  50% {
+    text-shadow: 0 0 10px var(--glow-color, #00d4ff),
+                 0 0 30px color-mix(in srgb, var(--glow-color, #00d4ff) 50%, transparent),
+                 0 0 50px color-mix(in srgb, var(--glow-color, #00d4ff) 20%, transparent);
+  }
+}
+
+/* utility classes */
+.animate-float      { animation: float 3s ease-in-out infinite; }
+.animate-neon-pulse { animation: neon-pulse 2s ease-in-out infinite; }
+.animate-shake      { animation: shake 0.5s ease-in-out; }
+.animate-scale-pop  { animation: scale-pop 0.4s ease-out; }
+.animate-glitch     { animation: glitch 0.3s ease-in-out; }
+.animate-fade-up    { animation: fade-up 0.6s ease-out both; }

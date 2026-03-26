@@ -18,6 +18,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [isDisqualified, setIsDisqualified] = useState(false)
   const [disqualificationReason, setDisqualificationReason] = useState('')
+  const [deviceInfoOpen, setDeviceInfoOpen] = useState(false)
   
   const { loginUser } = useAuth()
   const navigate = useNavigate()
@@ -110,7 +111,7 @@ const Login = () => {
       >
         <AnimatedBorder>
         <div className="login-card" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-          <h1 className="login-title">🦸 <HackerText text="Marvel Clue Hunt" delay={200} /></h1>
+          <h1 className="login-title"><span className="hero-icon">🦸</span> <HackerText text="Marvel Clue Hunt" delay={200} /></h1>
           <p className="login-subtitle">Assemble your team and solve the mystery!</p>
           
           {isDisqualified ? (
@@ -141,16 +142,16 @@ const Login = () => {
           ) : (
             // Login form
             <form onSubmit={handleSubmit} className="login-form">
-              <div className="checkbox-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isAdminLogin}
-                    onChange={(e) => setIsAdminLogin(e.target.checked)}
-                  />
-                  <span>Admin/Volunteer Login (Authorized Users Only)</span>
-                </label>
-              </div>
+              {/* Toggle switch for Admin/Volunteer */}
+              <label className="toggle-group" aria-label="Toggle admin or volunteer login">
+                <input
+                  type="checkbox"
+                  checked={isAdminLogin}
+                  onChange={(e) => setIsAdminLogin(e.target.checked)}
+                />
+                <span className="toggle-track" />
+                <span className="toggle-label">Admin / Volunteer Login</span>
+              </label>
 
               {!isAdminLogin && (
                 <div className="form-group">
@@ -162,6 +163,7 @@ const Login = () => {
                     onChange={(e) => setTeamName(e.target.value)}
                     placeholder="Team Avengers"
                     required
+                    aria-label="Team name"
                   />
                   <small className="form-hint">
                     💡 Your device will be registered automatically (max 3 devices per team)
@@ -180,6 +182,7 @@ const Login = () => {
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Kedhar Vinod"
                       required
+                      aria-label="Admin name"
                     />
                   </div>
                   <div className="form-group">
@@ -191,6 +194,7 @@ const Login = () => {
                       onChange={(e) => setPin(e.target.value)}
                       placeholder="Enter your PIN"
                       required
+                      aria-label="Admin PIN"
                     />
                   </div>
                 </>
@@ -199,21 +203,37 @@ const Login = () => {
               {error && <div className="error-message">{error}</div>}
 
               <MagneticButton type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Logging in...' : 'Enter'}
+                {loading ? (
+                  <><span className="btn-loading-spinner" /> Logging in...</>
+                ) : (
+                  'Enter'
+                )}
               </MagneticButton>
             </form>
           )}
 
+          {/* Collapsible Device Info Accordion (only in team mode) */}
           {!isAdminLogin && (
-            <div className="device-info-note">
-              <p><strong>Device Registration & Activation:</strong></p>
-              <ul>
-                <li>Your device is automatically registered on first login</li>
-                <li>Each team can register up to 3 different devices</li>
-                <li>⚡ <strong>Only 1 device can be active at a time</strong> - prevents simultaneous access</li>
-                <li>If one device has issues, switch to a fallback device immediately</li>
-                <li>Logging in from another device will automatically deactivate the previous one</li>
-              </ul>
+            <div className={`device-info-accordion ${deviceInfoOpen ? 'open' : ''}`}>
+              <button
+                type="button"
+                className="device-info-toggle"
+                onClick={() => setDeviceInfoOpen(!deviceInfoOpen)}
+                aria-expanded={deviceInfoOpen}
+                aria-controls="device-info-panel"
+              >
+                <span>📱 Device Registration & Activation</span>
+                <span className="device-info-chevron">▼</span>
+              </button>
+              <div className="device-info-content" id="device-info-panel" role="region">
+                <ul>
+                  <li>Your device is automatically registered on first login</li>
+                  <li>Each team can register up to 3 different devices</li>
+                  <li>⚡ <strong>Only 1 device can be active at a time</strong> — prevents simultaneous access</li>
+                  <li>If one device has issues, switch to a fallback device immediately</li>
+                  <li>Logging in from another device will automatically deactivate the previous one</li>
+                </ul>
+              </div>
             </div>
           )}
         </div>

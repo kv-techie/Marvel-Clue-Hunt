@@ -82,8 +82,8 @@
 
 /* Card Variations (Dark Mode Fixed) */
 .em-card-info {
-  background-color: rgba(52, 152, 219, 0.1);
-  border-color: rgba(52, 152, 219, 0.5);
+  background-color: rgba(255, 120, 84, 0.1);
+  border-color: rgba(255, 120, 84, 0.5);
 }
 .em-card-info h3 { color: var(--accent-secondary); }
 .em-card-info .em-summary-value { color: var(--accent-secondary); }
@@ -164,8 +164,8 @@
 }
 
 .em-list-card.active {
-  background-color: rgba(52, 152, 219, 0.05); /* Dark mode fix from #f0f7ff */
-  border-color: rgba(52, 152, 219, 0.4);
+  background-color: rgba(255, 120, 84, 0.05); /* Dark mode fix from #f0f7ff */
+  border-color: rgba(255, 120, 84, 0.4);
   border-left: 6px solid var(--accent-green);
 }
 

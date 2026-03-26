@@ -5,7 +5,7 @@ const TeamTimer = () => {
   const { formatTime, elapsedTime } = useTimer()
 
   return (
-    <div className="card" style={{ textAlign: 'center' }}>
+    <div className="card timer-card" style={{ textAlign: 'center' }}>
       <h2>⏱️ Team Timer</h2>
       <div className="timer">{formatTime(elapsedTime)}</div>
       <p style={{ color: 'rgba(255, 255, 255, 0.6)', marginTop: '10px' }}>

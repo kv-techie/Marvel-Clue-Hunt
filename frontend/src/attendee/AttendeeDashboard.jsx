@@ -362,16 +362,16 @@ const AttendeeDashboard = () => {
         onDismiss={() => setFocusWarning(false)}
       />
       
-      {/* Timer */}
-      <TeamTimer />
+      {/* Left column stack: timer + streak */}
+      <div className="dashboard-stack">
+        <TeamTimer />
+        {currentQuestionIndex > 0 && (
+          <StreakCounter currentStreak={currentStreak} bestStreak={bestStreak} />
+        )}
+      </div>
 
       {/* Progress Tracker */}
       <TeamProgress teamStatus={teamStatus} currentQuestionIndex={currentQuestionIndex} />
-
-      {/* Gamification - Streak Counter */}
-      {currentQuestionIndex > 0 && (
-        <StreakCounter currentStreak={currentStreak} bestStreak={bestStreak} />
-      )}
 
       {/* Gamification - Badges */}
       {badges.length > 0 && <BadgeDisplay badges={badges} />}

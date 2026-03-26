@@ -84,7 +84,7 @@ const DialogueRound = ({ teamName, dialogueNumber, elapsedTime, onComplete }) =>
       <h2>🦸 Dialogue {dialogueNumber}</h2>
       
       {character && (
-        <p style={{ fontSize: '16px', color: '#3498db', marginBottom: '15px' }}>
+        <p style={{ fontSize: '16px', color: 'var(--accent-secondary)', marginBottom: '15px' }}>
           <strong>Character:</strong> {character}
         </p>
       )}

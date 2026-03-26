@@ -1097,6 +1097,13 @@ async def remove_volunteer(name: str):
 
     save_volunteer_whitelist(volunteers)
 
+    # Also remove any stored volunteer credentials for this name
+    volunteer_credentials = load_volunteer_credentials()
+    credential_key = name.lower()
+    if credential_key in volunteer_credentials:
+        volunteer_credentials.pop(credential_key)
+        save_volunteer_credentials(volunteer_credentials)
+
     return {
         "message": f"{name} has been removed from volunteers",
         "volunteers": volunteers,

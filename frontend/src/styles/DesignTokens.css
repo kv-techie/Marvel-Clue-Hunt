@@ -21,7 +21,7 @@
   
   /* Accents */
   --accent-primary: #e74c3c;      /* Marvel red */
-  --accent-secondary: #3498db;    /* shield blue */
+  --accent-secondary: #ff9b54;    /* ember orange */
   --accent-gold: #f39c12;         /* infinity gold */
   --accent-green: #2ecc71;        /* success */
   --accent-purple: #9c27b0;       /* powerup purple */
@@ -38,7 +38,7 @@
   --border-highlight: rgba(255, 255, 255, 0.2);
   --border-glass: rgba(255, 255, 255, 0.08);
   --border-accent: rgba(231, 76, 60, 0.4);
-  --border-glow: rgba(52, 152, 219, 0.5);
+  --border-glow: rgba(255, 155, 84, 0.5);
 
   /* Border Radii */
   --radius-sm: 6px;
@@ -54,7 +54,7 @@
   
   /* Glows */
   --glow-primary: 0 0 15px rgba(231, 76, 60, 0.4), 0 0 30px rgba(231, 76, 60, 0.2);
-  --glow-secondary: 0 0 15px rgba(52, 152, 219, 0.4), 0 0 30px rgba(52, 152, 219, 0.2);
+  --glow-secondary: 0 0 15px rgba(255, 155, 84, 0.4), 0 0 30px rgba(255, 155, 84, 0.2);
   --glow-gold: 0 0 15px rgba(243, 156, 18, 0.4), 0 0 30px rgba(243, 156, 18, 0.2);
   --glow-purple: 0 0 15px rgba(156, 39, 176, 0.4), 0 0 30px rgba(156, 39, 176, 0.2);
   --glow-subtle: 0 0 6px rgba(46, 204, 113, 0.4);

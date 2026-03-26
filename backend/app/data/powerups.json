@@ -11,8 +11,8 @@
         },
         {
           "id": "logic_lock",
-          "name": "Logic Lock",
-          "description": "Accept typos and spelling variations in answers",
+          "description": "Check answer certainty before submitting",
+          "effect": "certainty_check"
           "effect": "fuzzy_match_boost"
         },
         {
@@ -98,7 +98,7 @@
         {
           "id": "reality_distortion",
           "name": "Reality Distortion",
-          "description": "Reduce question difficulty for bonus points",
+          "description": "Reduce logged difficulty for bonus points",
           "effect": "difficulty_reduction"
         },
         {
@@ -108,10 +108,10 @@
           "effect": "reveal_first_letter"
         },
         {
-          "id": "truth_manifestation",
-          "name": "Truth Manifestation",
-          "description": "Double base points for next answer",
-          "effect": "points_multiplier_2x"
+          "id": "certainty_check",
+          "name": "Certainty Check",
+          "description": "Evaluate answer similarity before submitting",
+          "effect": "certainty_check"
         }
       ]
     },

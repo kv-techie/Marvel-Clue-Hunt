@@ -158,15 +158,8 @@ const VolunteerDashboard = () => {
 
   return (
     <div>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '15px',
-        marginBottom: '20px'
-      }}>
-        <h2 style={{ margin: 0 }}>📋 Volunteer Panel</h2>
+      <div className="volunteer-topbar">
+        <h2 className="volunteer-title">📋 Volunteer Panel</h2>
         
         {/* Change PIN Button */}
         <button
@@ -176,18 +169,7 @@ const VolunteerDashboard = () => {
             setNewPin('')
             setConfirmPin('')
           }}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#f39c12',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
+          className="volunteer-pin-button"
         >
           🔐 Change My PIN
         </button>
@@ -195,19 +177,13 @@ const VolunteerDashboard = () => {
 
       {/* Change PIN Section */}
       {showPinChange && (
-        <div style={{
-          marginBottom: '20px',
-          padding: '20px',
-          backgroundColor: 'rgba(243, 156, 18, 0.1)',
-          borderRadius: '8px',
-          border: '1px solid rgba(243, 156, 18, 0.3)'
-        }}>
-          <h3 style={{ marginTop: 0, color: '#f39c12' }}>🔐 Change My PIN</h3>
-          <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '15px' }}>
+        <div className="volunteer-pin-panel">
+          <h3>🔐 Change My PIN</h3>
+          <p>
             Enter your new PIN below. You'll need to use this PIN for your next login.
           </p>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+          <div className="volunteer-pin-inputs">
             <label htmlFor="volunteer-new-pin" className="sr-only">
               New PIN
             </label>
@@ -217,14 +193,6 @@ const VolunteerDashboard = () => {
               placeholder="Enter new PIN"
               value={newPin}
               onChange={(e) => setNewPin(e.target.value)}
-              style={{
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #444',
-                backgroundColor: '#222',
-                color: '#fff',
-                fontSize: '16px'
-              }}
             />
             <label htmlFor="volunteer-confirm-pin" className="sr-only">
               Confirm new PIN
@@ -236,30 +204,13 @@ const VolunteerDashboard = () => {
               value={confirmPin}
               onChange={(e) => setConfirmPin(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleChangePin()}
-              style={{
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #444',
-                backgroundColor: '#222',
-                color: '#fff',
-                fontSize: '16px'
-              }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="volunteer-pin-actions">
             <button
               onClick={handleChangePin}
-              style={{
-                flex: 1,
-                padding: '10px',
-                backgroundColor: '#2ecc71',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
+              className="volunteer-pin-primary"
             >
               Save New PIN
             </button>
@@ -270,30 +221,14 @@ const VolunteerDashboard = () => {
                 setNewPin('')
                 setConfirmPin('')
               }}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: 'transparent',
-                color: '#888',
-                border: '1px solid #888',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className="volunteer-pin-secondary"
             >
               Cancel
             </button>
           </div>
 
           {pinMessage && (
-            <div style={{
-              marginTop: '15px',
-              padding: '10px',
-              borderRadius: '4px',
-              backgroundColor: pinMessage.includes('✅') 
-                ? 'rgba(46, 204, 113, 0.2)' 
-                : 'rgba(231, 76, 60, 0.2)',
-              color: pinMessage.includes('✅') ? '#2ecc71' : '#e74c3c',
-              border: `1px solid ${pinMessage.includes('✅') ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`
-            }}>
+            <div className={`volunteer-pin-message ${pinMessage.includes('✅') ? 'success' : 'error'}`}>
               {pinMessage}
             </div>
           )}
@@ -301,44 +236,22 @@ const VolunteerDashboard = () => {
       )}
 
       {error && (
-        <div
-          style={{
-            color: '#e74c3c',
-            marginBottom: '15px',
-            padding: '10px',
-            backgroundColor: 'rgba(231, 76, 60, 0.2)',
-            borderRadius: '4px',
-          }}
-        >
+        <div className="volunteer-message error">
           ❌ {error}
         </div>
       )}
 
       {success && (
-        <div
-          style={{
-            color: '#2ecc71',
-            marginBottom: '15px',
-            padding: '10px',
-            backgroundColor: 'rgba(46, 204, 113, 0.2)',
-            borderRadius: '4px',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
+        <div className="volunteer-message success">
           ✅ {success}
         </div>
       )}
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-        gap: '20px', 
-        marginBottom: '30px' 
-      }}>
+      <div className="volunteer-grid">
         {/* Leaderboard */}
         <div>
           <h3>Live Leaderboard</h3>
-          <table className="leaderboard-table" style={{ width: '100%' }}>
+          <table className="leaderboard-table volunteer-leaderboard">
             <thead>
               <tr>
                 <th>Rank</th>
@@ -351,21 +264,15 @@ const VolunteerDashboard = () => {
                 <tr
                   key={team.team_name}
                   onClick={() => setSelectedTeam(team.team_name)}
-                  style={{
-                    cursor: 'pointer',
-                    backgroundColor:
-                      selectedTeam === team.team_name
-                        ? 'rgba(52, 152, 219, 0.3)'
-                        : 'transparent',
-                  }}
+                  className={selectedTeam === team.team_name ? 'is-selected' : ''}
                 >
-                  <td style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                  <td className="volunteer-rank">
                     {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                   </td>
                   <td>
                     <strong>{team.team_name}</strong>
                   </td>
-                  <td style={{ fontSize: '18px', fontWeight: 'bold', color: team.score < 0 ? '#e74c3c' : '#2ecc71' }}>
+                  <td className={`volunteer-score ${team.score < 0 ? 'negative' : 'positive'}`}>
                     {team.score}
                   </td>
                 </tr>
@@ -377,9 +284,9 @@ const VolunteerDashboard = () => {
         {/* Adjustment Form */}
         <div>
           <h3>Adjust Points</h3>
-          <form onSubmit={handleAdjustPoints}>
+          <form onSubmit={handleAdjustPoints} className="volunteer-form">
             <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="selected-team-display" style={{ display: 'block', marginBottom: '5px' }}>
+              <label htmlFor="selected-team-display">
                 Selected Team
               </label>
               <input
@@ -387,20 +294,13 @@ const VolunteerDashboard = () => {
                 type="text"
                 value={selectedTeam || ''}
                 disabled
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #444',
-                  backgroundColor: '#222',
-                  color: selectedTeam ? '#fff' : '#666',
-                }}
+                className="volunteer-disabled-input"
               />
-              <small style={{ color: '#bbb' }}>Click on a team in the leaderboard</small>
+              <small>Click on a team in the leaderboard</small>
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="adjustment-type" style={{ display: 'block', marginBottom: '5px' }}>
+              <label htmlFor="adjustment-type">
                 Adjustment Type
               </label>
               <select
@@ -409,14 +309,7 @@ const VolunteerDashboard = () => {
                 onChange={(e) =>
                   setAdjustmentForm({ ...adjustmentForm, adjustment_type: e.target.value })
                 }
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #444',
-                  backgroundColor: '#222',
-                  color: '#fff',
-                }}
+                className="volunteer-select"
               >
                 <option value="reward">➕ Reward Points</option>
                 <option value="deduct">➖ Deduct Points</option>
@@ -427,40 +320,29 @@ const VolunteerDashboard = () => {
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
                 Quick Categories
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', marginBottom: '10px' }}>
+              <div className="volunteer-category-grid">
                 {PENALTY_CATEGORIES[adjustmentForm.adjustment_type].map((category) => (
                   <button
                     key={category.value}
                     type="button"
                     onClick={() => handleCategorySelect(category)}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '4px',
-                      border: adjustmentForm.reason === category.value ? '2px solid #2ecc71' : '1px solid #444',
-                      backgroundColor: adjustmentForm.reason === category.value ? 'rgba(46, 204, 113, 0.2)' : '#222',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      fontSize: '11px',
-                      textAlign: 'center',
-                      transition: 'all 0.2s'
-                    }}
+                    className={`volunteer-category-button ${adjustmentForm.reason === category.value ? 'active' : ''}`}
                   >
                     {category.label}
                     <br/>
-                    <strong style={{ color: adjustmentForm.adjustment_type === 'reward' ? '#2ecc71' : '#e74c3c' }}>
+                    <strong className={`volunteer-category-points ${adjustmentForm.adjustment_type === 'reward' ? 'reward' : 'deduct'}`}>
                       {category.points}pts
                     </strong>
                   </button>
                 ))}
               </div>
               <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #444' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
+                <label className="volunteer-custom-toggle">
                   <input
                     id="use-custom-reason"
                     type="checkbox"
                     checked={useCustomReason}
                     onChange={(e) => setUseCustomReason(e.target.checked)}
-                    style={{ cursor: 'pointer' }}
                   />
                   Use Custom Reason
                 </label>
@@ -468,7 +350,7 @@ const VolunteerDashboard = () => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="adjustment-amount" style={{ display: 'block', marginBottom: '5px' }}>
+              <label htmlFor="adjustment-amount">
                 Amount
               </label>
               <input
@@ -480,19 +362,12 @@ const VolunteerDashboard = () => {
                   setAdjustmentForm({ ...adjustmentForm, amount: e.target.value })
                 }
                 placeholder="Enter amount"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #444',
-                  backgroundColor: '#222',
-                  color: '#fff',
-                }}
+                className="volunteer-input"
               />
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label htmlFor={useCustomReason ? 'custom-reason' : 'selected-reason'} style={{ display: 'block', marginBottom: '5px' }}>
+              <label htmlFor={useCustomReason ? 'custom-reason' : 'selected-reason'}>
                 Reason {useCustomReason && '(Custom)'}
               </label>
               {useCustomReason ? (
@@ -502,16 +377,7 @@ const VolunteerDashboard = () => {
                   onChange={(e) => setCustomReason(e.target.value)}
                   placeholder="Enter custom reason"
                   rows="3"
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #444',
-                    backgroundColor: '#222',
-                    color: '#fff',
-                    fontFamily: 'monospace',
-                    resize: 'vertical',
-                  }}
+                  className="volunteer-input"
                 />
               ) : (
                 <input
@@ -519,14 +385,7 @@ const VolunteerDashboard = () => {
                   type="text"
                   value={adjustmentForm.reason}
                   disabled
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #444',
-                    backgroundColor: '#111',
-                    color: '#666',
-                  }}
+                  className="volunteer-disabled-input"
                   placeholder="Select a category above or enable custom reason"
                 />
               )}
@@ -535,12 +394,7 @@ const VolunteerDashboard = () => {
             <button
               type="submit"
               disabled={!selectedTeam}
-              className="btn btn-primary"
-              style={{
-                width: '100%',
-                padding: '10px',
-                opacity: selectedTeam ? 1 : 0.5,
-              }}
+              className="btn btn-primary volunteer-submit"
             >
               Apply Adjustment
             </button>

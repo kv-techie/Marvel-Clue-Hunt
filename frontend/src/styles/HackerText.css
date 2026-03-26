@@ -1,0 +1,31 @@
+/* HackerText — Matrix-style scramble effect */
+
+.hacker-text {
+  display: inline;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+}
+
+.hacker-char {
+  display: inline-block;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+  min-width: 0.55em;
+  text-align: center;
+}
+
+.hacker-char.scrambling {
+  color: var(--neon-primary, #00d4ff);
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.8), 0 0 20px rgba(0, 212, 255, 0.4);
+  opacity: 0.85;
+  animation: hacker-flicker 0.08s steps(1) infinite;
+}
+
+.hacker-char.resolved {
+  color: inherit;
+  text-shadow: none;
+}
+
+@keyframes hacker-flicker {
+  0%   { opacity: 0.7; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.85; }
+}
