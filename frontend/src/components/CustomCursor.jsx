@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { playHoverSound, playTypeSound } from '../utils/audio';
 import '../styles/CustomCursor.css';
 
 const CustomCursor = () => {
@@ -26,7 +25,6 @@ const CustomCursor = () => {
       
       if (isClickable) {
         if (!target.dataset.hovered) {
-          playHoverSound();
           target.dataset.hovered = "true";
         }
         setIsHovering(true);
@@ -40,10 +38,7 @@ const CustomCursor = () => {
     };
 
     const handleClick = (e) => {
-      const target = e.target;
-      if (target.closest('a') || target.closest('button')) {
-        playTypeSound();
-      }
+      // Audio removed
     };
 
     window.addEventListener('mousemove', updateMousePosition);

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTimer } from "../context/TimerContext";
 import * as client from "../api/client";
-import { playSuccessSound, playErrorSound, playTypeSound, playOverchargeHum, stopOverchargeHum, playStrikeSound, playSparkSound } from "../utils/audio";
 import Tilt from 'react-parallax-tilt';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
@@ -36,15 +35,6 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
   // Overcharge Logic
   const isOvercharged = activePowerup || streak >= 3;
-
-  useEffect(() => {
-    if (isOvercharged) {
-      playOverchargeHum();
-    } else {
-      stopOverchargeHum();
-    }
-    return () => stopOverchargeHum();
-  }, [isOvercharged]);
 
   // Load current question on component mount or when question changes
   useEffect(() => {
@@ -114,11 +104,8 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
       if (response.correct) {
         if (isOvercharged) {
-          playStrikeSound();
           setIsHitting(true);
           setTimeout(() => setIsHitting(false), 800);
-        } else {
-          playSuccessSound();
         }
         
         // Show success and load next question
@@ -135,7 +122,6 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
         }
         if (onQuestionComplete) onQuestionComplete(response);
       } else {
-        playErrorSound();
         // Incorrect answer 
         setError(`❌ ${response.message}`);
         setAnswer(""); 
