@@ -1,26 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTimer } from "../context/TimerContext";
 import * as client from "../api/client";
-import Tilt from 'react-parallax-tilt';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 import HackerText from '../components/HackerText';
-import MagneticButton from '../components/MagneticButton';
-import AnimatedBorder from '../components/AnimatedBorder';
 import ElectricOverlay from '../components/ElectricOverlay';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useDeviceTier } from '../hooks/useDeviceTier';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import "../styles/QuestionRound.css";
 
 const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const { user } = useAuth();
-  const { elapsedTime } = useTimer();
+  const { elapsedTime, formatTime } = useTimer();
   const { width, height } = useWindowSize();
   const prefersReducedMotion = useReducedMotion();
   const tier = useDeviceTier();
 
+  // Hardware optimizations
   const confettiConfig = {
     low: { numberOfPieces: 50, gravity: 0.4, recycle: false },
     mid: { numberOfPieces: 120, gravity: 0.3, recycle: false },
@@ -33,21 +31,44 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  
+  // Clues & Hints
+  const [showClue2, setShowClue2] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [hintsRemaining, setHintsRemaining] = useState(3);
+  
+  // Powerups & Gamification
   const [powerupsAvailable, setPowerupsAvailable] = useState({});
   const [teamPowerups, setTeamPowerups] = useState([]);
   const [activePowerup, setActivePowerup] = useState(null);
   const [certaintyFeedback, setCertaintyFeedback] = useState(null);
   const [stone, setStone] = useState(null);
-  const [showClue2, setShowClue2] = useState(false);
   const [streak, setStreak] = useState(0);
-  const [isHitting, setIsHitting] = useState(false);
+  const [score, setScore] = useState(0);
+  
+  // UI States
+  const [shake, setShake] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const inputRef = useRef(null);
 
-  // Overcharge Logic
   const isOvercharged = activePowerup || streak >= 3;
 
-  // Load current question on component mount or when question changes
+  // Evaluate Keyboard Visibility (Responsive Footer)
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth <= 768;
+      // Shrinking vertical height strictly indicates a soft-keyboard opening
+      if (isMobile && window.innerHeight < 500) {
+        setKeyboardOpen(true);
+      } else {
+        setKeyboardOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Sync state cleanly on mount
   useEffect(() => {
     loadCurrentQuestion();
   }, [teamName]);
@@ -62,13 +83,10 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
     setActivePowerup(null);
 
     try {
-      console.log(`[QuestionRound] Loading question for team: ${teamName}`);
       const response = await client.getCurrentQuestion(teamName);
 
-      console.log("[QuestionRound] Question response:", response);
-
       if (response.completed) {
-        setQuestion({ completed: true, message: response.message });
+        setQuestion({ completed: true, message: response.message, current_score: response.current_score });
         return;
       }
 
@@ -76,28 +94,45 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       setHintsRemaining(response.hints_remaining);
       setPowerupsAvailable(response.powerups_available);
 
-      // Load team stone info
       const stoneData = await client.getTeamStone(teamName);
-      console.log("[QuestionRound] Stone data:", stoneData);
       setStone(stoneData.stone);
       setStreak(stoneData.current_streak || 0);
 
       const powerupData = await client.getTeamPowerups(teamName);
       setTeamPowerups(powerupData.powerups || []);
     } catch (err) {
-      console.error("[QuestionRound] Error loading question:", err);
       setError(
-        err.response?.data?.detail ||
-        "Failed to load question: " + err.message
+        err.response?.data?.detail || "Failed to load question securely."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmitAnswer = async () => {
+  const handleCertaintyCheck = async () => {
     if (!answer.trim()) {
-      setError("Please enter an answer");
+      triggerError("Enter an answer first to check its certainty.");
+      return;
+    }
+    try {
+      const response = await client.certaintyCheck(
+        teamName,
+        question.question_id,
+        answer
+      );
+      setCertaintyFeedback(response.feedback);
+      setActivePowerup("Certainty Check");
+    } catch (err) {
+      triggerError("Certainty Check failed: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const handleSubmitAnswer = async (e) => {
+    if (e) e.preventDefault();
+    if (!answer.trim() || submitting) return;
+
+    if (activePowerup === "Certainty Check" && !certaintyFeedback) {
+      await handleCertaintyCheck();
       return;
     }
 
@@ -114,30 +149,26 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       });
 
       if (response.correct) {
-        if (isOvercharged) {
-          setIsHitting(true);
-          setTimeout(() => setIsHitting(false), 800);
-        }
-
-        // Show success and load next question
-        setSuccessMessage(`🎉 ${response.message} (Score: +${response.score_earned} points)`);
-
-        setTimeout(() => setSuccessMessage(null), 4000);
+        setSuccessMessage(`🎉 ${response.message} (+${response.score_earned} points)`);
+        setScore(response.current_score || score + response.score_earned);
+        
+        setTimeout(() => setSuccessMessage(null), 3000);
+        
         if (response.next_question_ready) {
           loadCurrentQuestion();
         } else {
-          setQuestion({ completed: true, message: "All questions completed!" });
+          setQuestion({ completed: true, message: "All questions completed!", current_score: response.current_score });
         }
+        
         if (response.powerups_available) {
           setPowerupsAvailable(response.powerups_available);
         }
+        
         if (onQuestionComplete) onQuestionComplete(response);
       } else {
-        // Incorrect answer 
-        setError(`❌ ${response.message}`);
+        triggerError(`❌ ${response.message}`);
         setAnswer("");
-
-        // If backend moved us to the next question, process it after a short delay
+        
         if (response.next_question_ready !== undefined) {
           setTimeout(() => {
             setError(null);
@@ -146,271 +177,272 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
             } else {
               setQuestion({ completed: true, message: "All questions completed!" });
             }
-          }, 2500);
+          }, 2000);
         } else {
-          // Fallback if it's just a validation failure
-          setTimeout(() => {
-            document.querySelector('.answer-input')?.focus();
-          }, 100);
+          inputRef.current?.focus();
         }
       }
     } catch (err) {
-      console.error("[QuestionRound] Submit answer error:", err);
-      setError("Failed to submit answer: " + (err.response?.data?.detail || err.message));
+      triggerError("Failed to submit: " + (err.response?.data?.detail || err.message));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleRequestHint = async () => {
-    if (hintsRemaining <= 0) {
-      setError("No hints remaining");
-      return;
-    }
-
+    if (hintsRemaining <= 0) return;
     try {
       const response = await client.requestHintQuestion({
         team_name: teamName,
         question_id: question.question_id,
       });
-
       setShowHint(true);
       setHintsRemaining(response.hints_remaining);
       setError(null);
     } catch (err) {
-      setError(
-        "Failed to get hint: " +
-        (err.response?.data?.detail || err.message)
-      );
-    }
-  };
-
-  const handleCertaintyCheck = async () => {
-    if (!answer.trim()) {
-      setError("Enter an answer first");
-      return;
-    }
-
-    try {
-      const response = await client.certaintyCheck(
-        teamName,
-        question.question_id,
-        answer
-      );
-
-      setCertaintyFeedback(response.feedback);
-      setActivePowerup("Certainty Check");
-    } catch (err) {
-      setError(
-        "Certainty Check failed: " +
-        (err.response?.data?.detail || err.message)
-      );
+      triggerError("Hint extraction blocked: " + (err.response?.data?.detail || err.message));
     }
   };
 
   const handleUsePowerup = (powerupId) => {
-    if (!powerupsAvailable[powerupId]) {
-      setError("This powerup is not available or already used");
-      return;
-    }
-
     if (activePowerup === powerupId) {
-      setActivePowerup(null);
+      setActivePowerup(null); // Deselect
     } else {
       setActivePowerup(powerupId);
     }
-
-    setError(null);
   };
 
-  if (loading) return <div className="question-loading">Loading question...</div>;
+  const triggerError = (msg) => {
+    setError(msg);
+    if (!prefersReducedMotion) {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    }
+  };
 
-  if (error) {
-    return <div className="question-error">{error}</div>;
-  }
-
+  if (loading) return <div className="qr-container"><div className="qr-center-pane">Initiating Challenge Matrix...</div></div>;
+  
   if (question?.completed) {
     return (
-      <div className="question-completed">
-        <h2>🏆 Congratulations!</h2>
-        <p>{question.message}</p>
-        <p className="final-score">Final Score: {question.current_score} points</p>
+      <div className="qr-container">
+        <motion.div 
+          className="qr-center-pane"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#2ecc71' }}>🏆 Tesseract Complete!</h2>
+          <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>{question.message}</p>
+          <div className="qr-score-pill" style={{ marginTop: '2rem', fontSize: '1.5rem', padding: '1rem 2rem' }}>
+            Final Score: {question.current_score}
+          </div>
+          {!prefersReducedMotion && <Confetti width={width} height={height} {...confettiConfig[tier]} recycle={true} />}
+        </motion.div>
       </div>
     );
   }
 
   if (!question || !question.difficulty) {
-    return <div className="question-error">Failed to load question - missing data</div>;
+    return <div className="qr-container"><div className="qr-center-pane qr-feedback-box">Critical Error: Connection Intercepted.</div></div>;
   }
 
   return (
-    <Tilt
-      tiltMaxAngleX={prefersReducedMotion ? 0 : 3}
-      tiltMaxAngleY={prefersReducedMotion ? 0 : 3}
-      perspective={1000}
-      transitionSpeed={3000}
-      scale={prefersReducedMotion ? 1 : 1.01}
-      glareEnable={!prefersReducedMotion}
-      glareMaxOpacity={0.05}
-      glareColor="#3498db"
-      glarePosition="all"
-    >
-      <motion.div
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
-        style={{ width: '100%' }}
-      >
-        <AnimatedBorder isOvercharged={isOvercharged && !prefersReducedMotion}>
-          <div className={`question-round-container ${isOvercharged ? 'overcharged' : ''} ${isHitting ? 'hit-shake' : ''}`} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-            {isOvercharged && <ElectricOverlay />}
-            <div className="question-header">
-              <div className="question-progress">
-                Question {question.question_index + 1} of {question.total_questions}
+    <div className="qr-container">
+      {/* ── TOP NAV HEADER ── */}
+      <header className="qr-header">
+        <div className="qr-header-left">
+          <div className="qr-progress">
+            Q{question.question_index + 1} / {question.total_questions}
+          </div>
+          {streak > 0 && (
+            <motion.div 
+              initial={{ scale: 0 }} 
+              animate={{ scale: 1 }} 
+              className="qr-score-pill" 
+              style={{ color: '#f59e0b', borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.1)' }}
+            >
+              🔥 {streak}x
+            </motion.div>
+          )}
+        </div>
+        
+        <div className="qr-header-right">
+          <div className="qr-timer">
+            <span className="qr-timer-icon">⏱</span>
+            {formatTime(elapsedTime).substring(3)} {/* Show MM:SS */}
+          </div>
+        </div>
+      </header>
+
+      {/* ── MAIN SCROLLABLE CONTENT ── */}
+      <main className="qr-main">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={question.question_id}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className={`qr-card ${isOvercharged ? 'overcharged' : ''} ${shake ? 'error-shake' : ''}`}
+          >
+            {isOvercharged && !prefersReducedMotion && <ElectricOverlay />}
+
+            <div className="qr-meta-row">
+              <div className={`qr-difficulty-badge qr-difficulty-${question.difficulty}`}>
+                {question.difficulty} (+{document.querySelector('body')?.dataset?.base || 100} pts)
               </div>
-              <div className="question-stone">
-                <span className="stone-badge">{stone}</span>
-              </div>
-              <div className="question-difficulty">
-                <span className={`difficulty-${question.difficulty}`}>
-                  {question.difficulty.toUpperCase()}
-                </span>
+              <div className="qr-meta-stone">
+                <span style={{fontSize: '1.2rem'}}>💎</span> {stone}
               </div>
             </div>
 
-            <div className="question-content">
-              <h2 className="question-text">
-                <HackerText text={question.question_text} delay={300} />
-              </h2>
+            <h2 className="qr-clue-text">
+              <HackerText text={question.question_text} delay={0} />
+            </h2>
 
-              <div className="clues-section">
-                <div className="clue clue-1">
-                  <strong>💡 Clue 1:</strong> {question.clue_1}
-                </div>
-                <button
-                  className="clue-toggle-btn"
-                  onClick={() => setShowClue2(!showClue2)}
-                >
-                  {showClue2 ? "Hide Clue 2" : "Show Clue 2"}
-                </button>
-                {showClue2 && (
-                  <div className="clue clue-2">
-                    <strong>💡 Clue 2:</strong> {question.clue_2}
-                  </div>
-                )}
+            <div className="qr-clues-container">
+              <div className="qr-clue-item">
+                <strong style={{color: 'var(--text-primary)'}}>Hint 1:</strong> {question.clue_1}
               </div>
-
-              {showHint && (
-                <div className="hint-display">
-                  <strong>💬 Hint:</strong> {question.hint_text}
-                </div>
+              
+              <AnimatePresence>
+                {showClue2 && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }} 
+                    animate={{ height: 'auto', opacity: 1 }} 
+                    exit={{ height: 0, opacity: 0 }}
+                    className="qr-clue-item"
+                  >
+                    <strong style={{color: 'var(--text-primary)'}}>Hint 2:</strong> {question.clue_2}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {!showClue2 && (
+                <button className="qr-action-btn" onClick={() => setShowClue2(true)}>
+                  Reveal Hint 2 <span>▼</span>
+                </button>
               )}
 
-              <div className="powerup-bar">
-                <div className="powerups-label">⚡ PowerUps ({stone}):</div>
-                <div className="powerups-list">
-                  {teamPowerups.map((powerup) => (
-                    <button
-                      key={powerup.id}
-                      className={`powerup-button ${powerupsAvailable[powerup.id] ? "available" : "used"
-                        } ${activePowerup === powerup.id ? "active" : ""}`}
-                      onClick={() =>
-                        powerupsAvailable[powerup.id] && handleUsePowerup(powerup.id)
-                      }
-                      disabled={!powerupsAvailable[powerup.id]}
-                      title={`${powerup.name}${!powerupsAvailable[powerup.id] ? " (locked/used)" : ""
-                        }`}
-                    >
-                      {powerup.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Hints Drawer */}
+              <AnimatePresence>
+                {showHint && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }} 
+                    animate={{ height: 'auto', opacity: 1 }}
+                    className="qr-clue-item" 
+                    style={{ background: 'rgba(245,158,11,0.05)', borderLeftColor: '#f59e0b' }}
+                  >
+                    <strong style={{color: '#f59e0b'}}>Bonus Hint:</strong> {question.hint_text}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              <div className="answer-input-section">
-                <label htmlFor="question-answer-input" className="sr-only">
-                  Answer input
-                </label>
-                <input
-                  id="question-answer-input"
-                  type="text"
-                  className={`answer-input ${error ? 'error' : ''}`}
-                  placeholder="Type your answer here..."
-                  value={answer}
-                  onChange={(e) => {
-                    setAnswer(e.target.value);
-                    // Clear error when user starts typing a new answer
-                    if (e.target.value.length > 0 && error) {
-                      setError(null);
-                    }
-                  }}
-                  onKeyPress={(e) => e.key === "Enter" && handleSubmitAnswer()}
-                  disabled={submitting}
+              {!showHint && (
+                <button 
+                  className="qr-action-btn qr-hint-btn" 
+                  onClick={handleRequestHint} 
+                  disabled={hintsRemaining <= 0 || submitting}
+                >
+                  Request Bonus Hint ({hintsRemaining} left) <span>💬</span>
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* ── STICKY FOOTER INTERFACE ── */}
+      <footer className="qr-footer">
+        <div className="qr-footer-content">
+          
+          {/* Powerups Tray (Hides when mobile keyboard covers screen) */}
+          {!keyboardOpen && teamPowerups.length > 0 && (
+            <div className="qr-powerups-wrap">
+              <div className="qr-powerups-label">Powerups</div>
+              <div className="qr-powerups-scroll">
+                {teamPowerups.map((p) => (
+                  <button
+                    key={p.id}
+                    className={`qr-powerup-pill ${activePowerup === p.id ? "active" : ""}`}
+                    onClick={() => powerupsAvailable[p.id] && handleUsePowerup(p.id)}
+                    disabled={!powerupsAvailable[p.id]}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Certainty Check Display */}
+          {certaintyFeedback && activePowerup === "Certainty Check" && (
+            <motion.div initial={{opacity: 0}} animate={{opacity: 1}} className="qr-certainty-wrap">
+              <div className="qr-certainty-label">
+                <span style={{ color: certaintyFeedback.similarity_percent > 80 ? '#2ecc71' : '#f59e0b' }}>
+                  {certaintyFeedback.feedback}
+                </span>
+                <span>{certaintyFeedback.similarity_percent}% Match</span>
+              </div>
+              <div className="qr-certainty-track">
+                <div 
+                  className="qr-certainty-fill" 
+                  style={{ 
+                    width: `${certaintyFeedback.similarity_percent}%`,
+                    background: certaintyFeedback.similarity_percent > 80 ? '#2ecc71' : '#f59e0b'
+                  }} 
                 />
               </div>
+            </motion.div>
+          )}
 
-              {certaintyFeedback && (
-                <div className={`certainty-feedback ${certaintyFeedback.match_level}`}>
-                  <div className="feedback-level">
-                    {certaintyFeedback.feedback}
-                  </div>
-                  <div className="similarity-bar">
-                    <div
-                      className="similarity-fill"
-                      style={{
-                        width: `${certaintyFeedback.similarity_percent}%`,
-                      }}
-                    >
-                      {certaintyFeedback.similarity_percent}%
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+          {/* Input & Submit Row */}
+          <form className="qr-input-group" onSubmit={handleSubmitAnswer}>
+            <input
+              ref={inputRef}
+              type="text"
+              className={`qr-input ${error ? 'error' : ''}`}
+              placeholder="Intercept answer..."
+              value={answer}
+              onChange={(e) => {
+                setAnswer(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={submitting}
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck="false"
+            />
+            <button 
+              type="submit" 
+              className="qr-submit"
+              disabled={!answer.trim() || submitting}
+            >
+              {submitting ? "..." : "Lock In"}
+            </button>
+          </form>
 
-            <div className="actions-section">
-              <div className="actions-left">
-                <MagneticButton
-                  className="hint-btn"
-                  onClick={handleRequestHint}
-                  disabled={hintsRemaining === 0 || submitting}
-                >
-                  💭 Hint ({hintsRemaining}/3)
-                </MagneticButton>
-              </div>
+          {/* Error / Success Banners */}
+          <AnimatePresence>
+            {error && (
+              <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }} className="qr-feedback-box">
+                {error}
+              </motion.div>
+            )}
+            {successMessage && (
+              <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }} className="qr-feedback-box success">
+                {successMessage}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              <div className="actions-center">
-                <MagneticButton
-                  className="submit-btn"
-                  onClick={handleSubmitAnswer}
-                  disabled={!answer.trim() || submitting}
-                >
-                  {submitting ? "Submitting..." : "Submit Answer"}
-                </MagneticButton>
-              </div>
+        </div>
+      </footer>
 
-              <div className="actions-right" />
-            </div>
-
-            {successMessage && !prefersReducedMotion && <Confetti width={width} height={height} {...confettiConfig[tier]} style={{ position: 'fixed', top: 0, left: 0, zIndex: 1000, pointerEvents: 'none' }} />}
-
-            {successMessage && <div className="question-success" style={{
-              marginTop: '15px',
-              padding: '12px',
-              backgroundColor: 'rgba(46, 204, 113, 0.15)',
-              border: '1px solid rgba(46, 204, 113, 0.4)',
-              borderRadius: '8px',
-              color: 'var(--accent-green, #2ecc71)',
-              textAlign: 'center',
-              fontWeight: '500',
-              animation: 'fadeIn 0.3s ease-out'
-            }}>{successMessage}</div>}
-
-            {error && <div className="error-message">{error}</div>}
-          </div>
-        </AnimatedBorder>
-      </motion.div>
-    </Tilt>
+      {/* Global Hardware-Accelerated Confetti */}
+      {successMessage && !prefersReducedMotion && (
+        <Confetti width={width} height={height} {...confettiConfig[tier]} style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, pointerEvents: 'none' }} />
+      )}
+    </div>
   );
 };
 
