@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTimer } from '../context/TimerContext'
 import { getTeamStatus, getTeamStone, startTeamTimer, teamAcknowledgeDisqualification, getTeamBadges, getTeamPowerups } from '../api/client'
 import { useTabFocusTracking } from '../hooks/useTabFocusTracking'
+import { useGameSocket } from '../hooks/useGameSocket'
 import TeamTimer from './TeamTimer'
 import QuestionRound from './QuestionRound'
 import DisqualificationScreen from './DisqualifiationScreen'
@@ -255,6 +256,28 @@ const AttendeeDashboard = () => {
     }
   }
 
+  // WebSocket event integration replacing active polling
+  useGameSocket((event, data) => {
+    console.log("[WS] Received event:", event, data);
+    switch (event) {
+      case 'score_update':
+      case 'powerup_used':
+      case 'state_update':
+      case 'leaderboard_update':
+      case 'round_start':
+        fetchTeamStatus();
+        fetchTeamStone();
+        fetchTeamBadges();
+        fetchTeamPowerups();
+        break;
+      case 'disqualify':
+        fetchTeamStatus();
+        break;
+      default:
+        break;
+    }
+  });
+
   useEffect(() => {
     const initializeTeam = async () => {
       try {
@@ -275,16 +298,6 @@ const AttendeeDashboard = () => {
     }
 
     initializeTeam()
-    
-    // Refresh status every 2 seconds for instant updates
-    const interval = setInterval(() => {
-      fetchTeamStatus()
-      fetchTeamStone()
-      fetchTeamBadges()
-      fetchTeamPowerups()
-    }, 2000)
-
-    return () => clearInterval(interval)
   }, [team])
 
   // Stop the timer immediately when disqualification is detected

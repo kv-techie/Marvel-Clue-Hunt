@@ -11,6 +11,9 @@
   --bg-glass: rgba(16, 22, 38, 0.6);
   --bg-glass-heavy: rgba(10, 14, 25, 0.85);
   --bg-glass-light: rgba(255, 255, 255, 0.03);
+  --glass-bg: rgba(10, 10, 30, 0.75);
+  --glass-border: rgba(46, 204, 113, 0.25);
+  --glass-blur: 16px;
   
   /* Typography */
   --font-body: 'Inter', sans-serif;
@@ -24,9 +27,10 @@
   --accent-purple: #9c27b0;       /* powerup purple */
 
   /* Text Colors */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-primary: #f0f0f0;
+  --text-secondary: #b0b0b0;
   --text-muted: rgba(255, 255, 255, 0.5);
+  --text-accent-glow: #2ecc71;
 
   /* Borders */
   --border-subtle: rgba(255, 255, 255, 0.05);
@@ -53,4 +57,7 @@
   --glow-secondary: 0 0 15px rgba(52, 152, 219, 0.4), 0 0 30px rgba(52, 152, 219, 0.2);
   --glow-gold: 0 0 15px rgba(243, 156, 18, 0.4), 0 0 30px rgba(243, 156, 18, 0.2);
   --glow-purple: 0 0 15px rgba(156, 39, 176, 0.4), 0 0 30px rgba(156, 39, 176, 0.2);
+  --glow-subtle: 0 0 6px rgba(46, 204, 113, 0.4);
+  --glow-intense: 0 0 20px rgba(46, 204, 113, 0.6),
+                  0 0 40px rgba(46, 204, 113, 0.3);
 }

@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import Particles from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 
-const ParticleBackground = () => {
+const ParticleBackground = ({ density = 60 }) => {
   const particlesInit = useCallback(async (engine) => {
     // loadSlim is lightweight and contains the required shapes/lines
     await loadSlim(engine);
@@ -68,7 +68,7 @@ const ParticleBackground = () => {
               enable: true,
               area: 800,
             },
-            value: 60,
+            value: density,
           },
           opacity: {
             value: { min: 0.1, max: 0.5 },

@@ -1,7 +1,10 @@
 # Marvel Clue Hunt — Points Rewarding System
 
 ## 1. Base Points
-Each question has a `base_points` value defined in `questions.json`, varying by difficulty.
+Each question has a `base_points` value defined in `questions.json`, varying by difficulty:
+- **Easy**: 100 points
+- **Medium**: 200 points
+- **Hard**: 300 points
 
 ## 2. Speed Multiplier (1.0x – 1.5x)
 Faster answers earn a bonus multiplier on top of base points:

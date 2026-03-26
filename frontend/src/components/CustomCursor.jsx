@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import '../styles/CustomCursor.css';
 
 const CustomCursor = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     // Only enable on desktop
@@ -54,7 +56,7 @@ const CustomCursor = () => {
     };
   }, []);
 
-  if (!isDesktop) return null;
+  if (!isDesktop || prefersReducedMotion) return null;
 
   return (
     <>

@@ -1,0 +1,30 @@
+.marvel-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #0a0a1e;
+  gap: 1.5rem;
+}
+
+.infinity-stone-spinner {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2ecc71 0%, transparent 70%);
+  box-shadow: 0 0 30px #2ecc71, 0 0 60px rgba(46, 204, 113, 0.4);
+  animation: pulse-stone 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-stone {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+.loader-text {
+  color: #b0b0b0;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}

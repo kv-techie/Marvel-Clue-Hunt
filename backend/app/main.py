@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from app.websocket_manager import manager
 
 from app.routes import admin, attendee, common
 
@@ -41,6 +42,24 @@ app.include_router(attendee.router, prefix="/api/attendee", tags=["attendee"])
 @app.get("/")
 async def root():
     return {"message": "Marvel Clue Hunt API", "status": "active"}
+
+@app.websocket("/ws")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    role: str = Query(...),
+    team_id: str = Query(None),
+    token: str = Query(...)
+):
+    if not token:
+        await websocket.close(code=4001)
+        return
+
+    await manager.connect(websocket, role, team_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, role, team_id)
 
 
 if __name__ == "__main__":

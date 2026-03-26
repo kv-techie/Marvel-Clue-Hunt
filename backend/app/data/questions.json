@@ -51,7 +51,7 @@
           "clue_2": "Two letters",
           "hint_text": "Au",
           "correct_answer": "Au",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -61,7 +61,7 @@
           "clue_2": "Discovered by accident in 1928",
           "hint_text": "Alexander Fleming",
           "correct_answer": "Fleming",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -81,7 +81,7 @@
           "clue_2": "Year when it hit an iceberg",
           "hint_text": "1912",
           "correct_answer": "1912",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -91,7 +91,7 @@
           "clue_2": "Less than 250",
           "hint_text": "206",
           "correct_answer": "206",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -101,7 +101,7 @@
           "clue_2": "Einstein's famous constant",
           "hint_text": "300000000 m/s or 3 x 10^8 m/s",
           "correct_answer": "300000000",
-          "base_points": 150,
+          "base_points": 300,
           "difficulty": "hard"
         }
       ]
@@ -117,7 +117,7 @@
           "clue_2": "Located in the jaw",
           "hint_text": "Masseter",
           "correct_answer": "Masseter",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -127,7 +127,7 @@
           "clue_2": "Son of Zeus",
           "hint_text": "Hercules or Heracles",
           "correct_answer": "Hercules",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -137,7 +137,7 @@
           "clue_2": "Used in construction and steel",
           "hint_text": "Iron",
           "correct_answer": "Iron",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -147,7 +147,7 @@
           "clue_2": "Extinction-era predator",
           "hint_text": "T-Rex or Tyrannosaurus",
           "correct_answer": "T-Rex",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -157,7 +157,7 @@
           "clue_2": "Symbol is N",
           "hint_text": "Newton",
           "correct_answer": "Newton",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -177,7 +177,7 @@
           "clue_2": "Used in jewelry and cutting tools",
           "hint_text": "Diamond",
           "correct_answer": "Diamond",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -197,7 +197,7 @@
           "clue_2": "Between 20 and 30",
           "hint_text": "26",
           "correct_answer": "26",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -207,7 +207,7 @@
           "clue_2": "Approximately 300",
           "hint_text": "300",
           "correct_answer": "300",
-          "base_points": 150,
+          "base_points": 300,
           "difficulty": "hard"
         }
       ]
@@ -219,18 +219,18 @@
         {
           "id": "time_1",
           "question_text": "How many seconds are in a day?",
-          "clue_1": "24 hours × 3600",
+          "clue_1": "24 hours \u00c3\u2014 3600",
           "clue_2": "Starts with 86",
           "hint_text": "86400",
           "correct_answer": "86400",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
           "id": "time_2",
           "question_text": "Who developed the theory of relativity?",
           "clue_1": "German physicist",
-          "clue_2": "E = mc²",
+          "clue_2": "E = mc\u00c2\u00b2",
           "hint_text": "Albert Einstein",
           "correct_answer": "Einstein",
           "base_points": 100,
@@ -263,7 +263,7 @@
           "clue_2": "Used in nuclear physics",
           "hint_text": "Picosecond",
           "correct_answer": "Picosecond",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -273,7 +273,7 @@
           "clue_2": "World Wide Web invented",
           "hint_text": "1991",
           "correct_answer": "1991",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -283,7 +283,7 @@
           "clue_2": "Moon cycle duration",
           "hint_text": "29.5 days",
           "correct_answer": "29.5",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -293,17 +293,17 @@
           "clue_2": "Babylonian origin",
           "hint_text": "Babylonian",
           "correct_answer": "Babylonian",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
           "id": "time_9",
           "question_text": "How many minutes are in a week?",
-          "clue_1": "7 days × 24 hours × 60",
+          "clue_1": "7 days \u00c3\u2014 24 hours \u00c3\u2014 60",
           "clue_2": "More than 10000",
           "hint_text": "10080",
           "correct_answer": "10080",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -313,7 +313,7 @@
           "clue_2": "Used in computing",
           "hint_text": "10^-9 seconds",
           "correct_answer": "billionth",
-          "base_points": 150,
+          "base_points": 300,
           "difficulty": "hard"
         }
       ]
@@ -329,7 +329,7 @@
           "clue_2": "Approximately 150 million km",
           "hint_text": "149.6 million km or 1 AU",
           "correct_answer": "150",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -339,7 +339,7 @@
           "clue_2": "Nothing escapes from it",
           "hint_text": "Collapsed star with infinite density",
           "correct_answer": "star",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -369,7 +369,7 @@
           "clue_2": "Expansion event",
           "hint_text": "Start of space and time",
           "correct_answer": "origin",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -399,7 +399,7 @@
           "clue_2": "Star formation region",
           "hint_text": "Cloud of gas and dust",
           "correct_answer": "cloud",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -409,7 +409,7 @@
           "clue_2": "Approximately 9.46 trillion km",
           "hint_text": "9.46 trillion",
           "correct_answer": "trillion",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -419,7 +419,7 @@
           "clue_2": "Contains icy bodies at edge of solar system",
           "hint_text": "Shell of icy objects",
           "correct_answer": "icy",
-          "base_points": 150,
+          "base_points": 300,
           "difficulty": "hard"
         }
       ]
@@ -435,7 +435,7 @@
           "clue_2": "Slower than light",
           "hint_text": "340",
           "correct_answer": "340",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -445,7 +445,7 @@
           "clue_2": "Physics of very small things",
           "hint_text": "Branch of physics dealing with atoms",
           "correct_answer": "quantum",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -475,7 +475,7 @@
           "clue_2": "Quantum mechanics concept",
           "hint_text": "Unique quantum states",
           "correct_answer": "electrons",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -495,7 +495,7 @@
           "clue_2": "Quantum mechanics law",
           "hint_text": "Position-momentum uncertainty",
           "correct_answer": "uncertainty",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -505,7 +505,7 @@
           "clue_2": "Einstein's concept",
           "hint_text": "4",
           "correct_answer": "4",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -515,7 +515,7 @@
           "clue_2": "Due to relative motion",
           "hint_text": "Shift in perceived frequency",
           "correct_answer": "frequency",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -525,7 +525,7 @@
           "clue_2": "Cannot decrease in isolated system",
           "hint_text": "Second law of thermodynamics",
           "correct_answer": "disorder",
-          "base_points": 150,
+          "base_points": 300,
           "difficulty": "hard"
         }
       ]
@@ -591,7 +591,7 @@
           "clue_2": "Occurs in plant chloroplasts",
           "hint_text": "Light-dependent process",
           "correct_answer": "light",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -601,7 +601,7 @@
           "clue_2": "Inherited from parents",
           "hint_text": "46",
           "correct_answer": "46",
-          "base_points": 100,
+          "base_points": 200,
           "difficulty": "medium"
         },
         {
@@ -611,7 +611,7 @@
           "clue_2": "Adenosine Triphosphate",
           "hint_text": "Energy currency of cells",
           "correct_answer": "energy",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -621,7 +621,7 @@
           "clue_2": "Contains all genes",
           "hint_text": "All genetic material",
           "correct_answer": "DNA",
-          "base_points": 100,
+          "base_points": 300,
           "difficulty": "hard"
         },
         {
@@ -631,7 +631,7 @@
           "clue_2": "Produces ATP for energy",
           "hint_text": "Process of energy extraction",
           "correct_answer": "respiration",
-          "base_points": 150,
+          "base_points": 300,
           "difficulty": "hard"
         }
       ]

@@ -9,12 +9,23 @@ import HackerText from '../components/HackerText';
 import MagneticButton from '../components/MagneticButton';
 import AnimatedBorder from '../components/AnimatedBorder';
 import ElectricOverlay from '../components/ElectricOverlay';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useDeviceTier } from '../hooks/useDeviceTier';
+import { motion } from 'framer-motion';
 import "../styles/QuestionRound.css";
 
 const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const { user } = useAuth();
   const { elapsedTime } = useTimer();
   const { width, height } = useWindowSize();
+  const prefersReducedMotion = useReducedMotion();
+  const tier = useDeviceTier();
+
+  const confettiConfig = {
+    low: { numberOfPieces: 50, gravity: 0.4, recycle: false },
+    mid: { numberOfPieces: 120, gravity: 0.3, recycle: false },
+    high: { numberOfPieces: 250, gravity: 0.25, recycle: false },
+  };
 
   const [question, setQuestion] = useState(null);
   const [answer, setAnswer] = useState("");
@@ -53,7 +64,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
     try {
       console.log(`[QuestionRound] Loading question for team: ${teamName}`);
       const response = await client.getCurrentQuestion(teamName);
-      
+
       console.log("[QuestionRound] Question response:", response);
 
       if (response.completed) {
@@ -64,7 +75,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       setQuestion(response);
       setHintsRemaining(response.hints_remaining);
       setPowerupsAvailable(response.powerups_available);
-      
+
       // Load team stone info
       const stoneData = await client.getTeamStone(teamName);
       console.log("[QuestionRound] Stone data:", stoneData);
@@ -77,7 +88,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       console.error("[QuestionRound] Error loading question:", err);
       setError(
         err.response?.data?.detail ||
-          "Failed to load question: " + err.message
+        "Failed to load question: " + err.message
       );
     } finally {
       setLoading(false);
@@ -107,10 +118,10 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
           setIsHitting(true);
           setTimeout(() => setIsHitting(false), 800);
         }
-        
+
         // Show success and load next question
         setSuccessMessage(`🎉 ${response.message} (Score: +${response.score_earned} points)`);
-        
+
         setTimeout(() => setSuccessMessage(null), 4000);
         if (response.next_question_ready) {
           loadCurrentQuestion();
@@ -124,8 +135,8 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       } else {
         // Incorrect answer 
         setError(`❌ ${response.message}`);
-        setAnswer(""); 
-        
+        setAnswer("");
+
         // If backend moved us to the next question, process it after a short delay
         if (response.next_question_ready !== undefined) {
           setTimeout(() => {
@@ -169,7 +180,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
     } catch (err) {
       setError(
         "Failed to get hint: " +
-          (err.response?.data?.detail || err.message)
+        (err.response?.data?.detail || err.message)
       );
     }
   };
@@ -192,7 +203,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
     } catch (err) {
       setError(
         "Certainty Check failed: " +
-          (err.response?.data?.detail || err.message)
+        (err.response?.data?.detail || err.message)
       );
     }
   };
@@ -203,7 +214,12 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       return;
     }
 
-    setActivePowerup(powerupId);
+    if (activePowerup === powerupId) {
+      setActivePowerup(null);
+    } else {
+      setActivePowerup(powerupId);
+    }
+
     setError(null);
   };
 
@@ -229,166 +245,171 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
   return (
     <Tilt
-      tiltMaxAngleX={3}
-      tiltMaxAngleY={3}
+      tiltMaxAngleX={prefersReducedMotion ? 0 : 3}
+      tiltMaxAngleY={prefersReducedMotion ? 0 : 3}
       perspective={1000}
       transitionSpeed={3000}
-      scale={1.01}
-      glareEnable={true}
+      scale={prefersReducedMotion ? 1 : 1.01}
+      glareEnable={!prefersReducedMotion}
       glareMaxOpacity={0.05}
       glareColor="#3498db"
       glarePosition="all"
     >
-    <AnimatedBorder isOvercharged={isOvercharged}>
-    <div className={`question-round-container ${isOvercharged ? 'overcharged' : ''} ${isHitting ? 'hit-shake' : ''}`} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-      {isOvercharged && <ElectricOverlay />}
-      <div className="question-header">
-        <div className="question-progress">
-          Question {question.question_index + 1} of {question.total_questions}
-        </div>
-        <div className="question-stone">
-          <span className="stone-badge">{stone}</span>
-        </div>
-        <div className="question-difficulty">
-          <span className={`difficulty-${question.difficulty}`}>
-            {question.difficulty.toUpperCase()}
-          </span>
-        </div>
-      </div>
-
-      <div className="question-content">
-        <h2 className="question-text">
-          <HackerText text={question.question_text} delay={300} />
-        </h2>
-
-        <div className="clues-section">
-          <div className="clue clue-1">
-            <strong>💡 Clue 1:</strong> {question.clue_1}
-          </div>
-          <button
-            className="clue-toggle-btn"
-            onClick={() => setShowClue2(!showClue2)}
-          >
-            {showClue2 ? "Hide Clue 2" : "Show Clue 2"}
-          </button>
-          {showClue2 && (
-            <div className="clue clue-2">
-              <strong>💡 Clue 2:</strong> {question.clue_2}
-            </div>
-          )}
-        </div>
-
-        {showHint && (
-          <div className="hint-display">
-            <strong>💬 Hint:</strong> {question.hint_text}
-          </div>
-        )}
-
-        <div className="powerup-bar">
-          <div className="powerups-label">⚡ PowerUps ({stone}):</div>
-          <div className="powerups-list">
-            {teamPowerups.map((powerup) => (
-              <button
-                key={powerup.id}
-                className={`powerup-button ${
-                  powerupsAvailable[powerup.id] ? "available" : "used"
-                } ${activePowerup === powerup.id ? "active" : ""}`}
-                onClick={() =>
-                  powerupsAvailable[powerup.id] && handleUsePowerup(powerup.id)
-                }
-                disabled={!powerupsAvailable[powerup.id]}
-                title={`${powerup.name}${
-                  !powerupsAvailable[powerup.id] ? " (locked/used)" : ""
-                }`}
-              >
-                {powerup.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="answer-input-section">
-          <label htmlFor="question-answer-input" className="sr-only">
-            Answer input
-          </label>
-          <input
-            id="question-answer-input"
-            type="text"
-            className={`answer-input ${error ? 'error' : ''}`}
-            placeholder="Type your answer here..."
-            value={answer}
-            onChange={(e) => {
-              setAnswer(e.target.value);
-              // Clear error when user starts typing a new answer
-              if (e.target.value.length > 0 && error) {
-                setError(null);
-              }
-            }}
-            onKeyPress={(e) => e.key === "Enter" && handleSubmitAnswer()}
-            disabled={submitting}
-          />
-        </div>
-
-        {certaintyFeedback && (
-          <div className={`certainty-feedback ${certaintyFeedback.match_level}`}>
-            <div className="feedback-level">
-              {certaintyFeedback.feedback}
-            </div>
-            <div className="similarity-bar">
-              <div
-                className="similarity-fill"
-                style={{
-                  width: `${certaintyFeedback.similarity_percent}%`,
-                }}
-              >
-                {certaintyFeedback.similarity_percent}%
+      <motion.div
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+        style={{ width: '100%' }}
+      >
+        <AnimatedBorder isOvercharged={isOvercharged && !prefersReducedMotion}>
+          <div className={`question-round-container ${isOvercharged ? 'overcharged' : ''} ${isHitting ? 'hit-shake' : ''}`} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+            {isOvercharged && <ElectricOverlay />}
+            <div className="question-header">
+              <div className="question-progress">
+                Question {question.question_index + 1} of {question.total_questions}
+              </div>
+              <div className="question-stone">
+                <span className="stone-badge">{stone}</span>
+              </div>
+              <div className="question-difficulty">
+                <span className={`difficulty-${question.difficulty}`}>
+                  {question.difficulty.toUpperCase()}
+                </span>
               </div>
             </div>
+
+            <div className="question-content">
+              <h2 className="question-text">
+                <HackerText text={question.question_text} delay={300} />
+              </h2>
+
+              <div className="clues-section">
+                <div className="clue clue-1">
+                  <strong>💡 Clue 1:</strong> {question.clue_1}
+                </div>
+                <button
+                  className="clue-toggle-btn"
+                  onClick={() => setShowClue2(!showClue2)}
+                >
+                  {showClue2 ? "Hide Clue 2" : "Show Clue 2"}
+                </button>
+                {showClue2 && (
+                  <div className="clue clue-2">
+                    <strong>💡 Clue 2:</strong> {question.clue_2}
+                  </div>
+                )}
+              </div>
+
+              {showHint && (
+                <div className="hint-display">
+                  <strong>💬 Hint:</strong> {question.hint_text}
+                </div>
+              )}
+
+              <div className="powerup-bar">
+                <div className="powerups-label">⚡ PowerUps ({stone}):</div>
+                <div className="powerups-list">
+                  {teamPowerups.map((powerup) => (
+                    <button
+                      key={powerup.id}
+                      className={`powerup-button ${powerupsAvailable[powerup.id] ? "available" : "used"
+                        } ${activePowerup === powerup.id ? "active" : ""}`}
+                      onClick={() =>
+                        powerupsAvailable[powerup.id] && handleUsePowerup(powerup.id)
+                      }
+                      disabled={!powerupsAvailable[powerup.id]}
+                      title={`${powerup.name}${!powerupsAvailable[powerup.id] ? " (locked/used)" : ""
+                        }`}
+                    >
+                      {powerup.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="answer-input-section">
+                <label htmlFor="question-answer-input" className="sr-only">
+                  Answer input
+                </label>
+                <input
+                  id="question-answer-input"
+                  type="text"
+                  className={`answer-input ${error ? 'error' : ''}`}
+                  placeholder="Type your answer here..."
+                  value={answer}
+                  onChange={(e) => {
+                    setAnswer(e.target.value);
+                    // Clear error when user starts typing a new answer
+                    if (e.target.value.length > 0 && error) {
+                      setError(null);
+                    }
+                  }}
+                  onKeyPress={(e) => e.key === "Enter" && handleSubmitAnswer()}
+                  disabled={submitting}
+                />
+              </div>
+
+              {certaintyFeedback && (
+                <div className={`certainty-feedback ${certaintyFeedback.match_level}`}>
+                  <div className="feedback-level">
+                    {certaintyFeedback.feedback}
+                  </div>
+                  <div className="similarity-bar">
+                    <div
+                      className="similarity-fill"
+                      style={{
+                        width: `${certaintyFeedback.similarity_percent}%`,
+                      }}
+                    >
+                      {certaintyFeedback.similarity_percent}%
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="actions-section">
+              <div className="actions-left">
+                <MagneticButton
+                  className="hint-btn"
+                  onClick={handleRequestHint}
+                  disabled={hintsRemaining === 0 || submitting}
+                >
+                  💭 Hint ({hintsRemaining}/3)
+                </MagneticButton>
+              </div>
+
+              <div className="actions-center">
+                <MagneticButton
+                  className="submit-btn"
+                  onClick={handleSubmitAnswer}
+                  disabled={!answer.trim() || submitting}
+                >
+                  {submitting ? "Submitting..." : "Submit Answer"}
+                </MagneticButton>
+              </div>
+
+              <div className="actions-right" />
+            </div>
+
+            {successMessage && !prefersReducedMotion && <Confetti width={width} height={height} {...confettiConfig[tier]} style={{ position: 'fixed', top: 0, left: 0, zIndex: 1000, pointerEvents: 'none' }} />}
+
+            {successMessage && <div className="question-success" style={{
+              marginTop: '15px',
+              padding: '12px',
+              backgroundColor: 'rgba(46, 204, 113, 0.15)',
+              border: '1px solid rgba(46, 204, 113, 0.4)',
+              borderRadius: '8px',
+              color: 'var(--accent-green, #2ecc71)',
+              textAlign: 'center',
+              fontWeight: '500',
+              animation: 'fadeIn 0.3s ease-out'
+            }}>{successMessage}</div>}
+
+            {error && <div className="error-message">{error}</div>}
           </div>
-        )}
-      </div>
-
-      <div className="actions-section">
-        <div className="actions-left">
-          <MagneticButton
-            className="hint-btn"
-            onClick={handleRequestHint}
-            disabled={hintsRemaining === 0 || submitting}
-          >
-            💭 Hint ({hintsRemaining}/3)
-          </MagneticButton>
-        </div>
-
-        <div className="actions-center">
-          <MagneticButton
-            className="submit-btn"
-            onClick={handleSubmitAnswer}
-            disabled={!answer.trim() || submitting}
-          >
-            {submitting ? "Submitting..." : "Submit Answer"}
-          </MagneticButton>
-        </div>
-
-        <div className="actions-right" />
-      </div>
-
-      {successMessage && <Confetti width={width} height={height} recycle={false} numberOfPieces={400} gravity={0.2} style={{ position: 'fixed', top: 0, left: 0, zIndex: 1000, pointerEvents: 'none' }} />}
-
-      {successMessage && <div className="question-success" style={{
-        marginTop: '15px',
-        padding: '12px',
-        backgroundColor: 'rgba(46, 204, 113, 0.15)',
-        border: '1px solid rgba(46, 204, 113, 0.4)',
-        borderRadius: '8px',
-        color: 'var(--accent-green, #2ecc71)',
-        textAlign: 'center',
-        fontWeight: '500',
-        animation: 'fadeIn 0.3s ease-out'
-      }}>{successMessage}</div>}
-      
-      {error && <div className="error-message">{error}</div>}
-    </div>
-    </AnimatedBorder>
+        </AnimatedBorder>
+      </motion.div>
     </Tilt>
   );
 };

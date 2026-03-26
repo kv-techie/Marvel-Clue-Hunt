@@ -160,17 +160,38 @@ input:focus, textarea:focus {
 }
 
 .card {
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   border-left: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-lg);
   padding: 24px;
   margin: 20px 0;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--shadow-glass);
   animation: fadeIn 0.6s ease-out;
+}
+
+.card p,
+.card span,
+.card label,
+.card td,
+.card th {
+  color: var(--text-primary);
+  text-shadow: none;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.card h1,
+.card h2,
+.card h3,
+.card h4,
+.card .accent-text {
+  color: var(--text-accent-glow);
+  text-shadow: var(--glow-subtle);
+  font-weight: 700;
 }
 
 .timer {
@@ -221,5 +242,33 @@ input:focus, textarea:focus {
 @media (min-width: 1920px) {
   .container {
     max-width: 1440px;
+  }
+}
+
+/* Global accessibility override */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .particle-bg,
+  .custom-cursor,
+  .cursor-dot,
+  .cursor-ring,
+  .magnetic-btn,
+  .confetti-canvas,
+  canvas {
+    display: none !important;
+  }
+
+  /* Provide static fallback styles */
+  .card, .question-round-container {
+    border: 2px solid var(--text-accent-glow);
+    /* Solid border replaces animated glow border */
   }
 }

@@ -5,6 +5,9 @@ from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
 from app.models import LoginRequest, LoginResponse
 from app.state_io import atomic_write_json
 
@@ -647,3 +650,19 @@ async def logout(request: LoginRequest):
 @router.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "Marvel Clue Hunt API"}
+
+
+class ErrorLogRequest(BaseModel):
+    message: str
+    stack: str | None = None
+    componentStack: str | None = None
+    teamId: str | None = None
+    timestamp: str | None = None
+    userAgent: str | None = None
+
+@router.post("/log-error")
+async def log_error(request: ErrorLogRequest):
+    print(f"[CLIENT CRASH] Team: {request.teamId} | Msg: {request.message}")
+    if request.componentStack:
+        print(f"Stack Trace: {request.componentStack}")
+    return {"status": "logged"}
