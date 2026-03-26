@@ -315,9 +315,11 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
             </h2>
 
             <div className="qr-clues-container">
-              <div className="qr-clue-item">
-                <strong style={{color: 'var(--text-primary)'}}>Hint 1:</strong> {question.clue_1}
-              </div>
+              {!question.is_bonus_question && (
+                <div className="qr-clue-item">
+                  <strong style={{color: 'var(--text-primary)'}}>Hint 1:</strong> {question.clue_1}
+                </div>
+              )}
               
               <AnimatePresence>
                 {revealClue2 && (
@@ -332,7 +334,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
                 )}
               </AnimatePresence>
               
-              {!revealClue2 && (
+              {!revealClue2 && !question.is_bonus_question && (
                 <button className="qr-action-btn" onClick={() => setShowClue2(true)}>
                   Reveal Hint 2 <span>▼</span>
                 </button>
@@ -358,7 +360,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
                 )}
               </AnimatePresence>
 
-              {!revealBonusHint && (
+              {!revealBonusHint && !question.is_bonus_question && (
                 <button 
                   className="qr-action-btn qr-hint-btn" 
                   onClick={handleRequestHint} 

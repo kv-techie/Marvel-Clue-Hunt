@@ -91,7 +91,7 @@ const DisqualificationNotice = ({ teamStatus, onAcknowledge, acknowledging, ackM
 }
 
 // Team Progress Component
-const TeamProgress = ({ teamStatus, currentQuestionIndex }) => {
+const TeamProgress = ({ teamStatus, currentQuestionIndex, totalQuestions = 15 }) => {
   if (!teamStatus) return null
 
   const questionResultMap = new Map(
@@ -110,11 +110,14 @@ const TeamProgress = ({ teamStatus, currentQuestionIndex }) => {
     return { status: 'locked', text: '🔒 Locked' }
   }
 
+  const standardNums = Array.from({ length: Math.min(totalQuestions, 15) }, (_, i) => i + 1)
+  const bonusNums = totalQuestions > 15 ? Array.from({ length: totalQuestions - 15 }, (_, i) => 16 + i) : []
+
   return (
     <div className="card">
-      <h2>📊 Question Progress ({currentQuestionIndex}/10)</h2>
+      <h2>📊 Question Progress ({currentQuestionIndex}/{totalQuestions})</h2>
       <div className="progress-indicator">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
+        {standardNums.map(num => {
           const { status, text } = getProgressStatus(num)
           return (
             <div key={num} className={`progress-step ${status}`}>
@@ -124,22 +127,46 @@ const TeamProgress = ({ teamStatus, currentQuestionIndex }) => {
           )
         })}
       </div>
+      {bonusNums.length > 0 && (
+        <>
+          <h3 style={{ marginTop: '1rem', color: 'var(--accent-primary, gold)' }}>🚀 Bonus Round</h3>
+          <div className="progress-indicator">
+            {bonusNums.map(num => {
+              const { status, text } = getProgressStatus(num)
+              return (
+                <div key={num} className={`progress-step ${status}`} style={{ borderColor: 'var(--accent-primary, gold)' }}>
+                  <h3>Q{num}</h3>
+                  <p>{text}</p>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
 // Completion Message Component
-const CompletionMessage = ({ teamStatus, stone }) => {
+const CompletionMessage = ({ teamStatus, stone, bonusUnlocked }) => {
   return (
     <div className="completion-message">
       <div className="completion-content">
-        <div className="completion-emoji">🎉</div>
-        <h2>Congratulations! All 10 questions completed!</h2>
+        <div className="completion-emoji">{bonusUnlocked ? '🏆' : '🎉'}</div>
+        <h2>
+          {bonusUnlocked
+            ? 'Incredible! All 20 questions completed!'
+            : 'Standard round complete! 15 questions finished!'}
+        </h2>
         <div className="stone-name">
           <span className="stone-badge">{stone}</span>
         </div>
         <div className="completion-status">
-          <span className="qualified-badge">✅ Your team has finished the Infinity Stone Challenge!</span>
+          <span className="qualified-badge">
+            {bonusUnlocked
+              ? '🏆 You conquered the Bonus Round!'
+              : '✅ Your team has finished the Infinity Stone Challenge!'}
+          </span>
         </div>
         <div className={`completion-score ${teamStatus?.current_score < 0 ? 'negative' : 'positive'}`}>
           Final Score: {teamStatus?.current_score} points
@@ -205,6 +232,8 @@ const AttendeeDashboard = () => {
   const [bestStreak, setBestStreak] = useState(0)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [teamPowerups, setTeamPowerups] = useState([])
+  const [totalQuestions, setTotalQuestions] = useState(15)
+  const [bonusUnlocked, setBonusUnlocked] = useState(false)
 
   // Data fetching functions
   const fetchTeamStatus = async () => {
@@ -227,6 +256,8 @@ const AttendeeDashboard = () => {
       console.log("[AttendeeDashboard] Set currentQuestionIndex to:", response.current_question_index);
       setCurrentStreak(response.current_streak || 0)
       setBestStreak(response.best_streak || 0)
+      setTotalQuestions(response.total_questions || 15)
+      setBonusUnlocked(response.bonus_unlocked || false)
       setDashboardError('')
     } catch (err) {
       console.error('Failed to fetch team stone:', err)
@@ -262,16 +293,16 @@ const AttendeeDashboard = () => {
     switch (event) {
       case 'score_update':
       case 'powerup_used':
+      case 'powerup_activated':
       case 'state_update':
       case 'leaderboard_update':
       case 'round_start':
+      case 'disqualification_update':
+      case 'disqualify':
         fetchTeamStatus();
         fetchTeamStone();
         fetchTeamBadges();
         fetchTeamPowerups();
-        break;
-      case 'disqualify':
-        fetchTeamStatus();
         break;
       default:
         break;
@@ -353,7 +384,7 @@ const AttendeeDashboard = () => {
   return (
     <div className="dashboard-grid">
       {/* Status and Notifications */}
-      <StatusBanner teamStatus={teamStatus} currentQuestionIndex={currentQuestionIndex} />
+      <StatusBanner teamStatus={teamStatus} currentQuestionIndex={currentQuestionIndex} totalQuestions={totalQuestions} />
       
       <TabSwitchWarning
         focusWarning={focusWarning}
@@ -371,7 +402,7 @@ const AttendeeDashboard = () => {
       </div>
 
       {/* Progress Tracker */}
-      <TeamProgress teamStatus={teamStatus} currentQuestionIndex={currentQuestionIndex} />
+      <TeamProgress teamStatus={teamStatus} currentQuestionIndex={currentQuestionIndex} totalQuestions={totalQuestions} />
 
       {/* Gamification - Badges */}
       {badges.length > 0 && <BadgeDisplay badges={badges} />}
@@ -393,7 +424,7 @@ const AttendeeDashboard = () => {
       {showLeaderboard && <GameLeaderboard teamName={team} autoRefresh={true} />}
 
       {/* Active Question Section */}
-      {currentQuestionIndex < 10 && (
+      {currentQuestionIndex < totalQuestions && (
         <QuestionRound
           teamName={team}
           stone={stone}
@@ -402,7 +433,7 @@ const AttendeeDashboard = () => {
       )}
 
       {/* Completion Message */}
-      {currentQuestionIndex === 10 && <CompletionMessage teamStatus={teamStatus} stone={stone} />}
+      {currentQuestionIndex >= totalQuestions && <CompletionMessage teamStatus={teamStatus} stone={stone} bonusUnlocked={bonusUnlocked} />}
     </div>
   )
 }

@@ -15,6 +15,12 @@ class Settings(BaseSettings):
         500  # Auto-disqualify if deductions exceed this
     )
 
+    # Question counts
+    standard_questions_count: int = 15  # Questions active from the start
+    bonus_questions_count: int = 5  # Bonus questions unlocked on qualification
+    total_questions_count: int = 20  # Total questions per stone
+    bonus_round_time_threshold: int = 1200  # 20 minutes in seconds
+
     # Scoring thresholds (in seconds) - 90 minute event duration
     dialogue_1_excellent: int = 1080  # 18 min
     dialogue_1_good: int = 1500  # 25 min

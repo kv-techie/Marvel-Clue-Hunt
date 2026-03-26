@@ -1,6 +1,6 @@
 import React from 'react'
 
-const StatusBanner = ({ teamStatus, currentQuestionIndex = 0 }) => {
+const StatusBanner = ({ teamStatus, currentQuestionIndex = 0, totalQuestions = 15 }) => {
   if (!teamStatus) return null
 
   return (
@@ -16,7 +16,7 @@ const StatusBanner = ({ teamStatus, currentQuestionIndex = 0 }) => {
         <div className="status-item">
           <h3>Question Progress</h3>
           <p className="status-progress">
-            {currentQuestionIndex}/10
+            {currentQuestionIndex}/{totalQuestions}
           </p>
         </div>
         

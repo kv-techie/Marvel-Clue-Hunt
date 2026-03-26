@@ -28,7 +28,9 @@ class Team(BaseModel):
     game_started: Optional[datetime] = None
 
     # Question-based gameplay
-    current_question_index: int = 0  # Current question number (0-9)
+    current_question_index: int = 0  # Current question number (0-19)
+    bonus_round_unlocked: bool = False  # Whether bonus round (Q16-20) is active
+    standard_round_completed_at: Optional[datetime] = None  # When Q1-15 were finished
     questions_completed: List[Dict] = Field(
         default_factory=list
     )  # Track which questions completed and scores

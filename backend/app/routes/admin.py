@@ -26,6 +26,7 @@ from app.team_allocator import (
     allocate_teams_from_files as allocate_teams,
 )
 from app.timer_manager import timer_manager
+from app.websocket_manager import manager
 
 router = APIRouter()
 
@@ -99,31 +100,40 @@ def load_game_state():
             print(
                 f"📄 Raw JSON - Mind Stone stone: {data.get('teams', {}).get('Mind Stone', {}).get('stone')}"
             )
-            game_state = GameState(**data)
-            print(f"✅ Loaded game state: {len(data.get('teams', {}))} teams")
+            
+            # **CRITICAL FIX**: Mutate the existing object instead of reassigning
+            # This ensures other modules that imported game_state still see the same object
+            new_state = GameState(**data)
+            
+            # Clear and update teams dict to maintain the reference
+            game_state.teams.clear()
+            game_state.teams.update(new_state.teams)
+            
+            # Update other fields
+            game_state.game_active = new_state.game_active
+            game_state.global_start_time = new_state.global_start_time
 
-            # **CRITICAL FIX**: Ensure all teams have stones assigned (team name = stone name)
-            # This handles the case where JSON was created without stone assignments
+            print(f"✅ Loaded game state: {len(game_state.teams)} teams")
+
+            # Ensure all teams have stones assigned
             for team_name, team in game_state.teams.items():
                 if team.stone is None or team.stone == "":
                     team.stone = team_name
                     print(f"🔨 Auto-assigned stone '{team_name}' to team '{team_name}'")
 
-            print(
-                f"🔍 Loaded - Mind Stone stone: {game_state.teams.get('Mind Stone').stone if game_state.teams.get('Mind Stone') else 'TEAM NOT FOUND'}"
-            )
-            # Restore in-memory timers from persisted state (if present)
+            # Restore in-memory timers
             try:
-                from app.timer_manager import timer_manager
-
                 timer_manager.restore_from_game_state(data)
             except Exception as e:
                 print(f"⚠️  Timer restoration error: {e}")
+                
         except (json.JSONDecodeError, TypeError, ValueError) as e:
             print(
                 f"⚠️  Invalid game state file at {os.path.abspath(GAME_STATE_FILE)}: {e}. Reinitializing with empty state."
             )
-            game_state = GameState()
+            game_state.teams = {}
+            game_state.game_active = False
+            game_state.global_start_time = None
             save_game_state()
     else:
         print(f"⚠️  Game state file not found at: {os.path.abspath(GAME_STATE_FILE)}")
@@ -589,7 +599,7 @@ async def delete_participant_data():
     Admin and volunteer credentials are stored separately and are NOT affected.
     """
 
-    if game_state.game_active:
+    if is_game_currently_active():
         raise HTTPException(
             status_code=400,
             detail="Cannot delete data while game is active. Stop the game first.",
@@ -655,9 +665,14 @@ async def award_enactment_bonus(team_name: str, request: BonusRequest):
     team.enactment_bonus_amount = bonus_amount
     save_game_state()
 
+    # Broadcast to team and admins
+    new_score = calculate_final_score(team)
+    await manager.send_to_team(team_name, "score_update", {"new_score": new_score})
+    await manager.send_to_role("admin", "leaderboard_update", {})
+
     return {
         "message": f"Enactment bonus of {bonus_amount} awarded to {team_name}",
-        "new_score": calculate_final_score(team),
+        "new_score": new_score,
     }
 
 
@@ -989,9 +1004,27 @@ async def adjust_points(
 
         save_game_state()
 
+        # Broadcast update to team and admins
+        new_score = calculate_final_score(team)
+        await manager.send_to_team(team_name, "score_update", {
+            "new_score": new_score,
+            "adjustment": {
+                "amount": request.amount,
+                "reason": request.reason,
+                "type": request.adjustment_type
+            }
+        })
+        if team.disqualified:
+            await manager.send_to_team(team_name, "disqualification_update", {
+                "disqualified": True,
+                "reason": team.disqualification_reason
+            })
+        
+        await manager.send_to_role("admin", "leaderboard_update", {})
+
     return {
         "message": f"{request.adjustment_type.capitalize()} of {request.amount} points applied to {team_name}",
-        "new_score": calculate_final_score(team),
+        "new_score": new_score,
         "auto_disqualified": team.disqualified
         and team.disqualification_reason
         and "Automatic" in team.disqualification_reason,
@@ -1156,6 +1189,13 @@ async def confirm_disqualification(team_name: str, confirmed_by: str):
         team.disqualification_timestamp = datetime.now()
         team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
         save_game_state()
+        
+        # Broadcast to team
+        await manager.send_to_team(team_name, "disqualification_update", {
+            "disqualified": True,
+            "reason": team.disqualification_reason
+        })
+        await manager.send_to_role("admin", "leaderboard_update", {})
 
     return {
         "message": f"{team_name} has been disqualified",
@@ -1214,6 +1254,12 @@ async def reverse_disqualification(team_name: str, reversed_by: str):
         team.disqualification_reason = None
         team.disqualification_timestamp = None
         save_game_state()
+
+        # Broadcast to team
+        await manager.send_to_team(team_name, "disqualification_update", {
+            "disqualified": False
+        })
+        await manager.send_to_role("admin", "leaderboard_update", {})
 
     return {
         "message": f"Disqualification reversed for {team_name}",
@@ -1285,7 +1331,7 @@ async def get_disqualification_candidates():
             continue  # Skip already disqualified teams
 
         # Check for excessive tab switches (more than 3)
-        tab_switches = len(team.tab_switches) if team.tab_switches else 0
+        tab_switches = len(team.tab_switch_logs) if team.tab_switch_logs else 0
 
         # Flag teams with high tab switch counts
         violation_reason = None

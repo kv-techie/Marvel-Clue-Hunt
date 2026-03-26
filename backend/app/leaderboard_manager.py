@@ -5,6 +5,8 @@ Tracks and ranks teams by various metrics
 
 from typing import Dict, List
 
+from app.config import settings
+
 
 def _get_attr(obj, key, default=None):
     """Get attribute from dict or Pydantic model"""
@@ -116,8 +118,8 @@ def get_leaderboard(
                 "best_streak": _get_attr(team_data, "best_streak", 0),
                 "badges_count": len(_get_attr(team_data, "badges_earned", [])),
                 "completion_status": "Completed"
-                if _get_attr(team_data, "total_questions_answered", 0) == 10
-                else f"{_get_attr(team_data, 'total_questions_answered', 0)}/10",
+                if _get_attr(team_data, "total_questions_answered", 0) >= settings.standard_questions_count
+                else f"{_get_attr(team_data, 'total_questions_answered', 0)}/{settings.total_questions_count}",
             }
         )
 

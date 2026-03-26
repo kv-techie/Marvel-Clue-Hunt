@@ -24,7 +24,7 @@ def _set_attr(obj, key, value):
 BADGES = {
     "speed_demon": {
         "name": "Speed Demon 🚀",
-        "description": "Answer all 10 questions in under 20 seconds each",
+        "description": "Answer all 15 standard questions in under 20 seconds each",
         "icon": "⚡",
         "color": "gold",
     },
@@ -54,7 +54,7 @@ BADGES = {
     },
     "flawless_round": {
         "name": "Flawless Round ✨",
-        "description": "Complete game without using any hints",
+        "description": "Complete all 15 standard questions without using any hints",
         "icon": "✨",
         "color": "cyan",
     },
@@ -66,7 +66,7 @@ BADGES = {
     },
     "stone_sage": {
         "name": "Stone Sage 💎",
-        "description": "Answer all 10 Infinity Stone questions correctly",
+        "description": "Answer all 15 standard Infinity Stone questions correctly",
         "icon": "💎",
         "color": "green",
     },
@@ -86,11 +86,14 @@ BADGES = {
 
 
 def check_speed_demon(team: Dict) -> bool:
-    """Check if all answers were < 20 seconds"""
-    for q in team.get("questions_completed", []):
+    """Check if all standard round answers were < 20 seconds"""
+    completed = team.get("questions_completed", [])
+    # Only check the first 15 (standard round) questions
+    standard = completed[:15] if len(completed) > 15 else completed
+    for q in standard:
         if q.get("time_taken", 0) >= 20:
             return False
-    return len(team.get("questions_completed", [])) == 10
+    return len(standard) >= 15
 
 
 def check_perfect_score(question_score: Dict) -> bool:
@@ -118,10 +121,10 @@ def check_powerup_warrior(powerups_used: List[str]) -> bool:
 
 
 def check_flawless_round(team: Dict) -> bool:
-    """Check if no hints were used"""
+    """Check if no hints were used in the standard round"""
     return (
         team.get("hints_used_count", 0) == 0
-        and len(team.get("questions_completed", [])) == 10
+        and len(team.get("questions_completed", [])) >= 15
     )
 
 
@@ -138,9 +141,10 @@ def check_accuracy_ace(team: Dict) -> bool:
 
 
 def check_stone_sage(team: Dict) -> bool:
-    """Check if all 10 questions are correct"""
+    """Check if all 15 standard questions are correct"""
     completed = team.get("questions_completed", [])
-    return len(completed) == 10 and all(q.get("correct", False) for q in completed)
+    standard = completed[:15] if len(completed) > 15 else completed
+    return len(standard) >= 15 and all(q.get("correct", False) for q in standard)
 
 
 def check_comeback_king(team: Dict) -> bool:

@@ -12,8 +12,8 @@
         {
           "id": "logic_lock",
           "description": "Check answer certainty before submitting",
-          "effect": "certainty_check"
-          "effect": "fuzzy_match_boost"
+          "effect": "certainty_check",
+          "name": "Logic Lock"
         },
         {
           "id": "cerebral_fortress",

@@ -31,6 +31,7 @@ def calculate_speed_multiplier(time_taken: int, difficulty: str) -> float:
         "easy": 30,
         "medium": 60,
         "hard": 90,
+        "bonus": 120,
     }
 
     baseline = baseline_times.get(difficulty, 60)
@@ -179,16 +180,24 @@ def check_qualification(team: Team) -> bool:
     """
     Check if team qualifies based on difficulty ratio.
     A team qualifies when they have correctly answered:
-      - At least 1 easy question
-      - At least 2 medium questions
+      - At least 2 easy questions
+      - At least 3 medium questions
       - At least 3 hard questions
-    (Ratio 1:2:3 for easy:medium:hard)
+    (Ratio 2:3:3 for easy:medium:hard)
     """
     easy_count = 0
     medium_count = 0
     hard_count = 0
 
     for question_data in (team.questions_completed or []):
+        is_correct = (
+            question_data.get("correct", False)
+            if isinstance(question_data, dict)
+            else getattr(question_data, "correct", False)
+        )
+        if not is_correct:
+            continue
+
         difficulty = (
             question_data.get("difficulty", "")
             if isinstance(question_data, dict)
@@ -197,13 +206,12 @@ def check_qualification(team: Team) -> bool:
         difficulty = difficulty.lower() if difficulty else ""
         if difficulty == "easy":
             easy_count += 1
-        elif difficulty in ("medium", "hard"):
-            # medium counts toward the medium-hard bucket
+        elif difficulty == "medium":
             medium_count += 1
-        if difficulty == "hard" or difficulty == "extreme":
+        elif difficulty in ("hard", "bonus"):
             hard_count += 1
 
-    return easy_count >= 1 and medium_count >= 2 and hard_count >= 2
+    return easy_count >= 2 and medium_count >= 3 and hard_count >= 3
 
 
 def calculate_total_deductions(team: Team) -> int:

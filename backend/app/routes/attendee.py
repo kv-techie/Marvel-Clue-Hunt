@@ -28,6 +28,7 @@ from app.scoring import (
     check_qualification,
 )
 from app.timer_manager import timer_manager
+from app.websocket_manager import manager
 
 router = APIRouter()
 
@@ -42,6 +43,28 @@ INFINITY_STONES = [
 
 MAX_TIME_TAKEN_SECONDS = 3600
 MIN_TIME_TAKEN_SECONDS = 1
+
+STANDARD_Q = settings.standard_questions_count  # 15
+TOTAL_Q = settings.total_questions_count  # 20
+BONUS_THRESHOLD_SECONDS = settings.bonus_round_time_threshold  # 1200 (20 min)
+
+
+def _get_effective_total(team) -> int:
+    """Return 15 or 20 depending on whether the team has unlocked the bonus round."""
+    return TOTAL_Q if team.bonus_round_unlocked else STANDARD_Q
+
+
+def _check_bonus_eligibility(team, team_name: str) -> bool:
+    """Check if a team qualifies for the bonus round.
+    Requirements: (a) completed 15 questions, (b) within time threshold, (c) qualifies.
+    """
+    if team.current_question_index < STANDARD_Q:
+        return False
+
+    elapsed = _get_elapsed_seconds(team_name, team)
+    within_time = elapsed <= BONUS_THRESHOLD_SECONDS
+    qualified = check_qualification(team)
+    return within_time and qualified
 CLIENT_SERVER_TIME_DELTA_WARN_SECONDS = 5
 
 
@@ -177,6 +200,13 @@ async def get_team_status(
     _enforce_active_access(team_name, x_device_id)
 
     team = game_state.teams[team_name]
+    
+    # Initialize powerups if missing (handles recovery from broken powerups.json)
+    if not team.powerups_available:
+        from app.powerup_manager import powerup_manager
+        powerup_manager.initialize_powerups_for_team(team)
+        save_game_state()
+
     # Prefer in-memory timer for accuracy; fall back to persisted team.timer_started
     elapsed_time = timer_manager.get_team_elapsed_time(team_name)
     if elapsed_time == 0 and team.timer_started:
@@ -275,6 +305,7 @@ async def log_tab_switch(request: TabSwitchLog):
         team.tab_switch_logs.append(log_entry)
         save_game_state()
 
+        # Broadcast to team and admins
         total_left_switches = len(
             [e for e in team.tab_switch_logs if e["event_type"] == "tab_left"]
         )
@@ -285,14 +316,25 @@ async def log_tab_switch(request: TabSwitchLog):
             if "Tab switch violation" in adj.get("reason", "")
         )
 
+        # Send score update and tab switch event
+        await manager.send_to_team(request.team_name, "score_update", {
+            "new_score": calculate_final_score(team),
+            "tab_switch_event": {
+                "event_type": request.event_type,
+                "total_left": total_left_switches,
+                "switches_remaining": switches_remaining,
+                "is_penalized": total_left_switches > 3
+            }
+        })
+        await manager.send_to_role("admin", "leaderboard_update", {})
+
     return {
         "message": f"Tab switch event logged: {request.event_type}",
         "total_tab_left": total_left_switches,
-        "switches_allowed_before_penalty": 3,
         "switches_remaining": switches_remaining,
-        "penalty_per_overuse": 50,
-        "total_deductions_from_switches": total_deductions,
         "is_penalized": total_left_switches > 3,
+        "total_deductions_from_switches": total_deductions,
+        "penalty_per_overuse": 50,
     }
 
 
@@ -322,12 +364,31 @@ async def get_current_question(
         else:
             raise HTTPException(status_code=400, detail="Team stone not assigned")
 
-    if team.current_question_index >= 10:
+    effective_total = _get_effective_total(team)
+
+    # — Bonus gate: just finished standard round —
+    if team.current_question_index >= STANDARD_Q and not team.bonus_round_unlocked:
+        if _check_bonus_eligibility(team, team_name):
+            team.bonus_round_unlocked = True
+            team.standard_round_completed_at = datetime.now()
+            save_game_state()
+            effective_total = TOTAL_Q
+        else:
+            return {
+                "completed": True,
+                "message": "Standard round complete! Bonus round not unlocked.",
+                "total_completed": STANDARD_Q,
+                "current_score": calculate_final_score(team),
+                "bonus_unlocked": False,
+            }
+
+    if team.current_question_index >= effective_total:
         return {
             "completed": True,
-            "message": "All 10 questions completed!",
-            "total_completed": 10,
-            "current_score": calculate_final_score_questions(team),
+            "message": f"All {effective_total} questions completed!",
+            "total_completed": effective_total,
+            "current_score": calculate_final_score(team),
+            "bonus_unlocked": team.bonus_round_unlocked,
         }
 
     # Get current question
@@ -338,19 +399,23 @@ async def get_current_question(
     if not question:
         raise HTTPException(status_code=500, detail="Question retrieval error")
 
+    is_bonus_question = team.current_question_index >= STANDARD_Q
+
     return {
         "question_id": question["id"],
         "question_index": team.current_question_index,
-        "total_questions": 10,
+        "total_questions": effective_total,
         "question_text": question["question_text"],
-        "clue_1": question["clue_1"],
-        "clue_2": question["clue_2"],
+        "clue_1": question["clue_1"] if not is_bonus_question else "Hints not available for bonus questions",
+        "clue_2": question["clue_2"] if not is_bonus_question else "Hints not available for bonus questions",
         "difficulty": question["difficulty"],
         "base_points": question["base_points"],
-        "hint_text": question.get("hint_text", ""),
+        "hint_text": question.get("hint_text", "") if not is_bonus_question else "Locked",
         "hints_remaining": max(0, 3 - team.hints_used_count),
         "powerups_available": team.powerups_available,
         "powerups_used": team.powerups_used,
+        "is_bonus_question": is_bonus_question,
+        "bonus_round_unlocked": team.bonus_round_unlocked,
     }
 
 
@@ -395,6 +460,8 @@ async def submit_question(
                         detail="Selected powerup is not available.",
                     )
 
+            effective_total = _get_effective_total(team)
+
             if powerup_effect in ("skip_question", "skip_penalty_free"):
                 team.questions_completed.append(
                     {
@@ -403,6 +470,7 @@ async def submit_question(
                         "correct": True,
                         "time_taken": 0,
                         "points": 0,
+                        "difficulty": question["difficulty"],
                         "combo_multiplier": team.current_combo,
                         "powerup_used": submission.powerup_used,
                         "hints_used": 0,
@@ -420,7 +488,7 @@ async def submit_question(
                     "message": "Question skipped without penalty.",
                     "current_question_index": team.current_question_index,
                     "questions_completed": team.current_question_index,
-                    "next_question_ready": team.current_question_index < 10,
+                    "next_question_ready": team.current_question_index < effective_total,
                     "powerup_used": submission.powerup_used,
                     "powerups_available": team.powerups_available,
                 }
@@ -451,6 +519,7 @@ async def submit_question(
                     "correct": False,
                     "time_taken": adjusted_time_taken,
                     "points": 0,
+                    "difficulty": question["difficulty"],
                     "combo_multiplier": 1.0,
                     "powerup_used": submission.powerup_used,
                     "hints_used": 0,
@@ -476,16 +545,27 @@ async def submit_question(
                 team.current_question_index += 1
                 save_game_state()
 
+                # Broadcast update
+                await manager.send_to_team(submission.team_name, "score_update", {
+                    "new_score": calculate_final_score(team),
+                    "question_result": {
+                        "question_index": team.current_question_index - 1,
+                        "correct": False,
+                        "points": 0
+                    }
+                })
+                await manager.send_to_role("admin", "leaderboard_update", {})
+
                 return {
                     "correct": False,
                     "message": "Incorrect answer. Moving to next question...",
                     "current_question_index": team.current_question_index,
                     "questions_completed": team.current_question_index,
-                    "next_question_ready": team.current_question_index < 10,
+                    "next_question_ready": team.current_question_index < effective_total,
                     "powerup_used": submission.powerup_used,
                     "streak_broken": True,
                     "current_streak": team.current_streak,
-                    "current_total_score": calculate_final_score_questions(team),
+                    "current_total_score": calculate_final_score(team),
                     "time_taken_used": adjusted_time_taken,
                     "client_time_taken": submission.time_taken,
                 }
@@ -539,6 +619,7 @@ async def submit_question(
                 "correct": True,
                 "time_taken": adjusted_time_taken,
                 "points": question_score,
+                "difficulty": question["difficulty"],
                 "combo_multiplier": team.current_combo,
                 "powerup_used": submission.powerup_used,
                 "hints_used": 0,
@@ -624,16 +705,44 @@ async def submit_question(
 
             # Move to next question
             team.current_question_index += 1
+
+            # Check if standard round just completed — evaluate bonus eligibility
+            bonus_just_unlocked = False
+            if team.current_question_index == STANDARD_Q and not team.bonus_round_unlocked:
+                if _check_bonus_eligibility(team, submission.team_name):
+                    team.bonus_round_unlocked = True
+                    team.standard_round_completed_at = datetime.now()
+                    bonus_just_unlocked = True
+                    effective_total = TOTAL_Q
+
             save_game_state()
+
+            # Broadcast update
+            new_score = calculate_final_score(team)
+            await manager.send_to_team(submission.team_name, "score_update", {
+                "new_score": new_score,
+                "question_result": {
+                    "question_index": team.current_question_index - 1,
+                    "correct": True,
+                    "points": question_score
+                },
+                "bonus_unlocked": bonus_just_unlocked
+            })
+            await manager.send_to_role("admin", "leaderboard_update", {})
+
+            bonus_msg = ""
+            if bonus_just_unlocked:
+                bonus_msg = " 🚀 BONUS ROUND UNLOCKED!"
 
             return {
                 "correct": True,
-                "message": f"Correct! Question {team.current_question_index} of 10 completed!"
+                "message": f"Correct! Question {team.current_question_index} of {effective_total} completed!"
                 + (
                     f" Earned: {', '.join(powerups_awarded)}!"
                     if powerups_awarded
                     else ""
-                ),
+                )
+                + bonus_msg,
                 "score_earned": question_score,
                 "speed_multiplier": calculate_speed_multiplier(
                     adjusted_time_taken, difficulty_for_score
@@ -641,13 +750,14 @@ async def submit_question(
                 "combo_multiplier": team.current_combo,
                 "current_streak": team.current_streak,
                 "best_streak": team.best_streak,
-                "current_total_score": calculate_final_score_questions(team),
+                "current_total_score": new_score,
                 "questions_completed": team.current_question_index,
-                "next_question_ready": team.current_question_index < 10,
+                "next_question_ready": team.current_question_index < effective_total,
                 "badges_earned": badge_details,
                 "all_badges": team.badges_earned,
                 "powerups_awarded": powerups_awarded,
                 "powerups_available": team.powerups_available,
+                "bonus_round_unlocked": team.bonus_round_unlocked,
                 "time_taken_used": adjusted_time_taken,
                 "client_time_taken": submission.time_taken,
             }
@@ -722,6 +832,13 @@ async def request_hint_question(
 
     with game_state_write_lock():
         team = game_state.teams[request.team_name]
+        
+        # Block hints for bonus questions
+        if team.current_question_index >= STANDARD_Q:
+            raise HTTPException(
+                status_code=400,
+                detail="Hints are not available for bonus questions"
+            )
 
         if team.hints_used_count >= 3:
             raise HTTPException(
@@ -732,6 +849,13 @@ async def request_hint_question(
         # Increment hint counter
         team.hints_used_count += 1
         save_game_state()
+
+        # Broadcast update
+        await manager.send_to_team(request.team_name, "score_update", {
+            "new_score": calculate_final_score(team),
+            "hints_used": team.hints_used_count
+        })
+        await manager.send_to_role("admin", "leaderboard_update", {})
 
         return {
             "hint": hint_text,
@@ -802,16 +926,27 @@ async def get_team_stone(
     _enforce_active_access(team_name, x_device_id)
 
     team = game_state.teams[team_name]
+    
+    # Initialize powerups if missing (handles recovery from broken powerups.json)
+    if not team.powerups_available:
+        from app.powerup_manager import powerup_manager
+        powerup_manager.initialize_powerups_for_team(team)
+        save_game_state()
+
+        # Broadcast update to refresh UI if powerups were missing
+        await manager.send_to_team(team_name, "state_update", {})
 
     return {
         "team_name": team_name,
         "stone": team.stone,
         "current_question_index": team.current_question_index,
         "questions_completed": len(team.questions_completed),
+        "total_questions": _get_effective_total(team),
+        "bonus_unlocked": team.bonus_round_unlocked,
         "hints_used": team.hints_used_count,
         "hints_remaining": max(0, 3 - team.hints_used_count),
         "powerups_available": team.powerups_available,
-        "current_score": calculate_final_score_questions(team),
+        "current_score": calculate_final_score(team),
         "current_streak": team.current_streak,
         "best_streak": team.best_streak,
     }

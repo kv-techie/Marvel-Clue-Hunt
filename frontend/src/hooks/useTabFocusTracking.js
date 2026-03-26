@@ -35,22 +35,30 @@ export const useTabFocusTracking = (teamName) => {
             is_penalized: response.data.is_penalized,
             total_deductions_from_switches: response.data.total_deductions_from_switches
           })
-          
-          setFocusWarning(true)
-          
-          // Auto-hide warning after 5 seconds
-          setTimeout(() => setFocusWarning(false), 5000)
         } catch (err) {
           console.error('Failed to log tab switch:', err)
         }
       } else if (newVisibility && !isVisible) {
         // User returned to tab
         try {
-          await apiClient.post('/attendee/log-tab-switch', {
+          const response = await apiClient.post('/attendee/log-tab-switch', {
             team_name: teamName,
             event_type: 'tab_returned',
             timestamp: new Date().toISOString(),
           })
+
+          // Update local state with response data
+          setTabSwitchData({
+            total_tab_left: response.data.total_tab_left,
+            switches_remaining: response.data.switches_remaining,
+            is_penalized: response.data.is_penalized,
+            total_deductions_from_switches: response.data.total_deductions_from_switches
+          })
+          
+          setFocusWarning(true)
+          
+          // Auto-hide warning after 8 seconds (longer so they see it)
+          setTimeout(() => setFocusWarning(false), 8000)
         } catch (err) {
           console.error('Failed to log tab return:', err)
         }

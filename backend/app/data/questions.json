@@ -45,6 +45,16 @@
           "difficulty": "easy"
         },
         {
+          "id": "mind_7",
+          "question_text": "What is the largest ocean on Earth?",
+          "clue_1": "Connected to Asia",
+          "clue_2": "Contains the Mariana Trench",
+          "hint_text": "Pacific Ocean",
+          "correct_answer": "Pacific",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
           "id": "mind_5",
           "question_text": "What is the chemical symbol for Gold?",
           "clue_1": "Precious metal",
@@ -65,22 +75,32 @@
           "difficulty": "medium"
         },
         {
-          "id": "mind_7",
-          "question_text": "What is the largest ocean on Earth?",
-          "clue_1": "Connected to Asia",
-          "clue_2": "Contains the Mariana Trench",
-          "hint_text": "Pacific Ocean",
-          "correct_answer": "Pacific",
-          "base_points": 100,
-          "difficulty": "easy"
-        },
-        {
           "id": "mind_8",
           "question_text": "In what year did the Titanic sink?",
           "clue_1": "Early 20th century",
           "clue_2": "Year when it hit an iceberg",
           "hint_text": "1912",
           "correct_answer": "1912",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "mind_11",
+          "question_text": "Who painted the Mona Lisa?",
+          "clue_1": "Italian Renaissance polymath",
+          "clue_2": "Also designed flying machines",
+          "hint_text": "Leonardo da Vinci",
+          "correct_answer": "Da Vinci",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "mind_12",
+          "question_text": "What is the square root of 144?",
+          "clue_1": "A dozen",
+          "clue_2": "Number between 10 and 15",
+          "hint_text": "12",
+          "correct_answer": "12",
           "base_points": 200,
           "difficulty": "medium"
         },
@@ -103,6 +123,86 @@
           "correct_answer": "300000000",
           "base_points": 300,
           "difficulty": "hard"
+        },
+        {
+          "id": "mind_13",
+          "question_text": "What mathematical constant is approximately 3.14159?",
+          "clue_1": "Greek letter",
+          "clue_2": "Ratio of circumference to diameter",
+          "hint_text": "Pi",
+          "correct_answer": "Pi",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "mind_14",
+          "question_text": "Who wrote 'A Brief History of Time'?",
+          "clue_1": "British theoretical physicist",
+          "clue_2": "Worked on black holes and cosmology",
+          "hint_text": "Stephen Hawking",
+          "correct_answer": "Hawking",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "mind_15",
+          "question_text": "What is the next number in the Fibonacci sequence: 0, 1, 1, 2, 3, 5, 8, ?",
+          "clue_1": "Sum of last two numbers",
+          "clue_2": "A teen number",
+          "hint_text": "13",
+          "correct_answer": "13",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "mind_16",
+          "question_text": "In what year was the first artificial satellite Sputnik launched?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "1957",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "mind_17",
+          "question_text": "What is the chemical formula for sulfuric acid?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "H2SO4",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "mind_18",
+          "question_text": "What is the value of Avogadro's number (first three digits)?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "602",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "mind_19",
+          "question_text": "What is the value of Euler's number (e) to two decimal places?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "2.72",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "mind_20",
+          "question_text": "What is the half-life of Carbon-14 in years?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "5730",
+          "base_points": 450,
+          "difficulty": "bonus"
         }
       ]
     },
@@ -111,14 +211,54 @@
       "theme": "Strength and Force",
       "questions": [
         {
-          "id": "power_1",
-          "question_text": "What is the strongest muscle in the human body?",
-          "clue_1": "Associated with biting",
-          "clue_2": "Located in the jaw",
-          "hint_text": "Masseter",
-          "correct_answer": "Masseter",
-          "base_points": 300,
-          "difficulty": "hard"
+          "id": "power_6",
+          "question_text": "How many arms does an octopus have?",
+          "clue_1": "Number is associated with 8-sided shapes",
+          "clue_2": "Latin prefix for eight",
+          "hint_text": "8",
+          "correct_answer": "8",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "power_8",
+          "question_text": "Which animal is the fastest land animal?",
+          "clue_1": "African predator",
+          "clue_2": "Known for spots",
+          "hint_text": "Cheetah",
+          "correct_answer": "Cheetah",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "power_11",
+          "question_text": "How many legs does a spider have?",
+          "clue_1": "More than six",
+          "clue_2": "Same as an octopus",
+          "hint_text": "8",
+          "correct_answer": "8",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "power_12",
+          "question_text": "What animal is known as the King of the Jungle?",
+          "clue_1": "Big cat",
+          "clue_2": "Has a mane",
+          "hint_text": "Lion",
+          "correct_answer": "Lion",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "power_13",
+          "question_text": "What is the largest land animal?",
+          "clue_1": "Has a trunk",
+          "clue_2": "Found in Africa and Asia",
+          "hint_text": "Elephant",
+          "correct_answer": "Elephant",
+          "base_points": 100,
+          "difficulty": "easy"
         },
         {
           "id": "power_2",
@@ -129,16 +269,6 @@
           "correct_answer": "Hercules",
           "base_points": 200,
           "difficulty": "medium"
-        },
-        {
-          "id": "power_3",
-          "question_text": "What element has the highest tensile strength?",
-          "clue_1": "Transition metal",
-          "clue_2": "Used in construction and steel",
-          "hint_text": "Iron",
-          "correct_answer": "Iron",
-          "base_points": 300,
-          "difficulty": "hard"
         },
         {
           "id": "power_4",
@@ -161,16 +291,6 @@
           "difficulty": "medium"
         },
         {
-          "id": "power_6",
-          "question_text": "How many arms does an octopus have?",
-          "clue_1": "Number is associated with 8-sided shapes",
-          "clue_2": "Latin prefix for eight",
-          "hint_text": "8",
-          "correct_answer": "8",
-          "base_points": 100,
-          "difficulty": "easy"
-        },
-        {
           "id": "power_7",
           "question_text": "What is the strongest material known to science?",
           "clue_1": "Form of carbon",
@@ -181,14 +301,34 @@
           "difficulty": "medium"
         },
         {
-          "id": "power_8",
-          "question_text": "Which animal is the fastest land animal?",
-          "clue_1": "African predator",
-          "clue_2": "Known for spots",
-          "hint_text": "Cheetah",
-          "correct_answer": "Cheetah",
-          "base_points": 100,
-          "difficulty": "easy"
+          "id": "power_14",
+          "question_text": "What martial art means 'empty hand' in Japanese?",
+          "clue_1": "Popular self-defense discipline",
+          "clue_2": "Originates from Okinawa",
+          "hint_text": "Karate",
+          "correct_answer": "Karate",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "power_1",
+          "question_text": "What is the strongest muscle in the human body?",
+          "clue_1": "Associated with biting",
+          "clue_2": "Located in the jaw",
+          "hint_text": "Masseter",
+          "correct_answer": "Masseter",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "power_3",
+          "question_text": "What element has the highest tensile strength?",
+          "clue_1": "Transition metal",
+          "clue_2": "Used in construction and steel",
+          "hint_text": "Iron",
+          "correct_answer": "Iron",
+          "base_points": 300,
+          "difficulty": "hard"
         },
         {
           "id": "power_9",
@@ -209,6 +349,66 @@
           "correct_answer": "300",
           "base_points": 300,
           "difficulty": "hard"
+        },
+        {
+          "id": "power_15",
+          "question_text": "What is the Mohs hardness scale rating of Talc?",
+          "clue_1": "Softest mineral on the scale",
+          "clue_2": "The lowest possible rating",
+          "hint_text": "1",
+          "correct_answer": "1",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "power_16",
+          "question_text": "What is the escape velocity of Earth in km/s (rounded)?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "11",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "power_17",
+          "question_text": "What is the maximum force a human bite can exert in Newtons?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "700",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "power_18",
+          "question_text": "What is the Mohs hardness scale rating of diamond?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "10",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "power_19",
+          "question_text": "What type of star has the strongest known magnetic field?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "magnetar",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "power_20",
+          "question_text": "What is the approximate pressure at the bottom of the Mariana Trench in atmospheres?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "1086",
+          "base_points": 450,
+          "difficulty": "bonus"
         }
       ]
     },
@@ -217,20 +417,10 @@
       "theme": "Time and Temporal Science",
       "questions": [
         {
-          "id": "time_1",
-          "question_text": "How many seconds are in a day?",
-          "clue_1": "24 hours \u00c3\u2014 3600",
-          "clue_2": "Starts with 86",
-          "hint_text": "86400",
-          "correct_answer": "86400",
-          "base_points": 200,
-          "difficulty": "medium"
-        },
-        {
           "id": "time_2",
           "question_text": "Who developed the theory of relativity?",
           "clue_1": "German physicist",
-          "clue_2": "E = mc\u00c2\u00b2",
+          "clue_2": "E = mc\u00b2",
           "hint_text": "Albert Einstein",
           "correct_answer": "Einstein",
           "base_points": 100,
@@ -257,6 +447,76 @@
           "difficulty": "easy"
         },
         {
+          "id": "time_11",
+          "question_text": "How many months have 31 days?",
+          "clue_1": "More than half the months",
+          "clue_2": "Jan, Mar, May, Jul, Aug, Oct, Dec",
+          "hint_text": "7",
+          "correct_answer": "7",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "time_12",
+          "question_text": "What is the shortest month of the year?",
+          "clue_1": "Second month",
+          "clue_2": "Has 28 or 29 days",
+          "hint_text": "February",
+          "correct_answer": "February",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "time_1",
+          "question_text": "How many seconds are in a day?",
+          "clue_1": "24 hours \u00d7 3600",
+          "clue_2": "Starts with 86",
+          "hint_text": "86400",
+          "correct_answer": "86400",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "time_7",
+          "question_text": "How long is a lunar month?",
+          "clue_1": "Approximately 29 days",
+          "clue_2": "Moon cycle duration",
+          "hint_text": "29.5 days",
+          "correct_answer": "29.5",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "time_9",
+          "question_text": "How many minutes are in a week?",
+          "clue_1": "7 days \u00d7 24 hours \u00d7 60",
+          "clue_2": "More than 10000",
+          "hint_text": "10080",
+          "correct_answer": "10080",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "time_13",
+          "question_text": "How many years are in a millennium?",
+          "clue_1": "Ten centuries",
+          "clue_2": "A very large round number",
+          "hint_text": "1000",
+          "correct_answer": "1000",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "time_14",
+          "question_text": "What does the abbreviation GMT stand for?",
+          "clue_1": "Based on a London observatory",
+          "clue_2": "Three words starting with G, M, T",
+          "hint_text": "Greenwich Mean Time",
+          "correct_answer": "Greenwich Mean Time",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
           "id": "time_5",
           "question_text": "What is the smallest unit of time?",
           "clue_1": "One-trillionth of a second",
@@ -277,16 +537,6 @@
           "difficulty": "hard"
         },
         {
-          "id": "time_7",
-          "question_text": "How long is a lunar month?",
-          "clue_1": "Approximately 29 days",
-          "clue_2": "Moon cycle duration",
-          "hint_text": "29.5 days",
-          "correct_answer": "29.5",
-          "base_points": 200,
-          "difficulty": "medium"
-        },
-        {
           "id": "time_8",
           "question_text": "What is the oldest known calendar system?",
           "clue_1": "Ancient civilization",
@@ -297,16 +547,6 @@
           "difficulty": "hard"
         },
         {
-          "id": "time_9",
-          "question_text": "How many minutes are in a week?",
-          "clue_1": "7 days \u00c3\u2014 24 hours \u00c3\u2014 60",
-          "clue_2": "More than 10000",
-          "hint_text": "10080",
-          "correct_answer": "10080",
-          "base_points": 200,
-          "difficulty": "medium"
-        },
-        {
           "id": "time_10",
           "question_text": "What is a nanosecond?",
           "clue_1": "One billionth of a second",
@@ -315,6 +555,66 @@
           "correct_answer": "billionth",
           "base_points": 300,
           "difficulty": "hard"
+        },
+        {
+          "id": "time_15",
+          "question_text": "In what year was the first atomic clock built?",
+          "clue_1": "Late 1940s",
+          "clue_2": "Based on cesium atoms",
+          "hint_text": "1949",
+          "correct_answer": "1949",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "time_16",
+          "question_text": "What is the approximate age of the universe in billion years?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "13.8",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "time_17",
+          "question_text": "How many leap seconds have been added to UTC since 1972?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "27",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "time_18",
+          "question_text": "What ancient civilization created the 365-day calendar?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "Egyptian",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "time_19",
+          "question_text": "What is the relativistic time dilation factor named after?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "Lorentz",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "time_20",
+          "question_text": "What is the name of the hypothetical particle that travels faster than light?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "tachyon",
+          "base_points": 450,
+          "difficulty": "bonus"
         }
       ]
     },
@@ -322,26 +622,6 @@
       "stone": "Space Stone",
       "theme": "Space and Cosmos",
       "questions": [
-        {
-          "id": "space_1",
-          "question_text": "How far is the Sun from Earth?",
-          "clue_1": "Measured in Astronomical Units",
-          "clue_2": "Approximately 150 million km",
-          "hint_text": "149.6 million km or 1 AU",
-          "correct_answer": "150",
-          "base_points": 200,
-          "difficulty": "medium"
-        },
-        {
-          "id": "space_2",
-          "question_text": "What is a black hole?",
-          "clue_1": "Region of spacetime",
-          "clue_2": "Nothing escapes from it",
-          "hint_text": "Collapsed star with infinite density",
-          "correct_answer": "star",
-          "base_points": 200,
-          "difficulty": "medium"
-        },
         {
           "id": "space_3",
           "question_text": "How many moons does Mars have?",
@@ -361,16 +641,6 @@
           "correct_answer": "Milky",
           "base_points": 100,
           "difficulty": "easy"
-        },
-        {
-          "id": "space_5",
-          "question_text": "What is the Big Bang?",
-          "clue_1": "Origin of universe theory",
-          "clue_2": "Expansion event",
-          "hint_text": "Start of space and time",
-          "correct_answer": "origin",
-          "base_points": 200,
-          "difficulty": "medium"
         },
         {
           "id": "space_6",
@@ -393,12 +663,62 @@
           "difficulty": "easy"
         },
         {
+          "id": "space_11",
+          "question_text": "What is the closest star to Earth?",
+          "clue_1": "Rises every morning",
+          "clue_2": "Source of all light on Earth",
+          "hint_text": "The Sun",
+          "correct_answer": "Sun",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "space_1",
+          "question_text": "How far is the Sun from Earth?",
+          "clue_1": "Measured in Astronomical Units",
+          "clue_2": "Approximately 150 million km",
+          "hint_text": "149.6 million km or 1 AU",
+          "correct_answer": "150",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "space_2",
+          "question_text": "What is a black hole?",
+          "clue_1": "Region of spacetime",
+          "clue_2": "Nothing escapes from it",
+          "hint_text": "Collapsed star with infinite density",
+          "correct_answer": "star",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "space_5",
+          "question_text": "What is the Big Bang?",
+          "clue_1": "Origin of universe theory",
+          "clue_2": "Expansion event",
+          "hint_text": "Start of space and time",
+          "correct_answer": "origin",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
           "id": "space_8",
           "question_text": "What is a nebula?",
           "clue_1": "Interstellar cloud",
           "clue_2": "Star formation region",
           "hint_text": "Cloud of gas and dust",
           "correct_answer": "cloud",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "space_12",
+          "question_text": "What planet is known as the Red Planet?",
+          "clue_1": "Fourth planet from the Sun",
+          "clue_2": "Named after the Roman god of war",
+          "hint_text": "Mars",
+          "correct_answer": "Mars",
           "base_points": 200,
           "difficulty": "medium"
         },
@@ -421,6 +741,86 @@
           "correct_answer": "icy",
           "base_points": 300,
           "difficulty": "hard"
+        },
+        {
+          "id": "space_13",
+          "question_text": "Approximately how many Earths can fit inside Jupiter?",
+          "clue_1": "More than 1000",
+          "clue_2": "About 1300",
+          "hint_text": "1300",
+          "correct_answer": "1300",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "space_14",
+          "question_text": "What is the name of the nearest major galaxy to the Milky Way?",
+          "clue_1": "Named after a Greek mythological figure",
+          "clue_2": "Will collide with our galaxy in billions of years",
+          "hint_text": "Andromeda",
+          "correct_answer": "Andromeda",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "space_15",
+          "question_text": "What temperature is cosmic microwave background radiation in Kelvin?",
+          "clue_1": "Very close to absolute zero",
+          "clue_2": "Between 2 and 3 Kelvin",
+          "hint_text": "2.7 Kelvin",
+          "correct_answer": "2.7",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "space_16",
+          "question_text": "What is the Chandrasekhar limit in solar masses?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "1.4",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "space_17",
+          "question_text": "What is the boundary where solar wind meets interstellar space called?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "heliopause",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "space_18",
+          "question_text": "What is the rotational period of the Sun at its equator in Earth days?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "25",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "space_19",
+          "question_text": "What is the Hubble constant approximately in km/s/Mpc?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "70",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "space_20",
+          "question_text": "What percentage of the universe is made up of dark energy?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "68",
+          "base_points": 450,
+          "difficulty": "bonus"
         }
       ]
     },
@@ -428,26 +828,6 @@
       "stone": "Reality Stone",
       "theme": "Physics and Reality",
       "questions": [
-        {
-          "id": "reality_1",
-          "question_text": "What is the speed of sound in air?",
-          "clue_1": "Approximately 340 m/s",
-          "clue_2": "Slower than light",
-          "hint_text": "340",
-          "correct_answer": "340",
-          "base_points": 200,
-          "difficulty": "medium"
-        },
-        {
-          "id": "reality_2",
-          "question_text": "What is quantum mechanics?",
-          "clue_1": "Study of subatomic particles",
-          "clue_2": "Physics of very small things",
-          "hint_text": "Branch of physics dealing with atoms",
-          "correct_answer": "quantum",
-          "base_points": 300,
-          "difficulty": "hard"
-        },
         {
           "id": "reality_3",
           "question_text": "How many states of matter are there?",
@@ -469,16 +849,6 @@
           "difficulty": "easy"
         },
         {
-          "id": "reality_5",
-          "question_text": "What is the Pauli Exclusion Principle?",
-          "clue_1": "No two electrons can have identical quantum numbers",
-          "clue_2": "Quantum mechanics concept",
-          "hint_text": "Unique quantum states",
-          "correct_answer": "electrons",
-          "base_points": 300,
-          "difficulty": "hard"
-        },
-        {
           "id": "reality_6",
           "question_text": "What is gravity?",
           "clue_1": "Force of attraction",
@@ -489,14 +859,34 @@
           "difficulty": "easy"
         },
         {
-          "id": "reality_7",
-          "question_text": "What is the Heisenberg Uncertainty Principle?",
-          "clue_1": "Cannot know position and momentum simultaneously",
-          "clue_2": "Quantum mechanics law",
-          "hint_text": "Position-momentum uncertainty",
-          "correct_answer": "uncertainty",
-          "base_points": 300,
-          "difficulty": "hard"
+          "id": "reality_11",
+          "question_text": "What is the boiling point of water in Celsius?",
+          "clue_1": "A round number",
+          "clue_2": "Triple digits, starts with 1",
+          "hint_text": "100 degrees Celsius",
+          "correct_answer": "100",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "reality_12",
+          "question_text": "What color does litmus paper turn in acid?",
+          "clue_1": "A warm color",
+          "clue_2": "Color of roses",
+          "hint_text": "Red",
+          "correct_answer": "red",
+          "base_points": 100,
+          "difficulty": "easy"
+        },
+        {
+          "id": "reality_1",
+          "question_text": "What is the speed of sound in air?",
+          "clue_1": "Approximately 340 m/s",
+          "clue_2": "Slower than light",
+          "hint_text": "340",
+          "correct_answer": "340",
+          "base_points": 200,
+          "difficulty": "medium"
         },
         {
           "id": "reality_8",
@@ -507,6 +897,66 @@
           "correct_answer": "4",
           "base_points": 200,
           "difficulty": "medium"
+        },
+        {
+          "id": "reality_13",
+          "question_text": "What is the unit of electrical resistance?",
+          "clue_1": "Named after a German physicist",
+          "clue_2": "Symbol is the Greek letter Omega",
+          "hint_text": "Ohm",
+          "correct_answer": "Ohm",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "reality_14",
+          "question_text": "What particle carries a positive charge?",
+          "clue_1": "Found in the nucleus of an atom",
+          "clue_2": "Opposite of electron",
+          "hint_text": "Proton",
+          "correct_answer": "proton",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "reality_15",
+          "question_text": "What is the freezing point of water in Fahrenheit?",
+          "clue_1": "Below body temperature",
+          "clue_2": "A number in the 30s",
+          "hint_text": "32\u00b0F",
+          "correct_answer": "32",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "reality_2",
+          "question_text": "What is quantum mechanics?",
+          "clue_1": "Study of subatomic particles",
+          "clue_2": "Physics of very small things",
+          "hint_text": "Branch of physics dealing with atoms",
+          "correct_answer": "quantum",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "reality_5",
+          "question_text": "What is the Pauli Exclusion Principle?",
+          "clue_1": "No two electrons can have identical quantum numbers",
+          "clue_2": "Quantum mechanics concept",
+          "hint_text": "Unique quantum states",
+          "correct_answer": "electrons",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "reality_7",
+          "question_text": "What is the Heisenberg Uncertainty Principle?",
+          "clue_1": "Cannot know position and momentum simultaneously",
+          "clue_2": "Quantum mechanics law",
+          "hint_text": "Position-momentum uncertainty",
+          "correct_answer": "uncertainty",
+          "base_points": 300,
+          "difficulty": "hard"
         },
         {
           "id": "reality_9",
@@ -527,6 +977,56 @@
           "correct_answer": "disorder",
           "base_points": 300,
           "difficulty": "hard"
+        },
+        {
+          "id": "reality_16",
+          "question_text": "What is the fine-structure constant approximately equal to?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "137",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "reality_17",
+          "question_text": "What is the name of the hypothetical particle that mediates gravity?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "graviton",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "reality_18",
+          "question_text": "What is the Compton wavelength of an electron in picometers?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "2.4",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "reality_19",
+          "question_text": "What is the name of the effect where light bends around massive objects?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "lensing",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "reality_20",
+          "question_text": "What is the critical temperature of superconducting mercury in Kelvin?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "4.2",
+          "base_points": 450,
+          "difficulty": "bonus"
         }
       ]
     },
@@ -605,6 +1105,36 @@
           "difficulty": "medium"
         },
         {
+          "id": "soul_11",
+          "question_text": "What is the largest organ in the human body?",
+          "clue_1": "Covers the entire body",
+          "clue_2": "Protects internal organs",
+          "hint_text": "Skin",
+          "correct_answer": "skin",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "soul_12",
+          "question_text": "How many pairs of ribs does a human have?",
+          "clue_1": "Same number as months in a year",
+          "clue_2": "A dozen",
+          "hint_text": "12",
+          "correct_answer": "12",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
+          "id": "soul_13",
+          "question_text": "What vitamin does sunlight help produce in the body?",
+          "clue_1": "Essential for bone health",
+          "clue_2": "A single letter of the alphabet",
+          "hint_text": "Vitamin D",
+          "correct_answer": "D",
+          "base_points": 200,
+          "difficulty": "medium"
+        },
+        {
           "id": "soul_8",
           "question_text": "What is ATP in biology?",
           "clue_1": "Molecule that stores energy",
@@ -633,6 +1163,76 @@
           "correct_answer": "respiration",
           "base_points": 300,
           "difficulty": "hard"
+        },
+        {
+          "id": "soul_14",
+          "question_text": "What is the name of the process by which cells divide?",
+          "clue_1": "Produces two identical daughter cells",
+          "clue_2": "Key to growth and repair",
+          "hint_text": "Mitosis",
+          "correct_answer": "mitosis",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "soul_15",
+          "question_text": "What enzyme unzips DNA during replication?",
+          "clue_1": "Works at the replication fork",
+          "clue_2": "Name relates to helical structure",
+          "hint_text": "Helicase",
+          "correct_answer": "helicase",
+          "base_points": 300,
+          "difficulty": "hard"
+        },
+        {
+          "id": "soul_16",
+          "question_text": "Approximately how many neurons are in the human brain (in billions)?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "86",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "soul_17",
+          "question_text": "What gene-editing technology uses Cas9 protein?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "CRISPR",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "soul_18",
+          "question_text": "What is the theory that all living cells arise from pre-existing cells?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "biogenesis",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "soul_19",
+          "question_text": "What is the term for organisms that survive extreme conditions?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "extremophile",
+          "base_points": 450,
+          "difficulty": "bonus"
+        },
+        {
+          "id": "soul_20",
+          "question_text": "What is the molecule that carries amino acids to ribosomes?",
+          "clue_1": "",
+          "clue_2": "",
+          "hint_text": "",
+          "correct_answer": "tRNA",
+          "base_points": 450,
+          "difficulty": "bonus"
         }
       ]
     }

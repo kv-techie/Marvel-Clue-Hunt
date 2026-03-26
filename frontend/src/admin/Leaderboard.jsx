@@ -266,7 +266,7 @@ const Leaderboard = () => {
                     <td style={{ fontSize: '20px', fontWeight: 'bold', color: team.score < 0 ? '#e74c3c' : '#2ecc71' }}>
                       {team.score}
                     </td>
-                    <td>{team.questions_completed || 0}/10</td>
+                    <td>{team.questions_completed || 0}/{team.total_questions || 20}</td>
                     <td>{team.hints_used}/3</td>
                     <td>
                       {team.qualified ? (

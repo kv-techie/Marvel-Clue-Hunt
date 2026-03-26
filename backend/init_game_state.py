@@ -28,6 +28,8 @@ def main():
             "timer_started": None,
             "game_started": None,
             "current_question_index": 0,
+            "bonus_round_unlocked": False,
+            "standard_round_completed_at": None,
             "questions_completed": [],
             "hints_used_count": 0,
             "enactment_bonus_awarded": False,
