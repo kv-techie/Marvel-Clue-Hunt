@@ -31,12 +31,12 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  
+
   // Clues & Hints
   const [showClue2, setShowClue2] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [hintsRemaining, setHintsRemaining] = useState(3);
-  
+
   // Powerups & Gamification
   const [powerupsAvailable, setPowerupsAvailable] = useState({});
   const [teamPowerups, setTeamPowerups] = useState([]);
@@ -45,7 +45,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const [stone, setStone] = useState(null);
   const [streak, setStreak] = useState(0);
   const [score, setScore] = useState(0);
-  
+
   // UI States
   const [shake, setShake] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -110,6 +110,13 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       setHintsRemaining(response.hints_remaining);
       setPowerupsAvailable(response.powerups_available);
 
+      // Sync active powerup from backend
+      if (response.active_powerup_id) {
+        setActivePowerup(response.active_powerup_id);
+      } else {
+        setActivePowerup(null);
+      }
+
       const stoneData = await client.getTeamStone(teamName);
       setStone(stoneData.stone);
       setStreak(stoneData.current_streak || 0);
@@ -170,30 +177,30 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
         question_id: question.question_id,
         answer: answer.trim(),
         time_taken: elapsedTime,
-        powerup_used: activePowerup,
+        powerup_used: activeEffect === "extra_clue" ? null : activePowerup,
       });
 
       if (response.correct) {
         setSuccessMessage(`🎉 ${response.message} (+${response.score_earned} points)`);
         setScore(response.current_score || score + response.score_earned);
-        
+
         setTimeout(() => setSuccessMessage(null), 3000);
-        
+
         if (response.next_question_ready) {
           loadCurrentQuestion();
         } else {
           setQuestion({ completed: true, message: "All questions completed!", current_score: response.current_score });
         }
-        
+
         if (response.powerups_available) {
           setPowerupsAvailable(response.powerups_available);
         }
-        
+
         if (onQuestionComplete) onQuestionComplete(response);
       } else {
         triggerError(`❌ ${response.message}`);
         setAnswer("");
-        
+
         if (response.next_question_ready !== undefined) {
           setTimeout(() => {
             setError(null);
@@ -229,7 +236,26 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
     }
   };
 
-  const handleUsePowerup = (powerupId) => {
+  const handleUsePowerup = async (powerupId) => {
+    const effect = getPowerupEffect(powerupId);
+
+    // Immediate activation powerups (Insight Surge)
+    if (effect === "extra_clue") {
+      try {
+        setSubmitting(true);
+        const response = await client.activatePowerup(teamName, question.question_id, powerupId);
+        await loadCurrentQuestion(); // Re-sync state to get the insight_clue
+        setSuccessMessage(response.message);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } catch (err) {
+        triggerError(err.response?.data?.detail || "Powerup activation failed.");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Standard toggle for others used during submission
     if (activePowerup === powerupId) {
       setActivePowerup(null); // Deselect
       setCertaintyFeedback(null);
@@ -250,11 +276,11 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   };
 
   if (loading) return <div className="qr-container"><div className="qr-center-pane">Initiating Challenge Matrix...</div></div>;
-  
+
   if (question?.completed) {
     return (
       <div className="qr-container">
-        <motion.div 
+        <motion.div
           className="qr-center-pane"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -283,17 +309,17 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
             Q{question.question_index + 1} / {question.total_questions}
           </div>
           {streak > 0 && (
-            <motion.div 
-              initial={{ scale: 0 }} 
-              animate={{ scale: 1 }} 
-              className="qr-score-pill" 
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="qr-score-pill"
               style={{ color: '#f59e0b', borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.1)' }}
             >
               🔥 {streak}x
             </motion.div>
           )}
         </div>
-        
+
         <div className="qr-header-right">
           <div className="qr-timer">
             <span className="qr-timer-icon">⏱</span>
@@ -304,31 +330,12 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
       {/* ── MAIN SCROLLABLE CONTENT ── */}
       <main className="qr-main">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={question.question_id}
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className={`qr-card ${isOvercharged ? 'overcharged' : ''} ${shake ? 'error-shake' : ''}`}
-          >
-            {isOvercharged && !prefersReducedMotion && <ElectricOverlay />}
-
-            <div className="qr-meta-row">
-              <div className={`qr-difficulty-badge qr-difficulty-${question.difficulty}`}>
-                {question.difficulty} (+{document.querySelector('body')?.dataset?.base || 100} pts)
-              </div>
-              <div className="qr-meta-stone">
-                <span style={{fontSize: '1.2rem'}}>💎</span> {stone}
-              </div>
-            </div>
-
             <h2 className="qr-clue-text">
               <HackerText text={question.question_text} delay={0} />
             </h2>
 
             <div className="qr-clues-container">
+<<<<<<< HEAD
               <div className="qr-clue-item">
                 <strong style={{color: 'var(--text-primary)'}}>Hint 1:</strong> {question.clue_1}
               </div>
@@ -342,40 +349,76 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
                     className="qr-clue-item"
                   >
                     <strong style={{color: 'var(--text-primary)'}}>Hint 2:</strong> {question.clue_2}
-                  </motion.div>
                 )}
               </AnimatePresence>
               
               {!revealClue2 && (
+=======
+              {!question.is_bonus_question && (
+                <div className="qr-clue-item">
+                  <strong style={{ color: 'var(--text-primary)' }}>Hint 1:</strong> {question.clue_1}
+                </div>
+              )}
+
+              {revealClue2 && (
+                <motion.div
+                  key="clue-2"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="qr-clue-item"
+                >
+                  <strong style={{ color: 'var(--text-primary)' }}>Hint 2:</strong> {question.clue_2}
+                </motion.div>
+              )}
+
+              {!revealClue2 && !question.is_bonus_question && (
+>>>>>>> b4851e2fc3a7410380da191a9c080d8c15541347
                 <button className="qr-action-btn" onClick={() => setShowClue2(true)}>
                   Reveal Hint 2 <span>▼</span>
                 </button>
               )}
 
+              {question.insight_clue && (
+                <motion.div
+                  key="insight-clue"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="qr-clue-item"
+                  style={{
+                    background: 'rgba(156, 39, 176, 0.1)',
+                    borderLeftColor: 'var(--accent-purple)',
+                    boxShadow: '0 0 15px rgba(156, 39, 176, 0.2)'
+                  }}
+                >
+                  <strong style={{ color: 'var(--accent-purple)' }}>INSIGHT SURGE CLUE:</strong> {question.insight_clue}
+                </motion.div>
+              )}
+
               {revealFirstLetter && question.hint_text && (
                 <div className="qr-clue-item" style={{ borderLeftColor: 'var(--accent-secondary)' }}>
-                  <strong style={{color: 'var(--accent-secondary)'}}>First Letter:</strong> {question.hint_text.trim().charAt(0)}
+                  <strong style={{ color: 'var(--accent-secondary)' }}>First Letter:</strong> {question.hint_text.trim().charAt(0)}
                 </div>
               )}
 
               {/* Hints Drawer */}
-              <AnimatePresence>
-                {revealBonusHint && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }} 
-                    animate={{ height: 'auto', opacity: 1 }}
-                    className="qr-clue-item" 
-                    style={{ background: 'rgba(245,158,11,0.05)', borderLeftColor: '#f59e0b' }}
-                  >
-                    <strong style={{color: '#f59e0b'}}>Bonus Hint:</strong> {question.hint_text}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {revealBonusHint && (
+                <motion.div
+                  key="bonus-hint"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="qr-clue-item"
+                  style={{ background: 'rgba(245,158,11,0.05)', borderLeftColor: '#f59e0b' }}
+                >
+                  <strong style={{ color: '#f59e0b' }}>Bonus Hint:</strong> {question.hint_text}
+                </motion.div>
+              )}
 
-              {!revealBonusHint && (
-                <button 
-                  className="qr-action-btn qr-hint-btn" 
-                  onClick={handleRequestHint} 
+              {!revealBonusHint && !question.is_bonus_question && (
+                <button
+                  className="qr-action-btn qr-hint-btn"
+                  onClick={handleRequestHint}
                   disabled={hintsRemaining <= 0 || submitting}
                 >
                   Request Bonus Hint ({hintsRemaining} left) <span>💬</span>
@@ -389,7 +432,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
       {/* ── STICKY FOOTER INTERFACE ── */}
       <footer className="qr-footer">
         <div className="qr-footer-content">
-          
+
           {/* Powerups Tray (Hides when mobile keyboard covers screen) */}
           {!keyboardOpen && teamPowerups.length > 0 && (
             <div className="qr-powerups-wrap">
@@ -411,7 +454,12 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
           {/* Certainty Check Display */}
           {certaintyFeedback && activeEffect === "certainty_check" && (
-            <motion.div initial={{opacity: 0}} animate={{opacity: 1}} className="qr-certainty-wrap">
+            <motion.div
+              key="certainty-check"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="qr-certainty-wrap"
+            >
               <div className="qr-certainty-label">
                 <span style={{ color: certaintyFeedback.similarity_percent > 80 ? '#2ecc71' : '#f59e0b' }}>
                   {certaintyFeedback.feedback}
@@ -419,12 +467,12 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
                 <span>{certaintyFeedback.similarity_percent}% Match</span>
               </div>
               <div className="qr-certainty-track">
-                <div 
-                  className="qr-certainty-fill" 
-                  style={{ 
+                <div
+                  className="qr-certainty-fill"
+                  style={{
                     width: `${certaintyFeedback.similarity_percent}%`,
                     background: certaintyFeedback.similarity_percent > 80 ? '#2ecc71' : '#f59e0b'
-                  }} 
+                  }}
                 />
               </div>
             </motion.div>
@@ -448,8 +496,8 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
               autoCapitalize="off"
               spellCheck="false"
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="qr-submit"
               disabled={
                 !answer.trim() ||
@@ -478,18 +526,25 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
           )}
 
           {/* Error / Success Banners */}
-          <AnimatePresence>
-            {error && (
-              <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }} className="qr-feedback-box">
-                {error}
-              </motion.div>
-            )}
-            {successMessage && (
-              <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }} className="qr-feedback-box success">
-                {successMessage}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {error ? (
+            <motion.div
+              key="error-banner"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="qr-feedback-box"
+            >
+              {error}
+            </motion.div>
+          ) : successMessage ? (
+            <motion.div
+              key="success-banner"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="qr-feedback-box success"
+            >
+              {successMessage}
+            </motion.div>
+          ) : null}
 
         </div>
       </footer>

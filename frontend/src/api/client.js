@@ -187,6 +187,14 @@ export const certaintyCheck = (teamName, questionId, submittedAnswer) =>
     submitted_answer: submittedAnswer,
   })
 
+// Activate a powerup for the current question
+export const activatePowerup = (teamName, questionId, powerupId) =>
+  api.post('/attendee/activate-powerup', {
+    team_name: teamName,
+    question_id: questionId,
+    powerup_id: powerupId,
+  })
+
 // Get team's assigned stone and progress
 export const getTeamStone = (teamName) =>
   api.get(`/attendee/team-stone/${encodeURIComponent(teamName)}`)

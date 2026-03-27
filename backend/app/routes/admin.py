@@ -1331,15 +1331,15 @@ async def get_disqualification_candidates():
             continue  # Skip already disqualified teams
 
         # Check for excessive tab switches (more than 3)
-        tab_switches = len(team.tab_switch_logs) if team.tab_switch_logs else 0
+        tab_switches = len([e for e in (team.tab_switch_logs or []) if e.get("event_type") == "tab_left"])
 
         # Flag teams with high tab switch counts
         violation_reason = None
         violation_score = 0
 
-        if tab_switches > 5:
+        if tab_switches > 3:
             violation_reason = f"Excessive tab switches ({tab_switches})"
-            violation_score = tab_switches
+            violation_score = tab_switches * 50  # This shows the total potential penalty
 
         if violation_reason:
             candidates.append(
