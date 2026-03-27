@@ -7,7 +7,7 @@ from fastapi import APIRouter, Header, HTTPException
 from app.achievement_manager import evaluate_achievements, get_badge_details
 from app.config import settings
 from app.leaderboard_manager import update_team_stats
-from app.models import HintRequest, PowerupActivateRequest, QuestionSubmission, TabSwitchLog
+from app.models import HintRequest, QuestionSubmission, TabSwitchLog
 from app.question_manager import question_manager
 from app.routes.admin import (
     GAME_INACTIVE_MESSAGE,
@@ -351,17 +351,6 @@ async def get_current_question(
         "hints_remaining": max(0, 3 - team.hints_used_count),
         "powerups_available": team.powerups_available,
         "powerups_used": team.powerups_used,
-        "is_bonus_question": is_bonus_question,
-        "bonus_round_unlocked": team.bonus_round_unlocked,
-        "insight_clue": question.get("insight_clue") if (
-            team.active_powerup_effect 
-            and team.active_powerup_effect.get("id") == "insight_surge"
-            and team.active_powerup_effect.get("question_id") == question["id"]
-        ) else None,
-        "active_powerup_id": team.active_powerup_effect.get("id") if (
-            team.active_powerup_effect 
-            and team.active_powerup_effect.get("question_id") == question["id"]
-        ) else None
     }
 
 
@@ -751,54 +740,6 @@ async def request_hint_question(
             "hint_penalty": settings.hint_penalty,
             "penalty_applied_to_score": True,
         }
-
-
-@router.post("/activate-powerup")
-async def activate_powerup(
-    request: PowerupActivateRequest,
-    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
-):
-    """Activate a powerup for the current question"""
-    _enforce_active_access(request.team_name, x_device_id)
-    _enforce_game_active()
-
-    if request.team_name not in game_state.teams:
-        raise HTTPException(status_code=404, detail="Team not found")
-
-    team = game_state.teams[request.team_name]
-    
-    from app.powerup_manager import powerup_manager
-    
-    # Check if powerup is available
-    if not powerup_manager.is_powerup_available(team, request.powerup_id):
-        raise HTTPException(status_code=400, detail="Powerup not available or already used")
-
-    # Use the powerup
-    powerup_info = powerup_manager.get_powerup_info(request.team_name, request.powerup_id)
-    if not powerup_info:
-        raise HTTPException(status_code=404, detail="Powerup info not found")
-
-    with game_state_write_lock():
-        team = game_state.teams[request.team_name]
-        
-        # Mark as used (decrement availability)
-        powerup_manager.use_powerup(team, request.powerup_id)
-        
-        # Set active effect for the current question
-        team.active_powerup_effect = {
-            "id": request.powerup_id,
-            "effect": powerup_info.get("effect"),
-            "question_id": request.question_id
-        }
-        
-        save_game_state()
-
-    return {
-        "message": f"Powerup {powerup_info.get('name')} activated!",
-        "powerup_id": request.powerup_id,
-        "effect": powerup_info.get("effect"),
-        "active_powerup_effect": team.active_powerup_effect
-    }
 
 
 @router.post("/certainty-check")

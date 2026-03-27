@@ -17,8 +17,7 @@
   
   /* Typography */
   --font-body: 'Inter', sans-serif;
-  --font-display: 'Bebas Neue', sans-serif;
-  --font-accent: 'Space Grotesk', sans-serif;
+  --font-display: 'Orbitron', 'Inter', sans-serif;
   
   /* Accents */
   --accent-primary: #e74c3c;      /* Marvel red */

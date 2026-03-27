@@ -10,7 +10,6 @@
           "clue_1": "City of lights",
           "clue_2": "Located on the Seine River",
           "hint_text": "Paris",
-          "insight_clue": "Known for the Eiffel Tower",
           "correct_answer": "Paris",
           "base_points": 100,
           "difficulty": "easy"
@@ -21,7 +20,6 @@
           "clue_1": "English playwright",
           "clue_2": "Wrote during the Renaissance",
           "hint_text": "William Shakespeare",
-          "insight_clue": "Set in Verona",
           "correct_answer": "Shakespeare",
           "base_points": 100,
           "difficulty": "easy"
@@ -32,7 +30,6 @@
           "clue_1": "Even number",
           "clue_2": "Less than 5",
           "hint_text": "2",
-          "insight_clue": "The only even prime",
           "correct_answer": "2",
           "base_points": 100,
           "difficulty": "easy"
@@ -43,7 +40,6 @@
           "clue_1": "Named after a messenger god",
           "clue_2": "Smallest planet in solar system",
           "hint_text": "Mercury",
-          "insight_clue": "First planet in the solar system",
           "correct_answer": "Mercury",
           "base_points": 100,
           "difficulty": "easy"
@@ -54,7 +50,6 @@
           "clue_1": "Connected to Asia",
           "clue_2": "Contains the Mariana Trench",
           "hint_text": "Pacific Ocean",
-          "insight_clue": "Deepest and largest ocean",
           "correct_answer": "Pacific",
           "base_points": 100,
           "difficulty": "easy"
@@ -65,7 +60,6 @@
           "clue_1": "Precious metal",
           "clue_2": "Two letters",
           "hint_text": "Au",
-          "insight_clue": "Latin name Aurum",
           "correct_answer": "Au",
           "base_points": 200,
           "difficulty": "medium"
@@ -76,7 +70,6 @@
           "clue_1": "Scottish scientist",
           "clue_2": "Discovered by accident in 1928",
           "hint_text": "Alexander Fleming",
-          "insight_clue": "Wonder drug discovered from mold",
           "correct_answer": "Fleming",
           "base_points": 200,
           "difficulty": "medium"
@@ -87,7 +80,6 @@
           "clue_1": "Early 20th century",
           "clue_2": "Year when it hit an iceberg",
           "hint_text": "1912",
-          "insight_clue": "The Unsinkable Ship's tragedy",
           "correct_answer": "1912",
           "base_points": 200,
           "difficulty": "medium"
@@ -98,7 +90,6 @@
           "clue_1": "Italian Renaissance polymath",
           "clue_2": "Also designed flying machines",
           "hint_text": "Leonardo da Vinci",
-          "insight_clue": "Kept in the Louvre, Paris",
           "correct_answer": "Da Vinci",
           "base_points": 200,
           "difficulty": "medium"
@@ -109,7 +100,6 @@
           "clue_1": "A dozen",
           "clue_2": "Number between 10 and 15",
           "hint_text": "12",
-          "insight_clue": "A dozen",
           "correct_answer": "12",
           "base_points": 200,
           "difficulty": "medium"
@@ -120,7 +110,6 @@
           "clue_1": "More than 200",
           "clue_2": "Less than 250",
           "hint_text": "206",
-          "insight_clue": "One more than 205",
           "correct_answer": "206",
           "base_points": 300,
           "difficulty": "hard"
@@ -131,7 +120,6 @@
           "clue_1": "Approximately 3 with 8 zeros meters per second",
           "clue_2": "Einstein's famous constant",
           "hint_text": "300000000 m/s or 3 x 10^8 m/s",
-          "insight_clue": "Nature's speed limit",
           "correct_answer": "300000000",
           "base_points": 300,
           "difficulty": "hard"
@@ -142,7 +130,6 @@
           "clue_1": "Greek letter",
           "clue_2": "Ratio of circumference to diameter",
           "hint_text": "Pi",
-          "insight_clue": "Infinite non-repeating decimal 3.14...",
           "correct_answer": "Pi",
           "base_points": 300,
           "difficulty": "hard"
@@ -153,7 +140,6 @@
           "clue_1": "British theoretical physicist",
           "clue_2": "Worked on black holes and cosmology",
           "hint_text": "Stephen Hawking",
-          "insight_clue": "Theoretical physicist known for black holes",
           "correct_answer": "Hawking",
           "base_points": 300,
           "difficulty": "hard"
@@ -164,7 +150,6 @@
           "clue_1": "Sum of last two numbers",
           "clue_2": "A teen number",
           "hint_text": "13",
-          "insight_clue": "Fibonacci sum of 5 and 8",
           "correct_answer": "13",
           "base_points": 300,
           "difficulty": "hard"
@@ -175,7 +160,6 @@
           "clue_1": "",
           "clue_2": "",
           "hint_text": "",
-          "insight_clue": "Launch of the Space Age",
           "correct_answer": "1957",
           "base_points": 450,
           "difficulty": "bonus"
@@ -186,7 +170,6 @@
           "clue_1": "",
           "clue_2": "",
           "hint_text": "",
-          "insight_clue": "Oil of vitriol",
           "correct_answer": "H2SO4",
           "base_points": 450,
           "difficulty": "bonus"
@@ -197,7 +180,6 @@
           "clue_1": "",
           "clue_2": "",
           "hint_text": "",
-          "insight_clue": "Number of particles per mole",
           "correct_answer": "602",
           "base_points": 450,
           "difficulty": "bonus"
@@ -208,7 +190,6 @@
           "clue_1": "",
           "clue_2": "",
           "hint_text": "",
-          "insight_clue": "Napier's constant",
           "correct_answer": "2.72",
           "base_points": 450,
           "difficulty": "bonus"
@@ -219,7 +200,6 @@
           "clue_1": "",
           "clue_2": "",
           "hint_text": "",
-          "insight_clue": "Used for radiocarbon dating",
           "correct_answer": "5730",
           "base_points": 450,
           "difficulty": "bonus"
