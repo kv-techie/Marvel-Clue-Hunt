@@ -56,9 +56,6 @@ export const useTabFocusTracking = (teamName) => {
           })
           
           setFocusWarning(true)
-          
-          // Auto-hide warning after 8 seconds (longer so they see it)
-          setTimeout(() => setFocusWarning(false), 8000)
         } catch (err) {
           console.error('Failed to log tab return:', err)
         }

@@ -266,33 +266,43 @@
 
 /* Tab Switch Warning Styles */
 .tab-warning {
-  padding: 16px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
   grid-column: 1 / -1;
-  animation: slideDown 0.3s ease-in-out;
+  background: rgba(5, 5, 10, 0.72);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  animation: slideDown 0.25s ease-in-out;
 }
 
 .tab-warning.warned {
-  background: rgba(255, 193, 7, 0.1);
-  border: 2px solid rgba(255, 193, 7, 0.5);
-  backdrop-filter: blur(12px);
+  background: rgba(5, 5, 10, 0.72);
 }
 
 .tab-warning.penalized {
-  background: rgba(231, 76, 60, 0.1);
-  border: 2px solid rgba(231, 76, 60, 0.5);
-  backdrop-filter: blur(12px);
+  background: rgba(5, 5, 10, 0.78);
 }
 
 .tab-warning-content {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px 18px;
   align-items: center;
-  gap: 12px;
+  max-width: 560px;
+  width: 100%;
+  padding: 24px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 18, 32, 0.9);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
 }
 
 .tab-warning-icon {
-  font-size: 20px;
+  font-size: 28px;
   flex-shrink: 0;
 }
 
@@ -301,9 +311,9 @@
 }
 
 .tab-warning-title {
-  margin: 0 0 4px 0;
-  font-size: 16px;
-  font-weight: bold;
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 800;
 }
 
 .tab-warning.warned .tab-warning-title {
@@ -316,7 +326,7 @@
 
 .tab-warning-message {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .tab-warning.warned .tab-warning-message {
@@ -334,21 +344,43 @@
   font-weight: bold;
 }
 
-.tab-warning-close {
-  margin-left: auto;
-  background: none;
+.tab-warning-ack {
+  grid-column: 1 / -1;
+  background: var(--accent-gold, #f39c12);
+  color: #121212;
   border: none;
-  font-size: 20px;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 0.95rem;
   cursor: pointer;
-  flex-shrink: 0;
+  justify-self: end;
+  min-width: 160px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 10px 24px rgba(243, 156, 18, 0.35);
 }
 
-.tab-warning.warned .tab-warning-close {
-  color: var(--accent-gold);
+.tab-warning-ack:hover {
+  transform: translateY(-1px);
 }
 
-.tab-warning.penalized .tab-warning-close {
-  color: var(--accent-primary);
+.tab-warning.penalized .tab-warning-ack {
+  background: var(--accent-primary, #e74c3c);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(231, 76, 60, 0.35);
+}
+
+@media (max-width: 640px) {
+  .tab-warning-content {
+    grid-template-columns: 1fr;
+  }
+  .tab-warning-icon {
+    justify-self: center;
+  }
+  .tab-warning-ack {
+    width: 100%;
+    justify-self: stretch;
+  }
 }
 
 /* Disqualification Notice Styles */
