@@ -105,9 +105,10 @@ class QuestionManager:
 
         if ignore_case:
             submitted_answer = submitted_answer.strip().lower()
-            correct = correct.lower()
+            correct = correct.strip().lower()
         else:
             submitted_answer = submitted_answer.strip()
+            correct = correct.strip()
 
         # Exact match
         if submitted_answer == correct:
@@ -136,7 +137,7 @@ class QuestionManager:
         if not question:
             return 0.0
 
-        correct = question["correct_answer"].lower()
+        correct = question["correct_answer"].strip().lower()
         submitted = submitted_answer.strip().lower()
 
         similarity = SequenceMatcher(None, submitted, correct).ratio()
