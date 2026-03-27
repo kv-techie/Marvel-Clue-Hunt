@@ -20,7 +20,6 @@ from app.routes.common import ensure_active_team_device
 from app.scoring import (
     calculate_combo_multiplier,
     calculate_final_score,
-    calculate_final_score_questions,
     calculate_question_score,
     calculate_speed_multiplier,
     calculate_total_deductions,
@@ -65,6 +64,8 @@ def _check_bonus_eligibility(team, team_name: str) -> bool:
     within_time = elapsed <= BONUS_THRESHOLD_SECONDS
     qualified = check_qualification(team)
     return within_time and qualified
+
+
 CLIENT_SERVER_TIME_DELTA_WARN_SECONDS = 5
 
 
@@ -190,7 +191,7 @@ async def start_team_timer(
 @router.get("/team-status/{team_name}")
 async def get_team_status(
     team_name: str,
-        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get current status for a team"""
 
@@ -200,10 +201,11 @@ async def get_team_status(
     _enforce_active_access(team_name, x_device_id)
 
     team = game_state.teams[team_name]
-    
+
     # Initialize powerups if missing (handles recovery from broken powerups.json)
     if not team.powerups_available:
         from app.powerup_manager import powerup_manager
+
         powerup_manager.initialize_powerups_for_team(team)
         save_game_state()
 
@@ -319,17 +321,21 @@ async def log_tab_switch(request: TabSwitchLog):
         penalty_applied = request.event_type == "tab_left" and total_left_switches > 3
 
         # Send score update and tab switch event
-        await manager.send_to_team(request.team_name, "score_update", {
-            "new_score": calculate_final_score(team),
-            "tab_switch_event": {
-                "event_type": request.event_type,
-                "total_left": total_left_switches,
-                "warning_count": warning_count,
-                "switches_remaining": switches_remaining,
-                "is_penalized": total_left_switches > 3,
-                "penalty_applied": penalty_applied,
-            }
-        })
+        await manager.send_to_team(
+            request.team_name,
+            "score_update",
+            {
+                "new_score": calculate_final_score(team),
+                "tab_switch_event": {
+                    "event_type": request.event_type,
+                    "total_left": total_left_switches,
+                    "warning_count": warning_count,
+                    "switches_remaining": switches_remaining,
+                    "is_penalized": total_left_switches > 3,
+                    "penalty_applied": penalty_applied,
+                },
+            },
+        )
         await manager.send_to_role("admin", "leaderboard_update", {})
 
     return {
@@ -350,7 +356,7 @@ async def log_tab_switch(request: TabSwitchLog):
 @router.get("/current-question/{team_name}")
 async def get_current_question(
     team_name: str,
-        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get the current question for a team (based on their stone and progress)"""
 
@@ -412,11 +418,20 @@ async def get_current_question(
         "question_index": team.current_question_index,
         "total_questions": effective_total,
         "question_text": question["question_text"],
-        "clue_1": question["clue_1"] if not is_bonus_question else "Hints not available for bonus questions",
-        "clue_2": question["clue_2"] if not is_bonus_question else "Hints not available for bonus questions",
+        "clue_1": question["clue_1"]
+        if not is_bonus_question
+        else "Hints not available for bonus questions",
+        "clue_2": question["clue_2"]
+        if not is_bonus_question
+        else "Hints not available for bonus questions",
+        "clue_3": question.get("clue_3", "")
+        if not is_bonus_question
+        else "Hints not available for bonus questions",
         "difficulty": question["difficulty"],
         "base_points": question["base_points"],
-        "hint_text": question.get("hint_text", "") if not is_bonus_question else "Locked",
+        "hint_text": question.get("hint_text", "")
+        if not is_bonus_question
+        else "Locked",
         "hints_remaining": max(0, 3 - team.hints_used_count),
         "powerups_available": team.powerups_available,
         "powerups_used": team.powerups_used,
@@ -428,7 +443,7 @@ async def get_current_question(
 @router.post("/submit-question")
 async def submit_question(
     submission: QuestionSubmission,
-        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Submit answer to current question"""
     try:
@@ -494,7 +509,8 @@ async def submit_question(
                     "message": "Question skipped without penalty.",
                     "current_question_index": team.current_question_index,
                     "questions_completed": team.current_question_index,
-                    "next_question_ready": team.current_question_index < effective_total,
+                    "next_question_ready": team.current_question_index
+                    < effective_total,
                     "powerup_used": submission.powerup_used,
                     "powerups_available": team.powerups_available,
                 }
@@ -552,14 +568,18 @@ async def submit_question(
                 save_game_state()
 
                 # Broadcast update
-                await manager.send_to_team(submission.team_name, "score_update", {
-                    "new_score": calculate_final_score(team),
-                    "question_result": {
-                        "question_index": team.current_question_index - 1,
-                        "correct": False,
-                        "points": 0
-                    }
-                })
+                await manager.send_to_team(
+                    submission.team_name,
+                    "score_update",
+                    {
+                        "new_score": calculate_final_score(team),
+                        "question_result": {
+                            "question_index": team.current_question_index - 1,
+                            "correct": False,
+                            "points": 0,
+                        },
+                    },
+                )
                 await manager.send_to_role("admin", "leaderboard_update", {})
 
                 return {
@@ -567,7 +587,8 @@ async def submit_question(
                     "message": "Incorrect answer. Moving to next question...",
                     "current_question_index": team.current_question_index,
                     "questions_completed": team.current_question_index,
-                    "next_question_ready": team.current_question_index < effective_total,
+                    "next_question_ready": team.current_question_index
+                    < effective_total,
                     "powerup_used": submission.powerup_used,
                     "streak_broken": True,
                     "current_streak": team.current_streak,
@@ -714,7 +735,10 @@ async def submit_question(
 
             # Check if standard round just completed — evaluate bonus eligibility
             bonus_just_unlocked = False
-            if team.current_question_index == STANDARD_Q and not team.bonus_round_unlocked:
+            if (
+                team.current_question_index == STANDARD_Q
+                and not team.bonus_round_unlocked
+            ):
                 if _check_bonus_eligibility(team, submission.team_name):
                     team.bonus_round_unlocked = True
                     team.standard_round_completed_at = datetime.now()
@@ -725,15 +749,19 @@ async def submit_question(
 
             # Broadcast update
             new_score = calculate_final_score(team)
-            await manager.send_to_team(submission.team_name, "score_update", {
-                "new_score": new_score,
-                "question_result": {
-                    "question_index": team.current_question_index - 1,
-                    "correct": True,
-                    "points": question_score
+            await manager.send_to_team(
+                submission.team_name,
+                "score_update",
+                {
+                    "new_score": new_score,
+                    "question_result": {
+                        "question_index": team.current_question_index - 1,
+                        "correct": True,
+                        "points": question_score,
+                    },
+                    "bonus_unlocked": bonus_just_unlocked,
                 },
-                "bonus_unlocked": bonus_just_unlocked
-            })
+            )
             await manager.send_to_role("admin", "leaderboard_update", {})
 
             bonus_msg = ""
@@ -780,7 +808,7 @@ async def submit_question(
 @router.get("/team-powerups/{team_name}")
 async def get_team_powerups(
     team_name: str,
-        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get powerup information for a team"""
     from app.powerup_manager import powerup_manager
@@ -818,7 +846,7 @@ async def get_team_powerups(
 @router.post("/request-hint-question")
 async def request_hint_question(
     request: HintRequest,
-        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Request a hint for current question (max 3 per session)"""
 
@@ -835,15 +863,19 @@ async def request_hint_question(
 
     # Get hint
     hint_text = question_manager.get_hint(request.question_id)
+    if not hint_text or not str(hint_text).strip():
+        raise HTTPException(
+            status_code=400,
+            detail="No bonus hint is configured for this question",
+        )
 
     with game_state_write_lock():
         team = game_state.teams[request.team_name]
-        
+
         # Block hints for bonus questions
         if team.current_question_index >= STANDARD_Q:
             raise HTTPException(
-                status_code=400,
-                detail="Hints are not available for bonus questions"
+                status_code=400, detail="Hints are not available for bonus questions"
             )
 
         if team.hints_used_count >= 3:
@@ -857,10 +889,14 @@ async def request_hint_question(
         save_game_state()
 
         # Broadcast update
-        await manager.send_to_team(request.team_name, "score_update", {
-            "new_score": calculate_final_score(team),
-            "hints_used": team.hints_used_count
-        })
+        await manager.send_to_team(
+            request.team_name,
+            "score_update",
+            {
+                "new_score": calculate_final_score(team),
+                "hints_used": team.hints_used_count,
+            },
+        )
         await manager.send_to_role("admin", "leaderboard_update", {})
 
         return {
@@ -877,7 +913,7 @@ async def certainty_check(
     team_name: str,
     question_id: str,
     submitted_answer: str,
-        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Reality Stone PowerUp: Check answer confidence before submitting"""
 
@@ -922,7 +958,7 @@ async def certainty_check(
 @router.get("/team-stone/{team_name}")
 async def get_team_stone(
     team_name: str,
-        x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
+    x_device_id: Optional[str] = Header(default=None, alias="X-Device-Id"),
 ):
     """Get the Infinity Stone assigned to a team"""
 
@@ -932,10 +968,11 @@ async def get_team_stone(
     _enforce_active_access(team_name, x_device_id)
 
     team = game_state.teams[team_name]
-    
+
     # Initialize powerups if missing (handles recovery from broken powerups.json)
     if not team.powerups_available:
         from app.powerup_manager import powerup_manager
+
         powerup_manager.initialize_powerups_for_team(team)
         save_game_state()
 

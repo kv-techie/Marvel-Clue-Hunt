@@ -65,9 +65,17 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
   const activeEffect = activePowerup ? getPowerupEffect(activePowerup) : null;
   const revealClue2 =
-    showClue2 || activeEffect === "extra_clue" || activeEffect === "reveal_all_clues";
+    showClue2 || activeEffect === "reveal_all_clues";
+  const revealClue3 =
+    activeEffect === "extra_clue" || activeEffect === "reveal_all_clues";
   const revealBonusHint = showHint || activeEffect === "reveal_all_clues";
   const revealFirstLetter = activeEffect === "reveal_first_letter";
+  const clue1Text = question?.clue_1?.trim() || "";
+  const clue2Text = question?.clue_2?.trim() || "";
+  const clue3Text = question?.clue_3?.trim() || "";
+  const hintText = question?.hint_text?.trim() || "";
+  const hasAnyStaticClue = Boolean(clue1Text || clue2Text || clue3Text);
+  const hasHintText = Boolean(hintText && hintText.toLowerCase() !== "locked");
 
   // Evaluate Keyboard Visibility (Responsive Footer)
   useEffect(() => {
@@ -316,51 +324,68 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
 
             <div className="qr-clues-container">
               {!question.is_bonus_question && (
-                <div className="qr-clue-item">
-                  <strong style={{color: 'var(--text-primary)'}}>Hint 1:</strong> {question.clue_1}
-                </div>
+                <>
+                  {clue1Text && (
+                    <div className="qr-clue-item">
+                      <strong style={{color: 'var(--text-primary)'}}>Hint 1:</strong> {clue1Text}
+                    </div>
+                  )}
+                </>
               )}
               
               <AnimatePresence>
-                {revealClue2 && (
+                {revealClue2 && clue2Text && (
                   <motion.div 
                     initial={{ height: 0, opacity: 0 }} 
                     animate={{ height: 'auto', opacity: 1 }} 
                     exit={{ height: 0, opacity: 0 }}
                     className="qr-clue-item"
                   >
-                    <strong style={{color: 'var(--text-primary)'}}>Hint 2:</strong> {question.clue_2}
+                    <strong style={{color: 'var(--text-primary)'}}>Hint 2:</strong> {clue2Text}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {revealClue3 && clue3Text && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="qr-clue-item"
+                  >
+                    <strong style={{color: 'var(--accent-primary)'}}>Hint 3:</strong> {clue3Text}
                   </motion.div>
                 )}
               </AnimatePresence>
               
-              {!revealClue2 && !question.is_bonus_question && (
+              {!revealClue2 && !question.is_bonus_question && clue2Text && (
                 <button className="qr-action-btn" onClick={() => setShowClue2(true)}>
                   Reveal Hint 2 <span>▼</span>
                 </button>
               )}
 
-              {revealFirstLetter && question.hint_text && (
+              {hasAnyStaticClue && revealFirstLetter && hintText && (
                 <div className="qr-clue-item" style={{ borderLeftColor: 'var(--accent-secondary)' }}>
-                  <strong style={{color: 'var(--accent-secondary)'}}>First Letter:</strong> {question.hint_text.trim().charAt(0)}
+                  <strong style={{color: 'var(--accent-secondary)'}}>First Letter:</strong> {hintText.charAt(0)}
                 </div>
               )}
 
               {/* Hints Drawer */}
               <AnimatePresence>
-                {revealBonusHint && (
+                {hasAnyStaticClue && revealBonusHint && hintText && (
                   <motion.div 
                     initial={{ height: 0, opacity: 0 }} 
                     animate={{ height: 'auto', opacity: 1 }}
                     className="qr-clue-item" 
                     style={{ background: 'rgba(245,158,11,0.05)', borderLeftColor: '#f59e0b' }}
                   >
-                    <strong style={{color: '#f59e0b'}}>Bonus Hint:</strong> {question.hint_text}
+                    <strong style={{color: '#f59e0b'}}>Bonus Hint:</strong> {hintText}
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {!revealBonusHint && !question.is_bonus_question && (
+              {!revealBonusHint && !question.is_bonus_question && hasAnyStaticClue && hasHintText && (
                 <button 
                   className="qr-action-btn qr-hint-btn" 
                   onClick={handleRequestHint} 

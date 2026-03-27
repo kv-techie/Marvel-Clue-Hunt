@@ -72,6 +72,7 @@ class QuestionManager:
             "question_text": question["question_text"],
             "clue_1": question["clue_1"],
             "clue_2": question["clue_2"],
+            "clue_3": question.get("clue_3", ""),
             "Stone": question.get("stone"),
             "difficulty": question["difficulty"],
             "base_points": question["base_points"],
