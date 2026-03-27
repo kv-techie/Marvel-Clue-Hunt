@@ -265,12 +265,28 @@
 }
 
 /* Tab Switch Warning Styles */
+.tab-warning-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 14, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
 .tab-warning {
   padding: 16px 20px;
   border-radius: 8px;
-  margin-bottom: 20px;
-  grid-column: 1 / -1;
+  margin: 0;
+  max-width: 760px;
+  width: min(100%, 760px);
   animation: slideDown 0.3s ease-in-out;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
 }
 
 .tab-warning.warned {
@@ -542,6 +558,15 @@
 
   .tab-warning-content {
     align-items: flex-start;
+  }
+
+  .tab-warning-overlay {
+    align-items: flex-end;
+  }
+
+  .tab-warning {
+    width: 100%;
+    margin-bottom: 8px;
   }
 
   .completion-message h2 {

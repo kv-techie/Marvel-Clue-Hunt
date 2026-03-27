@@ -311,10 +311,12 @@ async def log_tab_switch(request: TabSwitchLog):
         )
         switches_remaining = max(0, 3 - total_left_switches)
         total_deductions = sum(
-            adj["amount"]
+            abs(adj["amount"])
             for adj in team.manual_adjustments
             if "Tab switch violation" in adj.get("reason", "")
         )
+        warning_count = min(3, total_left_switches)
+        penalty_applied = request.event_type == "tab_left" and total_left_switches > 3
 
         # Send score update and tab switch event
         await manager.send_to_team(request.team_name, "score_update", {
@@ -322,8 +324,10 @@ async def log_tab_switch(request: TabSwitchLog):
             "tab_switch_event": {
                 "event_type": request.event_type,
                 "total_left": total_left_switches,
+                "warning_count": warning_count,
                 "switches_remaining": switches_remaining,
-                "is_penalized": total_left_switches > 3
+                "is_penalized": total_left_switches > 3,
+                "penalty_applied": penalty_applied,
             }
         })
         await manager.send_to_role("admin", "leaderboard_update", {})
@@ -331,8 +335,10 @@ async def log_tab_switch(request: TabSwitchLog):
     return {
         "message": f"Tab switch event logged: {request.event_type}",
         "total_tab_left": total_left_switches,
+        "warning_count": warning_count,
         "switches_remaining": switches_remaining,
         "is_penalized": total_left_switches > 3,
+        "penalty_applied": penalty_applied,
         "total_deductions_from_switches": total_deductions,
         "penalty_per_overuse": 50,
     }

@@ -205,7 +205,7 @@ const Leaderboard = () => {
           style={{
             padding: '10px 20px',
             marginRight: '10px',
-            backgroundColor: activeTab === 'active' ? 'var(--accent-secondary)' : '#555',
+            backgroundColor: activeTab === 'active' ? '#3498db' : '#555',
             color: 'white',
             border: 'none',
             cursor: 'pointer',
@@ -266,7 +266,7 @@ const Leaderboard = () => {
                     <td style={{ fontSize: '20px', fontWeight: 'bold', color: team.score < 0 ? '#e74c3c' : '#2ecc71' }}>
                       {team.score}
                     </td>
-                    <td>{team.questions_completed || 0}/{team.total_questions || 20}</td>
+                    <td>{team.questions_completed || 0}/10</td>
                     <td>{team.hints_used}/3</td>
                     <td>
                       {team.qualified ? (
@@ -340,7 +340,7 @@ const Leaderboard = () => {
                     style={{
                       padding: '10px 20px',
                       marginLeft: '15px',
-                      background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                      background: 'linear-gradient(135deg, #3498db, #2980b9)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',

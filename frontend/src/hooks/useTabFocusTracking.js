@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { apiClient } from '../api/client'
 
 /**
@@ -9,11 +9,33 @@ export const useTabFocusTracking = (teamName) => {
   const [isVisible, setIsVisible] = useState(true)
   const [tabSwitchData, setTabSwitchData] = useState({
     total_tab_left: 0,
+    warning_count: 0,
     switches_remaining: 3,
     is_penalized: false,
+    penalty_applied: false,
     total_deductions_from_switches: 0
   })
   const [focusWarning, setFocusWarning] = useState(false)
+  const warningTimeoutRef = useRef(null)
+
+  const applyTabSwitchResponse = useCallback((data) => {
+    setTabSwitchData({
+      total_tab_left: data.total_tab_left,
+      warning_count: data.warning_count ?? Math.min(3, data.total_tab_left ?? 0),
+      switches_remaining: data.switches_remaining,
+      is_penalized: data.is_penalized,
+      penalty_applied: data.penalty_applied ?? false,
+      total_deductions_from_switches: data.total_deductions_from_switches
+    })
+  }, [])
+
+  const showWarning = useCallback(() => {
+    setFocusWarning(true)
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current)
+    }
+    warningTimeoutRef.current = setTimeout(() => setFocusWarning(false), 8000)
+  }, [])
 
   const logTabSwitch = useCallback(
     async (event) => {
@@ -28,13 +50,7 @@ export const useTabFocusTracking = (teamName) => {
             timestamp: new Date().toISOString(),
           })
           
-          // Update local state with response data
-          setTabSwitchData({
-            total_tab_left: response.data.total_tab_left,
-            switches_remaining: response.data.switches_remaining,
-            is_penalized: response.data.is_penalized,
-            total_deductions_from_switches: response.data.total_deductions_from_switches
-          })
+          applyTabSwitchResponse(response.data)
         } catch (err) {
           console.error('Failed to log tab switch:', err)
         }
@@ -47,18 +63,8 @@ export const useTabFocusTracking = (teamName) => {
             timestamp: new Date().toISOString(),
           })
 
-          // Update local state with response data
-          setTabSwitchData({
-            total_tab_left: response.data.total_tab_left,
-            switches_remaining: response.data.switches_remaining,
-            is_penalized: response.data.is_penalized,
-            total_deductions_from_switches: response.data.total_deductions_from_switches
-          })
-          
-          setFocusWarning(true)
-          
-          // Auto-hide warning after 8 seconds (longer so they see it)
-          setTimeout(() => setFocusWarning(false), 8000)
+          applyTabSwitchResponse(response.data)
+          showWarning()
         } catch (err) {
           console.error('Failed to log tab return:', err)
         }
@@ -66,7 +72,7 @@ export const useTabFocusTracking = (teamName) => {
 
       setIsVisible(newVisibility)
     },
-    [teamName, isVisible]
+    [teamName, isVisible, applyTabSwitchResponse, showWarning]
   )
 
   useEffect(() => {
@@ -76,6 +82,12 @@ export const useTabFocusTracking = (teamName) => {
       document.removeEventListener('visibilitychange', logTabSwitch)
     }
   }, [logTabSwitch])
+
+  useEffect(() => () => {
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current)
+    }
+  }, [])
 
   return {
     isVisible,

@@ -13,24 +13,30 @@ import StreakCounter from '../components/StreakCounter'
 import GameLeaderboard from '../components/GameLeaderboard'
 
 // Tab Switch Warning Component
-const TabSwitchWarning = ({ focusWarning, isPenalized, switchesRemaining, onDismiss }) => {
+const TabSwitchWarning = ({ focusWarning, isPenalized, switchesRemaining, warningCount, totalTabLeft, penaltyApplied, onDismiss }) => {
   if (!focusWarning) return null
 
+  const warningNumber = Math.max(1, Math.min(3, warningCount || 1))
+
   return (
-    <div className={`tab-warning ${isPenalized ? 'penalized' : 'warned'}`}>
+    <div className="tab-warning-overlay" role="alert" aria-live="assertive">
+      <div className={`tab-warning ${isPenalized ? 'penalized' : 'warned'}`}>
       <div className="tab-warning-content">
         <span className="tab-warning-icon">
           {isPenalized ? '🚨' : '⚠️'}
         </span>
         <div className="tab-warning-text">
           <h3 className="tab-warning-title">
-            {isPenalized ? 'Electronics Violation: -50 Points!' : 'Tab Switch Detected'}
+            {isPenalized ? 'Electronics Violation: -50 Points' : `Tab Switch Warning ${warningNumber}/3`}
           </h3>
           <p className="tab-warning-message">
             {isPenalized ? (
-              <>You've exceeded the allowed tab switches. <strong>-50 points deducted</strong> for this violation.</>
+              <>
+                Tab switch #{totalTabLeft}. <strong>-50 points deducted</strong>.
+                {penaltyApplied ? ' Every tab switch after the first 3 costs 50 points.' : ' Penalties apply from the 4th tab switch onward.'}
+              </>
             ) : (
-              <>You switched away from the game. You have <strong>{switchesRemaining} more</strong> free switches before points are deducted.</>
+              <>You switched away from the game tab. You have <strong>{switchesRemaining} free warning(s) left</strong> before deductions begin.</>
             )}
           </p>
           {!isPenalized && switchesRemaining === 1 && (
@@ -42,6 +48,7 @@ const TabSwitchWarning = ({ focusWarning, isPenalized, switchesRemaining, onDism
         <button className="tab-warning-close" onClick={onDismiss}>
           ✕
         </button>
+      </div>
       </div>
     </div>
   )
@@ -221,7 +228,15 @@ const KnowYourPowerups = ({ powerups = [], teamName, stone }) => {
 const AttendeeDashboard = () => {
   const { team } = useAuth()
   const { startTimer, stopTimer, elapsedTime } = useTimer()
-  const { focusWarning, total_tab_left, switches_remaining, is_penalized, setFocusWarning } = useTabFocusTracking(team)
+  const {
+    focusWarning,
+    total_tab_left,
+    warning_count,
+    switches_remaining,
+    is_penalized,
+    penalty_applied,
+    setFocusWarning,
+  } = useTabFocusTracking(team)
   const [teamStatus, setTeamStatus] = useState(null)
   const [stone, setStone] = useState(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -390,6 +405,9 @@ const AttendeeDashboard = () => {
         focusWarning={focusWarning}
         isPenalized={is_penalized}
         switchesRemaining={switches_remaining}
+        warningCount={warning_count}
+        totalTabLeft={total_tab_left}
+        penaltyApplied={penalty_applied}
         onDismiss={() => setFocusWarning(false)}
       />
       
