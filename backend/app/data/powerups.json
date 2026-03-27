@@ -11,14 +11,9 @@
         },
         {
           "id": "logic_lock",
-          "name": "Logic Lock",
           "description": "Check answer certainty before submitting",
-<<<<<<< Updated upstream
           "effect": "certainty_check",
           "name": "Logic Lock"
-=======
-          "effect": "certainty_check"
->>>>>>> Stashed changes
         },
         {
           "id": "cerebral_fortress",

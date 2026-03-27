@@ -33,7 +33,7 @@ Below is the deep brief of all powerups categorized by their respective Infinity
 ### 🧠 Mind Stone (Mental Acuity & Forgiveness)
 The Mind Stone focuses on providing extra information and protecting against intellectual missteps.
 - **Insight Surge:** Reveals an extra hidden clue for the current question to help the team solve it.
-- **Logic Lock:** Check answer certainty before submitting (one verification per use).
+- **Logic Lock:** Temporarily activates a "fuzzy match boost," causing the system to be highly forgiving of typos or spelling variations in the submitted answer.
 - **Cerebral Fortress:** Acts as a mental shield for the next incorrect answer, preventing the team's streak from resetting to zero.
 
 ### 💥 Power Stone (Raw Scoring Potential)

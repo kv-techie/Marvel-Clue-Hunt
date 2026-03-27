@@ -126,10 +126,6 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   };
 
   const handleCertaintyCheck = async () => {
-    if (activeEffect !== "certainty_check") {
-      triggerError("Activate Logic Lock to verify your answer.");
-      return;
-    }
     if (!answer.trim()) {
       triggerError("Enter an answer first to check its certainty.");
       return;
@@ -141,17 +137,6 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
         answer
       );
       setCertaintyFeedback(response.feedback);
-      if (activePowerup) {
-        setPowerupsAvailable((prev) => ({ ...prev, [activePowerup]: false }));
-        setTeamPowerups((prev) =>
-          prev.map((item) =>
-            item.id === activePowerup
-              ? { ...item, available: false, used: true }
-              : item
-          )
-        );
-      }
-      setActivePowerup(null);
     } catch (err) {
       triggerError("Certainty Check failed: " + (err.response?.data?.detail || err.message));
     }
@@ -160,6 +145,11 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const handleSubmitAnswer = async (e) => {
     if (e) e.preventDefault();
     if (!answer.trim() || submitting) return;
+
+    if (activeEffect === "certainty_check" && !certaintyFeedback) {
+      await handleCertaintyCheck();
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -232,12 +222,8 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
   const handleUsePowerup = (powerupId) => {
     if (activePowerup === powerupId) {
       setActivePowerup(null); // Deselect
-      setCertaintyFeedback(null);
     } else {
       setActivePowerup(powerupId);
-      if (getPowerupEffect(powerupId) !== "certainty_check") {
-        setCertaintyFeedback(null);
-      }
     }
   };
 
@@ -329,9 +315,11 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
             </h2>
 
             <div className="qr-clues-container">
-              <div className="qr-clue-item">
-                <strong style={{color: 'var(--text-primary)'}}>Hint 1:</strong> {question.clue_1}
-              </div>
+              {!question.is_bonus_question && (
+                <div className="qr-clue-item">
+                  <strong style={{color: 'var(--text-primary)'}}>Hint 1:</strong> {question.clue_1}
+                </div>
+              )}
               
               <AnimatePresence>
                 {revealClue2 && (
@@ -346,7 +334,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
                 )}
               </AnimatePresence>
               
-              {!revealClue2 && (
+              {!revealClue2 && !question.is_bonus_question && (
                 <button className="qr-action-btn" onClick={() => setShowClue2(true)}>
                   Reveal Hint 2 <span>▼</span>
                 </button>
@@ -372,7 +360,7 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
                 )}
               </AnimatePresence>
 
-              {!revealBonusHint && (
+              {!revealBonusHint && !question.is_bonus_question && (
                 <button 
                   className="qr-action-btn qr-hint-btn" 
                   onClick={handleRequestHint} 
@@ -441,7 +429,6 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
               onChange={(e) => {
                 setAnswer(e.target.value);
                 if (error) setError(null);
-                if (certaintyFeedback) setCertaintyFeedback(null);
               }}
               disabled={submitting}
               autoComplete="off"
@@ -451,31 +438,11 @@ const QuestionRound = ({ teamName, onQuestionComplete }) => {
             <button 
               type="submit" 
               className="qr-submit"
-              disabled={
-                !answer.trim() ||
-                submitting ||
-                (activeEffect === "certainty_check" && !certaintyFeedback)
-              }
+              disabled={!answer.trim() || submitting}
             >
               {submitting ? "..." : "Lock In"}
             </button>
           </form>
-
-          {activeEffect === "certainty_check" && (
-            <div className="qr-certainty-actions">
-              <button
-                type="button"
-                className="qr-action-btn"
-                onClick={handleCertaintyCheck}
-                disabled={!answer.trim() || submitting || Boolean(certaintyFeedback)}
-              >
-                {certaintyFeedback ? "Verified" : "Verify Answer"}
-              </button>
-              <span className="qr-certainty-note">
-                Check answer certainty before submitting.
-              </span>
-            </div>
-          )}
 
           {/* Error / Success Banners */}
           <AnimatePresence>

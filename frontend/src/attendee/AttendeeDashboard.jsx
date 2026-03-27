@@ -19,26 +19,28 @@ const TabSwitchWarning = ({ focusWarning, isPenalized, switchesRemaining, onDism
   return (
     <div className={`tab-warning ${isPenalized ? 'penalized' : 'warned'}`}>
       <div className="tab-warning-content">
-        <span className="tab-warning-icon">{isPenalized ? '🚨' : '⚠️'}</span>
+        <span className="tab-warning-icon">
+          {isPenalized ? '🚨' : '⚠️'}
+        </span>
         <div className="tab-warning-text">
           <h3 className="tab-warning-title">
-            {isPenalized ? 'Penalty Applied: -50 Points' : 'Tab Switch Detected'}
+            {isPenalized ? 'Electronics Violation: -50 Points!' : 'Tab Switch Detected'}
           </h3>
           <p className="tab-warning-message">
             {isPenalized ? (
-              <>You left the game tab. <strong>-50 points</strong> were deducted. Stay on this tab to avoid more penalties.</>
+              <>You've exceeded the allowed tab switches. <strong>-50 points deducted</strong> for this violation.</>
             ) : (
-              <>You left the game tab. You have <strong>{switchesRemaining} free switch{switchesRemaining === 1 ? '' : 'es'}</strong> remaining.</>
+              <>You switched away from the game. You have <strong>{switchesRemaining} more</strong> free switches before points are deducted.</>
             )}
           </p>
           {!isPenalized && switchesRemaining === 1 && (
             <p className="tab-warning-final">
-              ⚠️ Next switch will deduct 50 points.
+              ⚠️ Next switch will result in -50 point penalty!
             </p>
           )}
         </div>
-        <button className="tab-warning-ack" onClick={onDismiss}>
-          I Understand
+        <button className="tab-warning-close" onClick={onDismiss}>
+          ✕
         </button>
       </div>
     </div>
