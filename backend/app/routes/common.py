@@ -1,7 +1,7 @@
 import json
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -351,7 +351,8 @@ def _update_device_entry(device, request, match_type, is_active=False):
 
 def _create_device_entry(request, is_active=True):
     """Create a new device entry"""
-    now = datetime.now().isoformat()
+    now_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    now = now_utc
 
     device_entry = {
         "device_id": request.device_id,

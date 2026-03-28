@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { getAllTeams, getTeamTabSwitches, getTeamsActiveDevices } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import '../styles/ElectronicsMonitoring.css'
 
 const ElectronicsMonitoring = () => {
+  const { user } = useAuth()
   const [teams, setTeams] = useState([])
   const [tabSwitchData, setTabSwitchData] = useState({})
   const [activeDevicesData, setActiveDevicesData] = useState([])
@@ -10,6 +12,8 @@ const ElectronicsMonitoring = () => {
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [sortBy, setSortBy] = useState('switches') // 'switches' or 'name'
   const [showDevicesView, setShowDevicesView] = useState(false)
+  
+
 
   useEffect(() => {
     let isFetching = false
@@ -25,27 +29,27 @@ const ElectronicsMonitoring = () => {
         }
         
         // Fetch all teams
-        const teamsResponse = await getAllTeams()
+        const teamsResponse = await getAllTeams(user)
         const teamsList = teamsResponse.teams.map(team => ({
           name: team.name,
           members: team.members || []
         }))
         setTeams(teamsList)
-
+ 
         // Fetch active devices info
         try {
-          const devicesResponse = await getTeamsActiveDevices()
+          const devicesResponse = await getTeamsActiveDevices(user)
           setActiveDevicesData(devicesResponse.teams || [])
         } catch (err) {
           console.error('Failed to fetch active devices:', err)
           setActiveDevicesData([])
         }
-
+ 
         // Fetch tab switch logs for each team in parallel
         const switchResults = await Promise.all(
           teamsList.map(async (team) => {
             try {
-              const response = await getTeamTabSwitches(team.name)
+              const response = await getTeamTabSwitches(team.name, user)
               return [team.name, response]
             } catch (err) {
               return [team.name, { total_tab_left: 0, events: [] }]

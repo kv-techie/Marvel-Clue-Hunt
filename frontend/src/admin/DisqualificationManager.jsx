@@ -15,11 +15,11 @@ const DisqualificationManager = () => {
 
   const fetchData = async () => {
     try {
-      const candidatesResponse = await getDisqualificationCandidates()
+      const candidatesResponse = await getDisqualificationCandidates(user)
       setCandidates(candidatesResponse.candidates)
       
       // Fetch all teams to get disqualified ones
-      const teamsResponse = await getAllTeams()
+      const teamsResponse = await getAllTeams(user)
       const disqualified = teamsResponse.teams.filter(team => team.disqualified)
       setDisqualifiedTeams(disqualified)
     } catch (err) {

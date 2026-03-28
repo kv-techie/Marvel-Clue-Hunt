@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { getTeamTabSwitches } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 const TabSwitchMonitor = ({ teamName }) => {
+  const { user } = useAuth()
   const [tabSwitches, setTabSwitches] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -10,7 +12,7 @@ const TabSwitchMonitor = ({ teamName }) => {
     const fetchTabSwitches = async () => {
       try {
         setLoading(true)
-        const response = await getTeamTabSwitches(teamName)
+        const response = await getTeamTabSwitches(teamName, user)
         setTabSwitches(response)
         setError('')
       } catch (err) {

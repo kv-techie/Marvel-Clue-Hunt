@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, Query
 
@@ -722,6 +722,17 @@ async def award_enactment_bonus(team_name: str, request: BonusRequest, admin_nam
 
     team.enactment_bonus_awarded = True
     team.enactment_bonus_amount = bonus_amount
+    
+    # Log to manual_adjustments for Audit Log visibility
+    now_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    team.manual_adjustments.append({
+        "timestamp": now_utc,
+        "adjusted_by": admin_name,
+        "amount": bonus_amount,
+        "reason": "Enactment Bonus Awarded",
+        "adjustment_type": "reward"
+    })
+    
     save_game_state()
 
     # Broadcast to team and admins
@@ -1068,21 +1079,23 @@ async def adjust_points(
         team = game_state.teams[team_name]
 
         # Create adjustment record
-        adjustment = PointAdjustment(
-            timestamp=datetime.now(),
-            adjusted_by=adjusted_by,
-            amount=request.amount,
-            reason=request.reason.strip(),
-            adjustment_type=request.adjustment_type,
-        )
+        now_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        new_adjustment = {
+            "timestamp": now_utc,
+            "adjusted_by": adjusted_by,
+            "amount": request.amount,
+            "reason": request.reason.strip(),
+            "adjustment_type": request.adjustment_type,
+        }
 
-        team.manual_adjustments.append(adjustment)
+        team.manual_adjustments.append(new_adjustment)
 
         # Check if team should be auto-disqualified
         if not team.disqualified and check_auto_disqualification(team):
+            now_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             team.disqualified = True
             team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
-            team.disqualification_timestamp = datetime.now()
+            team.disqualification_timestamp = now_utc
 
         save_game_state()
 
@@ -1118,7 +1131,7 @@ async def adjust_points(
             "amount": request.amount,
             "reason": request.reason,
             "adjustment_type": request.adjustment_type,
-            "timestamp": adjustment.timestamp.isoformat(),
+            "timestamp": now_utc,
         },
     }
 
@@ -1269,9 +1282,10 @@ async def confirm_disqualification(team_name: str, confirmed_by: str):
 
         from app.scoring import calculate_total_deductions
 
+        now_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         team.disqualified = True
         team.disqualification_confirmed_by_admin = True
-        team.disqualification_timestamp = datetime.now()
+        team.disqualification_timestamp = now_utc
         team.disqualification_reason = f"Automatic: Total deductions ({calculate_total_deductions(team)}) exceed threshold ({settings.disqualification_deduction_threshold})"
         save_game_state()
         
@@ -1288,7 +1302,7 @@ async def confirm_disqualification(team_name: str, confirmed_by: str):
         "disqualified": True,
         "reason": team.disqualification_reason,
         "confirmed_by": confirmed_by,
-        "timestamp": team.disqualification_timestamp.isoformat(),
+        "timestamp": team.disqualification_timestamp,
     }
 
 
@@ -1339,6 +1353,17 @@ async def reverse_disqualification(team_name: str, reversed_by: str):
         team.disqualification_acknowledged_by_team = False
         team.disqualification_reason = None
         team.disqualification_timestamp = None
+        
+        # Log reversal for audit trail
+        now_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        team.manual_adjustments.append({
+            "timestamp": now_utc,
+            "adjusted_by": reversed_by,
+            "amount": 0,
+            "reason": "Disqualification Reversed",
+            "adjustment_type": "reward"
+        })
+        
         save_game_state()
 
         # Broadcast to team
@@ -1352,7 +1377,7 @@ async def reverse_disqualification(team_name: str, reversed_by: str):
         "team_name": team_name,
         "disqualified": False,
         "reversed_by": reversed_by,
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": team.manual_adjustments[-1]["timestamp"],
     }
 
 
