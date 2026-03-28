@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -22,18 +23,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
-# CORS configuration for localhost development
-# Allow all origins for development, restrict in production
+# CORS configuration
+# Allow specific origins from environment, fallback to localhost for development
+env_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+origins = [
+    "http://localhost:3000",
+    "http://localhost:7080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:7080",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+if env_origins:
+    origins.extend([o.strip() for o in env_origins if o.strip()])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:7080",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:7080",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

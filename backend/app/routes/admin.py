@@ -25,8 +25,7 @@ from app.state_io import atomic_write_json, state_write_lock
 from app.team_allocator import (
     allocate_teams_from_files as allocate_teams,
 )
-from app.routes import common
-from app.routes.common import (
+from .common import (
     block_guest_access,
     load_guest_credentials,
     save_guest_credentials,
