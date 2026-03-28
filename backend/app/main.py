@@ -40,6 +40,7 @@ if env_origins:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.onrender\.com|https://.*", # Automagically allow deployed render frontends
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
