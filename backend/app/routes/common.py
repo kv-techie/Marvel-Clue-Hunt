@@ -81,6 +81,11 @@ def save_guest_credentials(credentials: dict):
     atomic_write_json(GUEST_CREDENTIALS_FILE, credentials, indent=2)
 
 
+def is_guest(name: str) -> bool:
+    """Return True if the user is a guest"""
+    return bool(name and name.endswith(" (Guest)"))
+
+
 def block_guest_access(name: str):
     """Block access if the user is a guest (fail-safe)"""
     if name and name.endswith(" (Guest)"):

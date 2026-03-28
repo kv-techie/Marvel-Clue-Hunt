@@ -4,7 +4,7 @@ import shutil
 from contextlib import contextmanager
 from datetime import datetime
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile, Query
 
 from app.config import settings
 from app.dialogue_manager import dialogue_manager
@@ -27,6 +27,7 @@ from app.team_allocator import (
 )
 from .common import (
     block_guest_access,
+    is_guest,
     load_guest_credentials,
     save_guest_credentials,
 )
@@ -527,7 +528,7 @@ async def upload_teams_and_attendees(
 
 
 @router.get("/teams")
-async def get_all_teams():
+async def get_all_teams(admin_name: str = Query(None)):
     """Get all teams with their current status"""
 
     if not game_state.teams:
@@ -596,13 +597,9 @@ async def start_game(admin_name: str = "Admin"):
 
 
 @router.get("/team-tab-switches/{team_name}")
-async def get_team_tab_switches(team_name: str):
-    """Get tab switch logs for a specific team
-
-    Rules:
-    - First 3 switches: Warning only, no deductions
-    - 4th switch and beyond: -50 points per switch
-    """
+async def list_tab_switches(team_name: str, admin_name: str = Query(...)):
+    """List tab switch logs for a team"""
+    block_guest_access(admin_name)
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
@@ -795,14 +792,28 @@ async def set_pin(role: str, name: str, pin: str, admin_name: str = "Admin"):
 
 
 @router.get("/pins")
-async def list_pins():
+async def list_pins(admin_name: str = Query(...)):
     """List admin and volunteer users with PINs"""
+    # Remove block_guest_access(admin_name) - guests can now see names but not pins
+    is_guest_user = is_guest(admin_name)
+    
     admin_credentials = load_admin_credentials()
     volunteer_credentials = load_volunteer_credentials()
 
-    # Normalize to readable lists
-    admins = [v for k, v in admin_credentials.items()]
-    volunteers = [v for k, v in volunteer_credentials.items()]
+    # Normalize to readable lists and mask pins for guests
+    admins = []
+    for k, v in admin_credentials.items():
+        user_data = v.copy()
+        if is_guest_user:
+            user_data["pin"] = "****"
+        admins.append(user_data)
+        
+    volunteers = []
+    for k, v in volunteer_credentials.items():
+        user_data = v.copy()
+        if is_guest_user:
+            user_data["pin"] = "****"
+        volunteers.append(user_data)
 
     return {"admin_users": admins, "volunteer_users": volunteers}
 
@@ -845,8 +856,9 @@ async def delete_pin(role: str, name: str, admin_name: str = "Admin"):
 
 
 @router.get("/devices/{team_name}")
-async def list_devices(team_name: str):
+async def list_devices(team_name: str, admin_name: str = Query(...)):
     """List registered device IDs for a team"""
+    block_guest_access(admin_name)
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
             devices = json.load(f)
@@ -902,8 +914,9 @@ async def remove_device(team_name: str, device_id: str, admin_name: str = "Admin
 
 
 @router.get("/teams-active-devices")
-async def get_teams_active_devices():
-    """Get all teams with their currently active device information"""
+async def get_teams_active_devices(admin_name: str = Query(...)):
+    """Get active device count for all teams"""
+    block_guest_access(admin_name)
     DEVICES_FILE = _state_file("devices.json")
 
     if os.path.exists(DEVICES_FILE):

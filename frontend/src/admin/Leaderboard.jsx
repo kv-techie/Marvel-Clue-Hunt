@@ -194,6 +194,7 @@ const Leaderboard = () => {
       )}
       
       {/* Export Button */}
+      {!isGuest && (
       <div style={{ marginBottom: '15px' }}>
         <button
           onClick={handleExportLeaderboard}
@@ -211,6 +212,7 @@ const Leaderboard = () => {
           📥 Download as CSV
         </button>
       </div>
+      )}
       
       {/* Tab Navigation */}
       <div className="tab-navigation" style={{ marginBottom: '20px', borderBottom: '2px solid #444' }}>

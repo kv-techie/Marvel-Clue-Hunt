@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { getAdjustmentsLog } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 // Utility function to convert data to CSV format
 const downloadCSV = (data, filename) => {
@@ -47,6 +48,7 @@ const downloadCSV = (data, filename) => {
 }
 
 const AuditLog = () => {
+  const { isGuest } = useAuth()
   const [adjustments, setAdjustments] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all') // all, reward, deduct
@@ -118,6 +120,7 @@ const AuditLog = () => {
         >
           Deductions ({adjustments.filter((a) => a.adjustment_type === 'deduct').length})
         </button>
+        {!isGuest && (
         <button
           onClick={handleExportAuditLog}
           style={{
@@ -133,6 +136,7 @@ const AuditLog = () => {
         >
           📥 Download as CSV
         </button>
+        )}
       </div>
 
       {filteredAdjustments.length === 0 ? (

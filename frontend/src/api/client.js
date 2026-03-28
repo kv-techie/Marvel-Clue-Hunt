@@ -76,7 +76,7 @@ export const uploadTeamsAndAttendees = (adminName, teamNamesFile, attendeesFile)
   })
 }
 
-export const getAllTeams = () => api.get('/admin/teams')
+export const getAllTeams = (adminName) => api.get('/admin/teams', { params: { admin_name: adminName } })
 
 export const setStartTime = (startTime, adminName) =>
   api.post('/admin/set-start-time', null, { params: { start_time: startTime, admin_name: adminName } })
@@ -113,7 +113,7 @@ export const removeVolunteer = (name, adminName) =>
 export const setPin = (role, name, pin, adminName) =>
   api.post(`/admin/set-pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`, null, { params: { pin, admin_name: adminName } })
 
-export const getPins = () => api.get('/admin/pins')
+export const getPins = (adminName) => api.get('/admin/pins', { params: { admin_name: adminName } })
 
 export const deletePin = (role, name, adminName) => 
   api.delete(`/admin/pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`, { params: { admin_name: adminName } })
@@ -122,14 +122,14 @@ export const generateGuestPassword = (adminName) =>
   api.post('/admin/generate-guest-password', null, { params: { admin_name: adminName } })
 
 // Device management
-export const getDevices = (teamName) => api.get(`/admin/devices/${encodeURIComponent(teamName)}`)
+export const getDevices = (teamName, adminName) => api.get(`/admin/devices/${encodeURIComponent(teamName)}`, { params: { admin_name: adminName } })
 
 export const removeDevice = (teamName, deviceId, adminName) => 
   api.delete(`/admin/devices/${encodeURIComponent(teamName)}/${encodeURIComponent(deviceId)}`, { params: { admin_name: adminName } })
 
-export const getTeamsActiveDevices = () => api.get('/admin/teams-active-devices')
+export const getTeamsActiveDevices = (adminName) => api.get('/admin/teams-active-devices', { params: { admin_name: adminName } })
 
-export const getTeamTabSwitches = (teamName) => api.get(`/admin/team-tab-switches/${encodeURIComponent(teamName)}`)
+export const getTeamTabSwitches = (teamName, adminName) => api.get(`/admin/team-tab-switches/${encodeURIComponent(teamName)}`, { params: { admin_name: adminName } })
 
 // Attendee APIs
 export const startTeamTimer = (teamName) =>

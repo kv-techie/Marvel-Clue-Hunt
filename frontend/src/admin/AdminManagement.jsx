@@ -57,7 +57,7 @@ const AdminManagement = () => {
 
   const fetchUsersWithPins = async () => {
     try {
-      const pinsResponse = await getPins()
+      const pinsResponse = await getPins(user)
       setAdminUsers(pinsResponse.admin_users || [])
       setVolunteerUsers(pinsResponse.volunteer_users || [])
     } catch (err) {
@@ -205,7 +205,7 @@ const AdminManagement = () => {
     }
 
     try {
-      const response = await getDevices(teamName.trim())
+      const response = await getDevices(teamName.trim(), user)
       setDevices(response.devices || [])
       setDeviceMessage(
         response.devices.length === 0
@@ -377,6 +377,7 @@ const AdminManagement = () => {
                         </div>
                         <div className="admin-list-subtitle">
                           <span>PIN: {getMaskedPin(admin.pin, admin.username)}</span>
+                          {!isGuest && (
                           <button
                             onClick={() => togglePinVisibility(admin.username)}
                             title={visiblePins[admin.username] ? 'Hide PIN' : 'Show PIN'}
@@ -385,6 +386,7 @@ const AdminManagement = () => {
                           >
                             {visiblePins[admin.username] ? '👁️ Hide' : '👁️ Show'}
                           </button>
+                          )}
                           <span style={{ marginLeft: '10px' }}>Created: {new Date(admin.created_at).toLocaleString()}</span>
                         </div>
                       </div>
@@ -489,6 +491,7 @@ const AdminManagement = () => {
                         </div>
                         <div className="admin-list-subtitle">
                           <span>PIN: {getMaskedPin(volunteer.pin, volunteer.username)}</span>
+                          {!isGuest && (
                           <button
                             onClick={() => togglePinVisibility(volunteer.username)}
                             title={visiblePins[volunteer.username] ? 'Hide PIN' : 'Show PIN'}
@@ -497,6 +500,7 @@ const AdminManagement = () => {
                           >
                             {visiblePins[volunteer.username] ? '👁️ Hide' : '👁️ Show'}
                           </button>
+                          )}
                           <span style={{ marginLeft: '10px' }}>Created: {new Date(volunteer.created_at).toLocaleString()}</span>
                         </div>
                       </div>
@@ -524,6 +528,7 @@ const AdminManagement = () => {
       </div>
 
       {/* ==================== DEVICE MANAGEMENT ==================== */}
+      {!isGuest && (
       <div>
         <h2 className="admin-section-title">
           📱 Device Management
@@ -577,10 +582,12 @@ const AdminManagement = () => {
                         ID: {getDeviceId(device)}
                       </div>
                     </div>
-                    {!isGuest && (
+                    {!isGuest ? (
                       <button className="admin-btn outline-danger" onClick={() => handleRemoveDevice(getDeviceId(device))}>
                         Remove
                       </button>
+                    ) : (
+                      <span className="admin-badge info">PROTECTED</span>
                     )}
                   </div>
                 ))}
@@ -589,6 +596,7 @@ const AdminManagement = () => {
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }

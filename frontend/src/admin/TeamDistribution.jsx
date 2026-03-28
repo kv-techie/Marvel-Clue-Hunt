@@ -13,7 +13,7 @@ const TeamDistribution = () => {
 
   const fetchTeams = async () => {
     try {
-      const response = await getAllTeams()
+      const response = await getAllTeams(user)
       setTeams(response)
     } catch (err) {
       console.error('Failed to fetch teams:', err)
@@ -98,6 +98,8 @@ const TeamDistribution = () => {
         </div>
       )}
 
+      {/* Allocation Form - Hidden for guests */}
+      {!isGuest && (
       <form onSubmit={handleUpload} style={{ marginBottom: '30px' }}>
         <div style={{
           display: 'grid',
@@ -206,6 +208,7 @@ Charlie Brown`}
           {isGuest ? '🔒 View Only' : (loading ? '⏳ Allocating...' : '🚀 Allocate Teams')}
         </button>
       </form>
+      )}
 
       {/* Results Display */}
       {result && (
