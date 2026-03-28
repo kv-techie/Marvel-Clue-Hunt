@@ -25,6 +25,12 @@ from app.state_io import atomic_write_json, state_write_lock
 from app.team_allocator import (
     allocate_teams_from_files as allocate_teams,
 )
+from app.routes import common
+from app.routes.common import (
+    block_guest_access,
+    load_guest_credentials,
+    save_guest_credentials,
+)
 from app.timer_manager import timer_manager
 from app.websocket_manager import manager
 
@@ -78,6 +84,7 @@ ADMIN_WHITELIST_FILE = _state_file("admin_whitelist.json")
 VOLUNTEER_WHITELIST_FILE = _state_file("volunteer_whitelist.json")
 ADMIN_CREDENTIALS_FILE = _state_file("admin_credentials.json")
 VOLUNTEER_CREDENTIALS_FILE = _state_file("volunteer_credentials.json")
+DEVICES_FILE = _state_file("devices.json")
 
 # In-memory game state
 game_state: GameState = GameState()
@@ -203,9 +210,34 @@ def save_volunteer_credentials(credentials: dict):
     print(f"💾 Saved {len(credentials)} volunteer credentials")
 
 
+@router.post("/generate-guest-password")
+async def generate_guest_password(admin_name: str):
+    """Generate a temporary 4-6 digit password for guest login.
+    Only authorized admins can call this (checked by caller).
+    """
+    import random
+
+    # Generate random 4-6 digit PIN
+    length = random.randint(4, 6)
+    temp_pin = "".join([str(random.randint(0, 9)) for _ in range(length)])
+
+    # Save to guest credentials
+    guest_creds = {
+        "admin_name": admin_name,
+        "temp_pin": temp_pin,
+        "is_active": True,
+        "created_at": datetime.now().isoformat(),
+    }
+    save_guest_credentials(guest_creds)
+
+    print(f"🔑 Generated guest PIN for {admin_name}: {temp_pin}")
+    return {"success": True, "pin": temp_pin, "admin_name": admin_name}
+
+
 @router.post("/upload-attendance")
-async def upload_attendance(file: UploadFile = File(...)):
+async def upload_attendance(admin_name: str, file: UploadFile = File(...)):
     """Upload attendance CSV and allocate teams"""
+    block_guest_access(admin_name)
 
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="File must be a CSV")
@@ -246,8 +278,9 @@ async def upload_attendance(file: UploadFile = File(...)):
 
 
 @router.post("/allocate-teams-random")
-async def allocate_teams_random(file: UploadFile = File(...)):
+async def allocate_teams_random(admin_name: str, file: UploadFile = File(...)):
     """Allocate attendees randomly into stone-named teams"""
+    block_guest_access(admin_name)
 
     try:
         # Read attendees file
@@ -307,16 +340,14 @@ async def allocate_teams_random(file: UploadFile = File(...)):
 
 @router.post("/upload-teams-and-attendees")
 async def upload_teams_and_attendees(
+    admin_name: str,
     teams_file: UploadFile = File(...),
     attendees_file: UploadFile = File(...),
 ):
     """
     Upload teams and attendees files to allocate teams based on character preferences.
-
-    Expected formats:
-    - Teams CSV: Team 1, Team 2, Team 3 (on first line)
-    - Attendees CSV: Name, FavoriteCharacter (one per line)
     """
+    block_guest_access(admin_name)
     try:
         # Read teams file
         teams_content = await teams_file.read()
@@ -513,8 +544,9 @@ async def get_all_teams():
 
 
 @router.post("/set-start-time")
-async def set_start_time(start_time: str):
+async def set_start_time(start_time: str, admin_name: str = "Admin"):
     """Set global game start time (ISO format)"""
+    block_guest_access(admin_name)
 
     try:
         dt = datetime.fromisoformat(start_time)
@@ -528,8 +560,9 @@ async def set_start_time(start_time: str):
 
 
 @router.post("/start-game")
-async def start_game():
+async def start_game(admin_name: str = "Admin"):
     """Start the game immediately"""
+    block_guest_access(admin_name)
 
     now = datetime.now()
 
@@ -578,8 +611,9 @@ async def get_team_tab_switches(team_name: str):
 
 
 @router.post("/stop-game")
-async def stop_game():
+async def stop_game(admin_name: str = "Admin"):
     """Stop the game"""
+    block_guest_access(admin_name)
 
     timer_manager.reset_all()
     for team in game_state.teams.values():
@@ -593,7 +627,7 @@ async def stop_game():
 
 
 @router.post("/delete-participant-data")
-async def delete_participant_data():
+async def delete_participant_data(admin_name: str = "Admin"):
     """Delete all participant data and reset game state after game ends
 
     Admin and volunteer credentials are stored separately and are NOT affected.
@@ -644,8 +678,9 @@ async def get_admin_leaderboard():
 
 
 @router.post("/award-enactment-bonus/{team_name}")
-async def award_enactment_bonus(team_name: str, request: BonusRequest):
+async def award_enactment_bonus(team_name: str, request: BonusRequest, admin_name: str = "Admin"):
     """Award enactment bonus to a team"""
+    block_guest_access(admin_name)
 
     if not is_game_currently_active():
         raise HTTPException(status_code=403, detail=GAME_INACTIVE_MESSAGE)
@@ -698,8 +733,9 @@ async def get_admin_list():
 
 
 @router.post("/set-pin/{role}/{name}")
-async def set_pin(role: str, name: str, pin: str):
+async def set_pin(role: str, name: str, pin: str, admin_name: str = "Admin"):
     """Set PIN for an admin or volunteer. role should be 'admin' or 'volunteer'."""
+    block_guest_access(admin_name)
 
     role = role.strip().lower()
     name = name.strip()
@@ -756,8 +792,9 @@ async def list_pins():
 
 
 @router.delete("/pin/{role}/{name}")
-async def delete_pin(role: str, name: str):
+async def delete_pin(role: str, name: str, admin_name: str = "Admin"):
     """Remove PIN entry for admin or volunteer"""
+    block_guest_access(admin_name)
     role = role.strip().lower()
     name = name.strip()
 
@@ -794,7 +831,6 @@ async def delete_pin(role: str, name: str):
 @router.get("/devices/{team_name}")
 async def list_devices(team_name: str):
     """List registered device IDs for a team"""
-    DEVICES_FILE = _state_file("devices.json")
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
             devices = json.load(f)
@@ -805,9 +841,12 @@ async def list_devices(team_name: str):
     return {"team": team_name, "devices": team_devices}
 
 
+
+
 @router.delete("/devices/{team_name}/{device_id}")
-async def remove_device(team_name: str, device_id: str):
+async def remove_device(team_name: str, device_id: str, admin_name: str = "Admin"):
     """Remove a specific device id from a team's registered devices"""
+    block_guest_access(admin_name)
     DEVICES_FILE = _state_file("devices.json")
     if os.path.exists(DEVICES_FILE):
         with open(DEVICES_FILE, "r") as f:
@@ -918,8 +957,9 @@ async def get_teams_active_devices():
 
 
 @router.post("/admins/{name}")
-async def add_admin(name: str):
+async def add_admin(name: str, admin_name: str = "Admin"):
     """Add a new admin to the whitelist"""
+    block_guest_access(admin_name)
     name = name.strip()
 
     if not name:
@@ -938,8 +978,9 @@ async def add_admin(name: str):
 
 
 @router.delete("/admins/{name}")
-async def remove_admin(name: str):
+async def remove_admin(name: str, admin_name: str = "Admin"):
     """Remove an admin from the whitelist"""
+    block_guest_access(admin_name)
     name = name.strip()
 
     if not name:
@@ -964,6 +1005,7 @@ async def adjust_points(
     team_name: str, adjusted_by: str, request: PointsAdjustmentRequest
 ):
     """Adjust points for a team with reason and auditing"""
+    block_guest_access(adjusted_by)
 
     if not is_game_currently_active():
         raise HTTPException(status_code=403, detail=GAME_INACTIVE_MESSAGE)
@@ -1087,8 +1129,9 @@ async def get_volunteer_list():
 
 
 @router.post("/volunteers/{name}")
-async def add_volunteer(name: str):
+async def add_volunteer(name: str, admin_name: str = "Admin"):
     """Add a new volunteer to the whitelist"""
+    block_guest_access(admin_name)
     name = name.strip()
 
     if not name:
@@ -1112,8 +1155,9 @@ async def add_volunteer(name: str):
 
 
 @router.delete("/volunteers/{name}")
-async def remove_volunteer(name: str):
+async def remove_volunteer(name: str, admin_name: str = "Admin"):
     """Remove a volunteer from the whitelist"""
+    block_guest_access(admin_name)
     name = name.strip()
 
     if not name:
@@ -1170,6 +1214,7 @@ async def get_disqualification_candidates():
 @router.post("/confirm-disqualification/{team_name}")
 async def confirm_disqualification(team_name: str, confirmed_by: str):
     """Admin confirms disqualification for a team"""
+    block_guest_access(confirmed_by)
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
@@ -1237,6 +1282,7 @@ async def team_acknowledge_disqualification(team_name: str):
 @router.post("/reverse-disqualification/{team_name}")
 async def reverse_disqualification(team_name: str, reversed_by: str):
     """Admin reverses a disqualification for a team"""
+    block_guest_access(reversed_by)
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")
@@ -1274,9 +1320,11 @@ async def reverse_disqualification(team_name: str, reversed_by: str):
 
 
 @router.post("/assign-stone/{team_name}/{stone}")
-async def assign_stone(team_name: str, stone: str):
+async def assign_stone(team_name: str, stone: str, admin_name: str = "Admin"):
     """Assign a stone to a team"""
     from app.powerup_manager import powerup_manager
+
+    block_guest_access(admin_name)
 
     if team_name not in game_state.teams:
         raise HTTPException(status_code=404, detail="Team not found")

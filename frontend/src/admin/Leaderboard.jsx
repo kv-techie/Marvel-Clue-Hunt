@@ -50,12 +50,18 @@ const downloadCSV = (data, filename) => {
 }
 
 const Leaderboard = () => {
-  const { user } = useAuth()
+  const { user, isGuest } = useAuth()
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('active') // 'active' or 'disqualified'
   const [reinstatingTeam, setReinstatingTeam] = useState(null)
   const [message, setMessage] = useState('')
+  
+  // Bonus Modal State
+  const [showBonusModal, setShowBonusModal] = useState(false)
+  const [bonusTarget, setBonusTarget] = useState('')
+  const [bonusAmount, setBonusAmount] = useState('15')
+  const [isSubmittingBonus, setIsSubmittingBonus] = useState(false)
 
   const fetchLeaderboard = async () => {
     try {
@@ -96,23 +102,32 @@ const Leaderboard = () => {
     return team.disqualification_reason || 'Unknown reason'
   }
 
-  const handleAwardBonus = async (teamName) => {
-    const bonusAmount = prompt(`Enter bonus amount for ${teamName}:`, '10')
-    if (bonusAmount === null) return // User cancelled
-    
+  const handleAwardBonus = (teamName) => {
+    setBonusTarget(teamName)
+    setBonusAmount('15')
+    setShowBonusModal(true)
+  }
+
+  const submitBonus = async () => {
     const bonus = parseInt(bonusAmount, 10)
     if (isNaN(bonus) || bonus <= 0) {
-      alert('Please enter a valid positive number')
+      setMessage('❌ Please enter a valid positive number')
       return
     }
 
+    setIsSubmittingBonus(true)
     try {
-      const response = await awardEnactmentBonus(teamName, bonus)
-      alert(`Enactment bonus of ${bonus} awarded to ${teamName}!\nNew Score: ${response.new_score}`)
-      // Immediately refresh leaderboard
-      await fetchLeaderboard()
+      const response = await awardEnactmentBonus(bonusTarget, bonus, user)
+      setMessage(`✅ Enactment bonus of ${bonus} awarded to ${bonusTarget}! New Score: ${response.new_score}`)
+      setShowBonusModal(false)
+      fetchLeaderboard()
+      
+      // Auto-clear message
+      setTimeout(() => setMessage(''), 5000)
     } catch (err) {
-      alert(`Error: ${err.response?.data?.detail || 'Failed to award bonus'}`)
+      setMessage(`❌ Error: ${err.response?.data?.detail || 'Failed to award bonus'}`)
+    } finally {
+      setIsSubmittingBonus(false)
     }
   }
 
@@ -276,13 +291,17 @@ const Leaderboard = () => {
                       )}
                     </td>
                     <td>
-                      <button 
-                        onClick={() => handleAwardBonus(team.team_name)}
-                        className="btn btn-secondary"
-                        style={{ padding: '5px 10px', fontSize: '14px' }}
-                      >
-                        Award Bonus
-                      </button>
+                      {!isGuest ? (
+                        <button 
+                          onClick={() => handleAwardBonus(team.team_name)}
+                          className="btn btn-secondary"
+                          style={{ padding: '5px 10px', fontSize: '14px' }}
+                        >
+                          Award Bonus
+                        </button>
+                      ) : (
+                        <span className="admin-locked-indicator">Locked</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -334,28 +353,106 @@ const Leaderboard = () => {
                       </small>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleReinstate(team.team_name)}
-                    disabled={reinstatingTeam === team.team_name}
-                    style={{
-                      padding: '10px 20px',
-                      marginLeft: '15px',
-                      background: 'linear-gradient(135deg, #3498db, #2980b9)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold',
-                      opacity: reinstatingTeam === team.team_name ? 0.6 : 1,
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {reinstatingTeam === team.team_name ? 'Reinstating...' : '🔄 Reinstate'}
-                  </button>
+                  {!isGuest ? (
+                    <button
+                      onClick={() => handleReinstate(team.team_name)}
+                      disabled={reinstatingTeam === team.team_name}
+                      style={{
+                        padding: '10px 20px',
+                        marginLeft: '15px',
+                        background: 'linear-gradient(135deg, #3498db, #2980b9)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        opacity: reinstatingTeam === team.team_name ? 0.6 : 1,
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {reinstatingTeam === team.team_name ? 'Reinstating...' : '🔄 Reinstate'}
+                    </button>
+                  ) : (
+                    <span className="admin-locked-indicator">View Only</span>
+                  )}
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+      {/* Bonus Award Modal Overlay */}
+      {showBonusModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            background: 'var(--bg-glass-heavy)',
+            padding: '30px',
+            borderRadius: '20px',
+            border: '2px solid var(--accent-secondary)',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 0 40px rgba(0,0,0,0.5), var(--glow-secondary)'
+          }}>
+            <h3 style={{ color: 'var(--accent-secondary)', marginBottom: '20px' }}>
+              ⭐ Award Enactment Bonus
+            </h3>
+            <p style={{ marginBottom: '20px' }}>
+              Awarding bonus to <strong>{bonusTarget}</strong>
+            </p>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#aaa' }}>
+                Bonus Amount
+              </label>
+              <input
+                type="number"
+                value={bonusAmount}
+                onChange={(e) => setBonusAmount(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(0,0,0,0.3)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontSize: '18px',
+                  fontWeight: 'bold'
+                }}
+                autoFocus
+                onKeyPress={(e) => e.key === 'Enter' && submitBonus()}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={submitBonus}
+                disabled={isSubmittingBonus}
+                className="btn btn-primary"
+                style={{ flex: 1 }}
+              >
+                {isSubmittingBonus ? 'Awarding...' : 'Confirm Bonus'}
+              </button>
+              <button
+                onClick={() => setShowBonusModal(false)}
+                className="btn btn-secondary"
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

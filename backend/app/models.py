@@ -182,6 +182,7 @@ class LoginResponse(BaseModel):
     team: Optional[str] = None
     is_admin: bool
     is_volunteer: bool = False
+    is_guest: bool = False
     message: str
 
 
@@ -199,6 +200,7 @@ class TabSwitchLog(BaseModel):
     team_name: str
     event_type: str  # "tab_left" or "tab_returned"
     timestamp: datetime
+
 
 
 class PowerupActivateRequest(BaseModel):

@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { setStartTime, startGame, stopGame, deleteParticipantData } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 const GlobalTimerControl = () => {
+  const { user, isGuest } = useAuth()
   const [scheduledTime, setScheduledTime] = useState('')
   const [message, setMessage] = useState('')
 
@@ -12,7 +14,7 @@ const GlobalTimerControl = () => {
     }
 
     try {
-      const response = await setStartTime(scheduledTime)
+      const response = await setStartTime(scheduledTime, user)
       setMessage(`✅ Game scheduled to start at ${new Date(scheduledTime).toLocaleString()}`)
       setTimeout(() => setMessage(''), 2000)
     } catch (err) {
@@ -23,7 +25,7 @@ const GlobalTimerControl = () => {
 
   const handleStartNow = async () => {
     try {
-      const response = await startGame()
+      const response = await startGame(user)
       setMessage('🎮 Game started immediately!')
       setTimeout(() => setMessage(''), 2000)
     } catch (err) {
@@ -34,7 +36,7 @@ const GlobalTimerControl = () => {
 
   const handleStopGame = async () => {
     try {
-      const response = await stopGame()
+      const response = await stopGame(user)
       setMessage('✅ Game stopped successfully!')
       setTimeout(() => setMessage(''), 2000)
     } catch (err) {
@@ -49,7 +51,7 @@ const GlobalTimerControl = () => {
     }
 
     try {
-      const response = await deleteParticipantData()
+      const response = await deleteParticipantData(user)
       setMessage('✅ All participant data has been deleted successfully! Teams and game state reset.')
       setTimeout(() => setMessage(''), 3000)
     } catch (err) {
@@ -73,15 +75,20 @@ const GlobalTimerControl = () => {
             onChange={(e) => setScheduledTime(e.target.value)}
             style={{ marginBottom: '10px' }}
           />
-          <button onClick={handleScheduleStart} className="btn btn-secondary">
+          <button onClick={handleScheduleStart} className="btn btn-secondary" disabled={isGuest}>
             Schedule Start
           </button>
         </div>
         
         <div style={{ flex: 1, minWidth: '250px' }}>
           <h3>Start Immediately</h3>
-          <button onClick={handleStartNow} className="btn btn-primary" style={{ marginTop: '10px' }}>
-            Start Game Now
+          <button 
+            onClick={handleStartNow} 
+            className={`btn btn-primary ${isGuest ? 'guest-locked' : ''}`} 
+            style={{ marginTop: '10px' }} 
+            disabled={isGuest}
+          >
+            {isGuest ? '🔒 Locked' : 'Start Game Now'}
           </button>
         </div>
 
@@ -89,11 +96,13 @@ const GlobalTimerControl = () => {
           <h3>Stop Game</h3>
           <button 
             onClick={handleStopGame} 
-            className="btn" 
+            className={`btn ${isGuest ? 'guest-locked' : ''}`}
+            disabled={isGuest}
             style={{ 
               marginTop: '10px',
-              background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
-              color: 'white'
+              background: isGuest ? '' : 'linear-gradient(135deg, #e74c3c, #c0392b)',
+              color: isGuest ? '' : 'white',
+              width: '100%'
             }}
           >
             🛑 Stop Game
@@ -104,14 +113,16 @@ const GlobalTimerControl = () => {
           <h3>Delete Data</h3>
           <button 
             onClick={handleDeleteData} 
-            className="btn" 
+            className={`btn ${isGuest ? 'guest-locked' : ''}`}
+            disabled={isGuest}
             style={{ 
               marginTop: '10px',
-              background: 'linear-gradient(135deg, #8e44ad, #6c3483)',
-              color: 'white'
+              background: isGuest ? '' : 'linear-gradient(135deg, #8e44ad, #6c3483)',
+              color: isGuest ? '' : 'white',
+              width: '100%'
             }}
           >
-            🗑️ Delete All Participant Data
+            {isGuest ? '🔒 Locked (View Only)' : '🗑️ Delete All Participant Data'}
           </button>
         </div>
       </div>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { uploadAttendees, getAllTeams } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 const TeamDistribution = () => {
+  const { user, isGuest } = useAuth()
   const [attendeesFile, setAttendeesFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -44,7 +46,7 @@ const TeamDistribution = () => {
     setLoading(true)
 
     try {
-      const response = await uploadAttendees(attendeesFile)
+      const response = await uploadAttendees(user, attendeesFile)
       const data = response
 
       setSuccess(data.message)
@@ -122,6 +124,7 @@ const TeamDistribution = () => {
               type="file"
               accept=".csv,.txt"
               onChange={handleAttendeesFileChange}
+              disabled={isGuest}
               style={{
                 padding: '10px',
                 width: '100%',
@@ -129,7 +132,8 @@ const TeamDistribution = () => {
                 border: '1px solid #444',
                 backgroundColor: '#222',
                 color: '#fff',
-                cursor: 'pointer'
+                cursor: isGuest ? 'not-allowed' : 'pointer',
+                opacity: isGuest ? 0.5 : 1
               }}
             />
             
@@ -175,31 +179,31 @@ Charlie Brown`}
 
         <button
           type="submit"
-          disabled={!attendeesFile || loading}
+          disabled={!attendeesFile || loading || isGuest}
           style={{
             padding: '12px 24px',
-            backgroundColor: attendeesFile && !loading ? 'var(--accent-secondary)' : '#555',
+            backgroundColor: (attendeesFile && !loading && !isGuest) ? 'var(--accent-secondary)' : '#555',
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
             fontSize: '14px',
             fontWeight: 'bold',
-            cursor: attendeesFile && !loading ? 'pointer' : 'default',
-            opacity: attendeesFile && !loading ? 1 : 0.5,
+            cursor: (attendeesFile && !loading && !isGuest) ? 'pointer' : 'not-allowed',
+            opacity: (attendeesFile && !loading && !isGuest) ? 1 : 0.5,
             transition: 'all 0.3s ease'
           }}
           onMouseEnter={(e) => {
-            if (attendeesFile && !loading) {
+            if (attendeesFile && !loading && !isGuest) {
               e.target.style.backgroundColor = 'var(--accent-primary)'
             }
           }}
           onMouseLeave={(e) => {
-            if (attendeesFile && !loading) {
+            if (attendeesFile && !loading && !isGuest) {
               e.target.style.backgroundColor = 'var(--accent-secondary)'
             }
           }}
         >
-          {loading ? '⏳ Allocating...' : '🚀 Allocate Teams'}
+          {isGuest ? '🔒 View Only' : (loading ? '⏳ Allocating...' : '🚀 Allocate Teams')}
         </button>
       </form>
 

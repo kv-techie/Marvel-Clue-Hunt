@@ -168,10 +168,15 @@ def calculate_final_score(team: Team) -> int:
             else adjustment.amount
         )
 
-        if adj_type == "reward":
-            score += adj_amount
-        elif adj_type == "deduct":
-            score -= abs(adj_amount)  # Ensure we subtract positive values
+        if adj_amount is not None:
+            if adj_type == "reward":
+                score += adj_amount
+            elif adj_type == "deduct":
+                score -= abs(adj_amount)  # Ensure we subtract positive values
+
+    # Add enactment bonus if awarded
+    if team.enactment_bonus_awarded and team.enactment_bonus_amount is not None:
+        score += team.enactment_bonus_amount
 
     return score  # Allow negative scores for heavy deductions
 
@@ -286,10 +291,15 @@ def calculate_final_score_questions(team: Team) -> int:
             else adjustment.amount
         )
 
-        if adj_type == "reward":
-            score += adj_amount
-        elif adj_type == "deduct":
-            score -= abs(adj_amount)
+        if adj_amount is not None:
+            if adj_type == "reward":
+                score += adj_amount
+            elif adj_type == "deduct":
+                score -= abs(adj_amount)
+
+    # Add enactment bonus if awarded
+    if team.enactment_bonus_awarded and team.enactment_bonus_amount is not None:
+        score += team.enactment_bonus_amount
 
     return score  # Allow negative scores for heavy deductions
 

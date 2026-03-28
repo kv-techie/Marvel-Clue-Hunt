@@ -1,11 +1,11 @@
 import axios from 'axios'
 
-// Use environment variable, or construct from current origin
-// This allows the proxy to intercept /api calls when accessed from network IP
-const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin
+// Use relative path by default to leverage Vite proxy in dev, or VITE_API_URL if provided
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,  // Add /api to the base URL
+  baseURL: `${API_BASE_URL}/api`,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -49,23 +49,25 @@ export const login = (payload) => api.post('/login', payload)
 export const logout = (payload) => api.post('/logout', payload)
 
 // Admin APIs - Team Allocation
-export const uploadAttendees = (attendeesFile) => {
+export const uploadAttendees = (adminName, attendeesFile) => {
   const formData = new FormData()
   formData.append('file', attendeesFile)
   
   return api.post('/admin/allocate-teams-random', formData, {
+    params: { admin_name: adminName },
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   })
 }
 
-export const uploadTeamsAndAttendees = (teamNamesFile, attendeesFile) => {
+export const uploadTeamsAndAttendees = (adminName, teamNamesFile, attendeesFile) => {
   const formData = new FormData()
   formData.append('team_names_file', teamNamesFile)
   formData.append('attendees_file', attendeesFile)
   
   return api.post('/admin/upload-teams-and-attendees', formData, {
+    params: { admin_name: adminName },
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -74,23 +76,23 @@ export const uploadTeamsAndAttendees = (teamNamesFile, attendeesFile) => {
 
 export const getAllTeams = () => api.get('/admin/teams')
 
-export const setStartTime = (startTime) =>
-  api.post('/admin/set-start-time', null, { params: { start_time: startTime } })
+export const setStartTime = (startTime, adminName) =>
+  api.post('/admin/set-start-time', null, { params: { start_time: startTime, admin_name: adminName } })
 
-export const startGame = () => api.post('/admin/start-game')
+export const startGame = (adminName) => api.post('/admin/start-game', null, { params: { admin_name: adminName } })
 
 export const getLeaderboard = () => api.get('/admin/leaderboard')
 
-export const awardEnactmentBonus = (teamName, bonusAmount) =>
-  api.post(`/admin/award-enactment-bonus/${teamName}`, { bonus_amount: bonusAmount })
+export const awardEnactmentBonus = (teamName, bonusAmount, adminName) =>
+  api.post(`/admin/award-enactment-bonus/${teamName}`, { bonus_amount: bonusAmount }, { params: { admin_name: adminName } })
 
 export const getGameStatus = () => api.get('/admin/game-status')
 
 export const getAdminList = () => api.get('/admin/admins')
 
-export const addAdmin = (name) => api.post(`/admin/admins/${name}`)
+export const addAdmin = (name, adminName) => api.post(`/admin/admins/${name}`, null, { params: { admin_name: adminName } })
 
-export const removeAdmin = (name) => api.delete(`/admin/admins/${name}`)
+export const removeAdmin = (name, adminName) => api.delete(`/admin/admins/${name}`, { params: { admin_name: adminName } })
 
 export const adjustPoints = (teamName, adjustedBy, request) =>
   api.post(`/admin/adjust-points/${teamName}`, request, { params: { adjusted_by: adjustedBy } })
@@ -99,24 +101,29 @@ export const getAdjustmentsLog = () => api.get('/admin/adjustments-log')
 
 export const getVolunteerList = () => api.get('/admin/volunteers')
 
-export const addVolunteer = (name) =>
-  api.post(`/admin/volunteers/${encodeURIComponent(name)}`)
+export const addVolunteer = (name, adminName) =>
+  api.post(`/admin/volunteers/${encodeURIComponent(name)}`, null, { params: { admin_name: adminName } })
 
-export const removeVolunteer = (name) =>
-  api.delete(`/admin/volunteers/${encodeURIComponent(name)}`)
+export const removeVolunteer = (name, adminName) =>
+  api.delete(`/admin/volunteers/${encodeURIComponent(name)}`, { params: { admin_name: adminName } })
 
 // PIN management
-export const setPin = (role, name, pin) =>
-  api.post(`/admin/set-pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`, null, { params: { pin } })
+export const setPin = (role, name, pin, adminName) =>
+  api.post(`/admin/set-pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`, null, { params: { pin, admin_name: adminName } })
 
 export const getPins = () => api.get('/admin/pins')
 
-export const deletePin = (role, name) => api.delete(`/admin/pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`)
+export const deletePin = (role, name, adminName) => 
+  api.delete(`/admin/pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`, { params: { admin_name: adminName } })
+
+export const generateGuestPassword = (adminName) => 
+  api.post('/admin/generate-guest-password', null, { params: { admin_name: adminName } })
 
 // Device management
 export const getDevices = (teamName) => api.get(`/admin/devices/${encodeURIComponent(teamName)}`)
 
-export const removeDevice = (teamName, deviceId) => api.delete(`/admin/devices/${encodeURIComponent(teamName)}/${encodeURIComponent(deviceId)}`)
+export const removeDevice = (teamName, deviceId, adminName) => 
+  api.delete(`/admin/devices/${encodeURIComponent(teamName)}/${encodeURIComponent(deviceId)}`, { params: { admin_name: adminName } })
 
 export const getTeamsActiveDevices = () => api.get('/admin/teams-active-devices')
 
@@ -150,9 +157,9 @@ export const logTabSwitch = (teamName, eventType) =>
     timestamp: new Date().toISOString(),
   })
 
-export const stopGame = () => api.post('/admin/stop-game')
+export const stopGame = (adminName) => api.post('/admin/stop-game', null, { params: { admin_name: adminName } })
 
-export const deleteParticipantData = () => api.post('/admin/delete-participant-data')
+export const deleteParticipantData = (adminName) => api.post('/admin/delete-participant-data', null, { params: { admin_name: adminName } })
 
 export const getDisqualificationCandidates = () => api.get('/admin/disqualification-candidates')
 
@@ -212,10 +219,9 @@ export const getLeaderboardData = (sortBy = 'total_points_earned') =>
 export const getTeamRank = (teamName, sortBy = 'total_points_earned') =>
   api.get(`/attendee/team-rank/${encodeURIComponent(teamName)}`, { params: { sort_by: sortBy } })
 
-// Get leaderboard statistics
+// Leaderboard statistics
 export const getLeaderboardStats = () =>
   api.get('/attendee/leaderboard-stats')
 
 // Export api as both default and named export
 export const apiClient = api
-

@@ -11,7 +11,7 @@ const DisqualificationManager = () => {
   const [confirming, setConfirming] = useState(null)
   const [reversing, setReversing] = useState(null)
 
-  const { user } = useAuth()
+  const { user, isGuest } = useAuth()
 
   const fetchData = async () => {
     try {
@@ -120,13 +120,17 @@ const DisqualificationManager = () => {
                   )}
                 </div>
                 <div className="admin-list-actions">
-                  <button
-                    className="admin-btn secondary lg"
-                    onClick={() => handleReverseDisqualification(team.name)}
-                    disabled={reversing === team.name}
-                  >
-                    {reversing === team.name ? 'Reversing...' : '🔄 Reverse'}
-                  </button>
+                  {!isGuest ? (
+                    <button
+                      className="admin-btn secondary lg"
+                      onClick={() => handleReverseDisqualification(team.name)}
+                      disabled={reversing === team.name}
+                    >
+                      {reversing === team.name ? 'Reversing...' : '🔄 Reverse'}
+                    </button>
+                  ) : (
+                    <span className="admin-locked-indicator">Locked</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -168,13 +172,17 @@ const DisqualificationManager = () => {
                   </p>
                 </div>
                 <div className="admin-list-actions">
-                  <button
-                    className="admin-btn primary lg"
-                    onClick={() => handleConfirmDisqualification(candidate.team_name)}
-                    disabled={confirming === candidate.team_name}
-                  >
-                    {confirming === candidate.team_name ? 'Confirming...' : 'Confirm Disqualification'}
-                  </button>
+                  {!isGuest ? (
+                    <button
+                      className="admin-btn primary lg"
+                      onClick={() => handleConfirmDisqualification(candidate.team_name)}
+                      disabled={confirming === candidate.team_name}
+                    >
+                      {confirming === candidate.team_name ? 'Confirming...' : 'Confirm Disqualification'}
+                    </button>
+                  ) : (
+                    <span className="admin-locked-indicator">View Only</span>
+                  )}
                 </div>
               </div>
             ))}

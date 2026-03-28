@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { getLeaderboard, adjustPoints, setPin } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import '../styles/VolunteerDashboard.css'
 
 // Predefined point deduction categories
 const PENALTY_CATEGORIES = {
@@ -285,7 +286,7 @@ const VolunteerDashboard = () => {
         <div>
           <h3>Adjust Points</h3>
           <form onSubmit={handleAdjustPoints} className="volunteer-form">
-            <div style={{ marginBottom: '15px' }}>
+            <div className="volunteer-form-group">
               <label htmlFor="selected-team-display">
                 Selected Team
               </label>
@@ -299,7 +300,7 @@ const VolunteerDashboard = () => {
               <small>Click on a team in the leaderboard</small>
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
+            <div className="volunteer-form-group">
               <label htmlFor="adjustment-type">
                 Adjustment Type
               </label>
@@ -316,8 +317,8 @@ const VolunteerDashboard = () => {
               </select>
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+            <div className="volunteer-form-group">
+              <label className="volunteer-form-label">
                 Quick Categories
               </label>
               <div className="volunteer-category-grid">
@@ -336,7 +337,7 @@ const VolunteerDashboard = () => {
                   </button>
                 ))}
               </div>
-              <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #444' }}>
+              <div className="volunteer-toggle-container">
                 <label className="volunteer-custom-toggle">
                   <input
                     id="use-custom-reason"
@@ -344,12 +345,12 @@ const VolunteerDashboard = () => {
                     checked={useCustomReason}
                     onChange={(e) => setUseCustomReason(e.target.checked)}
                   />
-                  Use Custom Reason
+                  <span>Use Custom Reason</span>
                 </label>
               </div>
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
+            <div className="volunteer-form-group">
               <label htmlFor="adjustment-amount">
                 Amount
               </label>
@@ -366,7 +367,7 @@ const VolunteerDashboard = () => {
               />
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
+            <div className="volunteer-form-group">
               <label htmlFor={useCustomReason ? 'custom-reason' : 'selected-reason'}>
                 Reason {useCustomReason && '(Custom)'}
               </label>

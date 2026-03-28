@@ -4,8 +4,10 @@ import {
   getPins,
   deletePin,
   getDevices,
-  removeDevice
+  removeDevice,
+  generateGuestPassword
 } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import '../styles/AdminComponents.css'
 
 const AdminManagement = () => {
@@ -35,6 +37,11 @@ const AdminManagement = () => {
   // PIN visibility state - tracks which user PINs are visible
   const [visiblePins, setVisiblePins] = useState({})
 
+  // Guest state
+  const { user, isGuest } = useAuth()
+  const [guestPIN, setGuestPIN] = useState('')
+  const [guestMessage, setGuestMessage] = useState('')
+
   // Toggle PIN visibility
   const togglePinVisibility = (username) => {
     setVisiblePins(prev => ({
@@ -62,6 +69,17 @@ const AdminManagement = () => {
     fetchUsersWithPins()
   }, [])
 
+  // Guest PIN Generation
+  const handleGenerateGuestPIN = async () => {
+    try {
+      const response = await generateGuestPassword(user)
+      setGuestPIN(response.pin)
+      setGuestMessage(`✅ Temporary PIN generated for ${user}`)
+    } catch (err) {
+      setGuestMessage(`❌ Error: ${err.response?.data?.detail || 'Failed to generate guest PIN'}`)
+    }
+  }
+
   // Add Admin with PIN
   const handleAddAdmin = async () => {
     if (!newAdminName.trim()) {
@@ -74,7 +92,7 @@ const AdminManagement = () => {
     }
 
     try {
-      await setPin('admin', newAdminName.trim(), newAdminPin.trim())
+      await setPin('admin', newAdminName.trim(), newAdminPin.trim(), user)
       setAdminMessage(`✅ Admin "${newAdminName}" added with PIN successfully`)
       setNewAdminName('')
       setNewAdminPin('')
@@ -89,7 +107,7 @@ const AdminManagement = () => {
     if (!window.confirm(`Remove admin "${username}"?`)) return
 
     try {
-      await deletePin('admin', username)
+      await deletePin('admin', username, user)
       setAdminMessage(`✅ Admin "${username}" removed`)
       fetchUsersWithPins()
     } catch (err) {
@@ -110,7 +128,7 @@ const AdminManagement = () => {
     }
 
     try {
-      await setPin(role, username, newPinValue.trim())
+      await setPin(role, username, newPinValue.trim(), user)
       const msg = `✅ PIN changed successfully for "${username}"`
       if (role === 'admin') {
         setAdminMessage(msg)
@@ -156,7 +174,7 @@ const AdminManagement = () => {
     }
 
     try {
-      await setPin('volunteer', newVolunteerName.trim(), newVolunteerPin.trim())
+      await setPin('volunteer', newVolunteerName.trim(), newVolunteerPin.trim(), user)
       setVolunteerMessage(`✅ Volunteer "${newVolunteerName}" added with PIN successfully`)
       setNewVolunteerName('')
       setNewVolunteerPin('')
@@ -171,7 +189,7 @@ const AdminManagement = () => {
     if (!window.confirm(`Remove volunteer "${username}"?`)) return
 
     try {
-      await deletePin('volunteer', username)
+      await deletePin('volunteer', username, user)
       setVolunteerMessage(`✅ Volunteer "${username}" removed`)
       fetchUsersWithPins()
     } catch (err) {
@@ -205,7 +223,7 @@ const AdminManagement = () => {
     if (!window.confirm(`Remove this device?`)) return
 
     try {
-      await removeDevice(teamName.trim(), deviceId)
+      await removeDevice(teamName.trim(), deviceId, user)
       setDeviceMessage(`✅ Device removed successfully`)
       handleFetchDevices()
     } catch (err) {
@@ -230,15 +248,67 @@ const AdminManagement = () => {
 
   return (
     <div>
+      {/* ==================== GUEST ACCESS ==================== */}
+      {!isGuest && (
+        <div style={{ marginBottom: '40px' }}>
+          <h2 className="admin-section-title">
+            🔑 Guest Access
+          </h2>
+          <div className="admin-form-panel">
+            <h3>Generate Temporary Access</h3>
+            <p className="admin-text-muted" style={{ marginBottom: '15px' }}>
+              Create a one-time-use PIN for guests to view the progress. They will have strictly view-only access.
+            </p>
+            <div className="admin-input-group">
+              <button 
+                className="admin-btn primary" 
+                onClick={handleGenerateGuestPIN}
+                style={{ minWidth: '200px' }}
+              >
+                Generate Guest PIN
+              </button>
+            </div>
+            {guestMessage && (
+              <div className={`admin-message ${guestMessage.includes('✅') ? 'success' : 'error'}`}>
+                {guestMessage}
+              </div>
+            )}
+            {guestPIN && (
+              <div style={{ 
+                marginTop: '15px', 
+                padding: '20px', 
+                background: 'rgba(0, 255, 0, 0.05)', 
+                border: '1px solid var(--success)', 
+                borderRadius: '12px', 
+                textAlign: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+              }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Share this Temporary PIN
+                </div>
+                <div style={{ fontSize: '42px', fontWeight: 'bold', letterSpacing: '8px', color: 'var(--success)', textShadow: '0 0 10px rgba(0,255,0,0.3)' }}>
+                  {guestPIN}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '12px', fontStyle: 'italic' }}>
+                  This PIN is valid for one-time use only. It will deactivate once used for login.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ==================== ADMIN MANAGEMENT ==================== */}
-      <div style={{ marginBottom: '40px' }}>
+      <div style={{ marginBottom: '40px', opacity: isGuest ? 0.7 : 1 }}>
         <h2 className="admin-section-title">
           👤 Admin Management
+          {isGuest && <span className="admin-badge warning" style={{ marginLeft: '10px' }}>VIEW ONLY</span>}
         </h2>
         
         {/* Add New Admin */}
-        <div className="admin-form-panel">
-          <h3>Add New Admin</h3>
+        {!isGuest && (
+          <div className="admin-form-panel">
+            <h3>Add New Admin</h3>
           <div className="admin-input-group">
             <input
               type="text"
@@ -264,6 +334,7 @@ const AdminManagement = () => {
             </div>
           )}
         </div>
+      )}
 
         {/* Current Admins List */}
         <div>
@@ -318,12 +389,17 @@ const AdminManagement = () => {
                         </div>
                       </div>
                       <div className="admin-list-actions">
-                        <button className="admin-btn outline-warning" onClick={() => startEditingPin(admin.username, 'admin')}>
-                          Change PIN
-                        </button>
-                        <button className="admin-btn outline-info" onClick={() => handleRemoveAdmin(admin.username)}>
-                          Remove
-                        </button>
+                        {!isGuest && (
+                          <>
+                            <button className="admin-btn outline-warning" onClick={() => startEditingPin(admin.username, 'admin')}>
+                              Change PIN
+                            </button>
+                            <button className="admin-btn outline-info" onClick={() => handleRemoveAdmin(admin.username)}>
+                              Remove
+                            </button>
+                          </>
+                        )}
+                        {isGuest && <span className="admin-text-muted">No Actions</span>}
                       </div>
                     </div>
                   )}
@@ -335,14 +411,16 @@ const AdminManagement = () => {
       </div>
 
       {/* ==================== VOLUNTEER MANAGEMENT ==================== */}
-      <div style={{ marginBottom: '40px' }}>
+      <div style={{ marginBottom: '40px', opacity: isGuest ? 0.7 : 1 }}>
         <h2 className="admin-section-title">
           👥 Volunteer Management
+          {isGuest && <span className="admin-badge warning" style={{ marginLeft: '10px' }}>VIEW ONLY</span>}
         </h2>
         
         {/* Add New Volunteer */}
-        <div className="admin-form-panel">
-          <h3>Add New Volunteer</h3>
+        {!isGuest && (
+          <div className="admin-form-panel">
+            <h3>Add New Volunteer</h3>
           <div className="admin-input-group">
             <input
               type="text"
@@ -368,6 +446,7 @@ const AdminManagement = () => {
             </div>
           )}
         </div>
+      )}
 
         {/* Current Volunteers List */}
         <div>
@@ -422,12 +501,18 @@ const AdminManagement = () => {
                         </div>
                       </div>
                       <div className="admin-list-actions">
-                        <button className="admin-btn outline-warning" onClick={() => startEditingPin(volunteer.username, 'volunteer')}>
-                          Change PIN
-                        </button>
-                        <button className="admin-btn outline-info" onClick={() => handleRemoveVolunteer(volunteer.username)}>
-                          Remove
-                        </button>
+                        {!isGuest ? (
+                          <>
+                            <button className="admin-btn outline-warning" onClick={() => startEditingPin(volunteer.username, 'volunteer')}>
+                              Change PIN
+                            </button>
+                            <button className="admin-btn outline-info" onClick={() => handleRemoveVolunteer(volunteer.username)}>
+                              Remove
+                            </button>
+                          </>
+                        ) : (
+                          <span className="admin-locked-indicator">View Only</span>
+                        )}
                       </div>
                     </div>
                   )}
@@ -492,9 +577,11 @@ const AdminManagement = () => {
                         ID: {getDeviceId(device)}
                       </div>
                     </div>
-                    <button className="admin-btn outline-danger" onClick={() => handleRemoveDevice(getDeviceId(device))}>
-                      Remove
-                    </button>
+                    {!isGuest && (
+                      <button className="admin-btn outline-danger" onClick={() => handleRemoveDevice(getDeviceId(device))}>
+                        Remove
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

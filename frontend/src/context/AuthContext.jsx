@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isVolunteer, setIsVolunteer] = useState(false)
+  const [isGuest, setIsGuest] = useState(false)
   const [team, setTeam] = useState(null)
   const [deviceId, setDeviceId] = useState(null)
   const [loading, setLoading] = useState(true) // Add loading state
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }) => {
     const savedUser = getStoredValue('user')
     const savedIsAdmin = getStoredValue('isAdmin') === 'true'
     const savedIsVolunteer = getStoredValue('isVolunteer') === 'true'
+    const savedIsGuest = getStoredValue('isGuest') === 'true'
     const savedTeam = getStoredValue('team')
     const savedDeviceId = getStoredValue('deviceId')
 
@@ -35,6 +37,7 @@ export const AuthProvider = ({ children }) => {
       setUser(savedUser)
       setIsAdmin(savedIsAdmin)
       setIsVolunteer(savedIsVolunteer)
+      setIsGuest(savedIsGuest)
       setTeam(savedTeam)
       setDeviceId(savedDeviceId)
     }
@@ -42,16 +45,18 @@ export const AuthProvider = ({ children }) => {
     setLoading(false) // Done loading
   }, [])
 
-  const loginUser = (name, isAdminFlag, teamName, isVolunteerFlag = false, deviceId = null) => {
+  const loginUser = (name, isAdminFlag, teamName, isVolunteerFlag = false, deviceId = null, isGuestFlag = false) => {
     setUser(name)
     setIsAdmin(isAdminFlag)
     setIsVolunteer(isVolunteerFlag)
+    setIsGuest(isGuestFlag)
     setTeam(teamName)
     setDeviceId(deviceId)
 
     setStoredValue('user', name)
     setStoredValue('isAdmin', String(isAdminFlag))
     setStoredValue('isVolunteer', String(isVolunteerFlag))
+    setStoredValue('isGuest', String(isGuestFlag))
     if (teamName) {
       setStoredValue('team', teamName)
     }
@@ -75,18 +80,20 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
     setIsAdmin(false)
     setIsVolunteer(false)
+    setIsGuest(false)
     setTeam(null)
     setDeviceId(null)
     removeStoredValue('user')
     removeStoredValue('isAdmin')
     removeStoredValue('isVolunteer')
+    removeStoredValue('isGuest')
     removeStoredValue('team')
     removeStoredValue('deviceId')
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, isAdmin, isVolunteer, team, deviceId, loading, loginUser, logout }}
+      value={{ user, isAdmin, isVolunteer, isGuest, team, deviceId, loading, loginUser, logout }}
     >
       {children}
     </AuthContext.Provider>

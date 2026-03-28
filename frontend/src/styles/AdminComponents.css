@@ -363,3 +363,42 @@
 .admin-text-warning { color: var(--accent-gold); }
 .admin-text-info { color: var(--accent-secondary); }
 .admin-text-muted { color: var(--text-secondary); }
+
+/* Locked/View Only Indicators */
+.admin-locked-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+
+.admin-locked-indicator::before {
+  content: '🔒';
+  font-size: 10px;
+}
+
+.admin-locked-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.btn:disabled.guest-locked {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: var(--text-secondary) !important;
+  border: 1px dashed var(--border-default) !important;
+  opacity: 0.5;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}

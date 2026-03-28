@@ -49,6 +49,29 @@ DEVICES_FILE = _state_file("devices.json")
 GAME_STATE_FILE = _state_file("game_state.json")
 ADMIN_CREDENTIALS_FILE = _state_file("admin_credentials.json")
 VOLUNTEER_CREDENTIALS_FILE = _state_file("volunteer_credentials.json")
+GUEST_CREDENTIALS_FILE = _state_file("guest_credentials.json")
+
+
+def load_guest_credentials():
+    """Load guest credentials from dedicated file"""
+    if os.path.exists(GUEST_CREDENTIALS_FILE):
+        with open(GUEST_CREDENTIALS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def save_guest_credentials(credentials: dict):
+    """Save guest credentials to dedicated file"""
+    atomic_write_json(GUEST_CREDENTIALS_FILE, credentials, indent=2)
+
+
+def block_guest_access(name: str):
+    """Block access if the user is a guest (fail-safe)"""
+    if name and name.endswith(" (Guest)"):
+        raise HTTPException(
+            status_code=403,
+            detail="Guest users are not allowed to perform this action (View-only mode).",
+        )
 
 
 def load_admin_credentials():
@@ -368,6 +391,32 @@ async def login(request: LoginRequest):
 
         name = request.name.strip()
 
+        # PRIORITY 0: Check guest credentials (NEW)
+        guest_creds = load_guest_credentials()
+        if guest_creds.get("is_active") and str(request.pin) == str(
+            guest_creds.get("temp_pin")
+        ):
+            # Verify the requesting admin name matches if provided (case-insensitive)
+            # If request.name is provided, it must match the admin who generated it
+            stored_admin_name = guest_creds.get("admin_name", "")
+            if name.lower() == stored_admin_name.lower():
+                guest_name = f"{stored_admin_name} (Guest)"
+
+                # Deactivate immediately
+                guest_creds["is_active"] = False
+                save_guest_credentials(guest_creds)
+
+                print(f"✅ Guest login successful: {guest_name}")
+                return LoginResponse(
+                    success=True,
+                    name=guest_name,
+                    team=None,
+                    is_admin=True,
+                    is_volunteer=False,
+                    is_guest=True,
+                    message="Guest login successful",
+                )
+
         # PRIORITY 1: Check dedicated credential files (NEW SYSTEM)
         admin_credentials = load_admin_credentials()
         volunteer_credentials = load_volunteer_credentials()
@@ -444,12 +493,12 @@ async def login(request: LoginRequest):
                     success=True,
                     name=name,
                     team=None,
-                    is_admin=False,
                     is_volunteer=True,
                     message="Volunteer login successful",
                 )
             else:
                 raise HTTPException(status_code=403, detail="Invalid PIN")
+
 
         # PRIORITY 3: Fallback to whitelist names (legacy without pins)
         admin_whitelist = load_admin_whitelist()
