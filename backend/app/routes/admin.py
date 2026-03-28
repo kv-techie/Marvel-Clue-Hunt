@@ -47,10 +47,17 @@ INFINITY_STONES = [
 ]
 
 # Get absolute path to data directory (works from any working directory)
+# Get absolute path to data directory
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_DATA_DIR = os.path.join(APP_DIR, "data")
 STATE_DATA_DIR = os.getenv("STATE_DATA_DIR", DEFAULT_DATA_DIR)
-os.makedirs(STATE_DATA_DIR, exist_ok=True)
+
+# Ensure state directory exists with error handling
+try:
+    os.makedirs(STATE_DATA_DIR, exist_ok=True)
+    print(f"📂 Admin state data directory: {os.path.abspath(STATE_DATA_DIR)}")
+except Exception as e:
+    print(f"⚠️ Warning: Could not create admin state directory {STATE_DATA_DIR}: {e}")
 
 
 def _state_file(filename: str) -> str:
@@ -184,8 +191,14 @@ def save_volunteer_whitelist(volunteers: list):
 def load_admin_credentials():
     """Load admin credentials from dedicated file"""
     if os.path.exists(ADMIN_CREDENTIALS_FILE):
-        with open(ADMIN_CREDENTIALS_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(ADMIN_CREDENTIALS_FILE, "r") as f:
+                content = f.read().strip()
+                if not content:
+                    return {}
+                return json.loads(content)
+        except Exception as e:
+            print(f"⚠️ Error loading admin credentials: {e}")
     return {}
 
 

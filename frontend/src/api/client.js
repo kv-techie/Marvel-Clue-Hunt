@@ -29,6 +29,8 @@ api.interceptors.response.use(
   (error) => {
     // Log the error for debugging
     console.error("[API Error]", {
+      url: error.config?.url,
+      method: error.config?.method,
       status: error.response?.status,
       statusText: error.response?.statusText,
       data: error.response?.data,
