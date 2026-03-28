@@ -69,7 +69,11 @@ def _bootstrap_state_file(filename: str):
     source = os.path.join(DEFAULT_DATA_DIR, filename)
     destination = _state_file(filename)
     if not os.path.exists(destination) and os.path.exists(source):
-        shutil.copy2(source, destination)
+        try:
+            shutil.copy2(source, destination)
+            print(f"📦 Bootstrapped {filename} to {destination}")
+        except Exception as e:
+            print(f"⚠️ Failed to bootstrap {filename}: {e}")
 
 
 for _filename in [
