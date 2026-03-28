@@ -334,11 +334,17 @@ async def log_tab_switch(request: TabSwitchLog):
             [e for e in team.tab_switch_logs if e["event_type"] == "tab_left"]
         )
         switches_remaining = max(0, 3 - total_left_switches)
-        total_deductions = sum(
-            abs(adj["amount"])
-            for adj in team.manual_adjustments
-            if "Tab switch violation" in adj.get("reason", "")
-        )
+        
+        # Calculate total deductions from adjustments safely
+        total_deductions = 0
+        for adj in team.manual_adjustments:
+            # Handle both dict and object formats
+            adj_reason = adj.get("reason", "") if isinstance(adj, dict) else getattr(adj, "reason", "")
+            adj_amount = adj.get("amount", 0) if isinstance(adj, dict) else getattr(adj, "amount", 0)
+            
+            if "Tab switch violation" in adj_reason:
+                total_deductions += abs(adj_amount)
+                
         warning_count = min(3, total_left_switches)
         penalty_applied = request.event_type == "tab_left" and total_left_switches > 3
 

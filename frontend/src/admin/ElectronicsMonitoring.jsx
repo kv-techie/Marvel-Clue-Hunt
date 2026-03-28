@@ -251,7 +251,7 @@ const ElectronicsMonitoring = () => {
               {sortedTeams.map(team => {
                 const switchCount = tabSwitchData[team.name]?.total_tab_left || 0
                 const isSuspicious = switchCount > 3
-                const penaltyAmount = Math.max(0, switchCount - 3) * 50
+                const penaltyAmount = tabSwitchData[team.name]?.total_deductions_from_switches || 0
 
                 return (
                   <div

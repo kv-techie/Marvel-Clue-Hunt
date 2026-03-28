@@ -271,12 +271,8 @@ def calculate_final_score_questions(team: Team) -> int:
     for question_data in team.questions_completed:
         score += question_data.get("points", question_data.get("score", 0))
 
-    # Subtract tab violation penalties
-    # Each tab switch after first 3 free switches costs 50 points
-    tab_switches = len(team.tab_switch_logs)
-    if tab_switches > 3:
-        penalty = (tab_switches - 3) * 50
-        score -= penalty
+    # Deductions are already included in manual_adjustments (added by log_tab_switch)
+    # so we don't need to subtract them separately here.
 
     # Add manual adjustments (rewards/deductions from volunteers/admins)
     for adjustment in team.manual_adjustments:

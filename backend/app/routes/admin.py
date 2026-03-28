@@ -608,8 +608,19 @@ async def list_tab_switches(team_name: str, admin_name: str = Query(...)):
     tab_switches = getattr(team, "tab_switch_logs", []) or []
 
     tab_left_count = len([e for e in tab_switches if e.get("event_type") == "tab_left"])
-    penalty_deductions = max(0, tab_left_count - 3) * 50
-    is_penalized = tab_left_count > 3
+    
+    # Calculate actual deductions from manual_adjustments (Audit Log source of truth)
+    actual_penalty_deductions = 0
+    manual_adjusts = getattr(team, "manual_adjustments", []) or []
+    for adj in manual_adjusts:
+        # Handle both dict and object formats
+        adj_reason = adj.get("reason", "") if isinstance(adj, dict) else getattr(adj, "reason", "")
+        adj_amount = adj.get("amount", 0) if isinstance(adj, dict) else getattr(adj, "amount", 0)
+        
+        if "Tab switch violation" in adj_reason:
+            actual_penalty_deductions += abs(adj_amount)
+
+    is_penalized = actual_penalty_deductions > 0
 
     return {
         "team_name": team_name,
@@ -618,7 +629,7 @@ async def list_tab_switches(team_name: str, admin_name: str = Query(...)):
         "switches_remaining": max(0, 3 - tab_left_count),
         "is_penalized": is_penalized,
         "penalty_per_overuse": 50,
-        "total_deductions_from_switches": penalty_deductions,
+        "total_deductions_from_switches": actual_penalty_deductions,
         "events": tab_switches,
     }
 
