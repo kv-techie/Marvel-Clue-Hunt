@@ -52,7 +52,6 @@ const PrivacyShield = ({ children }) => {
 
     window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
-    window.addEventListener('focusout', handleBlur);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     const handleKeyDown = (e) => {
@@ -113,7 +112,6 @@ const PrivacyShield = ({ children }) => {
     return () => {
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('focusout', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('keydown', handleKeyDown, { capture: true });
       window.removeEventListener('keyup', handleKeyUp);
