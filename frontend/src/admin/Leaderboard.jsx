@@ -255,14 +255,15 @@ const Leaderboard = () => {
           {activeTeams.length === 0 ? (
             <p>No active teams in the leaderboard.</p>
           ) : (
-            <table className="leaderboard-table">
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Team</th>
-                  <th>Score</th>
-                  <th>Questions</th>
-                  <th>Hints Used</th>
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Team</th>
+                    <th>Score</th>
+                    <th>Questions</th>
+                    <th>Hints Used</th>
                   <th>Qualified</th>
                   <th>Action</th>
                 </tr>
@@ -309,6 +310,7 @@ const Leaderboard = () => {
                 ))}
               </tbody>
             </table>
+          </div>
           )}
         </div>
       )}
@@ -325,18 +327,21 @@ const Leaderboard = () => {
               {disqualifiedTeams.map((team) => (
                 <div
                   key={team.team_name}
+                  className="disqualified-card"
                   style={{
                     padding: '15px',
                     backgroundColor: 'rgba(231, 76, 60, 0.15)',
                     borderLeft: '4px solid #e74c3c',
                     borderRadius: '6px',
                     display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '15px',
                     justifyContent: 'space-between',
                     alignItems: 'start'
                   }}
                 >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{ flex: '1 1 300px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
                       <strong style={{ fontSize: '18px' }}>⛔ {team.team_name}</strong>
                       <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#e74c3c' }}>
                         {team.score} pts
