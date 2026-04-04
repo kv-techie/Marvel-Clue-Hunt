@@ -184,6 +184,8 @@ class LoginResponse(BaseModel):
     is_volunteer: bool = False
     is_guest: bool = False
     message: str
+    session_id: Optional[str] = None
+
 
 
 class BonusRequest(BaseModel):

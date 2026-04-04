@@ -1,11 +1,14 @@
 import json
 import os
 import shutil
+import uuid
+import urllib.request
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
+
 
 from app.models import LoginRequest, LoginResponse
 from app.state_io import atomic_write_json
@@ -60,6 +63,36 @@ GAME_STATE_FILE = _state_file("game_state.json")
 ADMIN_CREDENTIALS_FILE = _state_file("admin_credentials.json")
 VOLUNTEER_CREDENTIALS_FILE = _state_file("volunteer_credentials.json")
 GUEST_CREDENTIALS_FILE = _state_file("guest_credentials.json")
+GUEST_AUDIT_LOG_FILE = _state_file("guest_audit_logs.json")
+
+def get_ip_location(ip: str):
+    if not ip or ip in ["127.0.0.1", "localhost", "::1"]:
+        return "Local Network"
+    try:
+        url = f"http://ip-api.com/json/{ip}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=3) as res:
+            data = json.loads(res.read().decode())
+            if data.get("status") == "success":
+                city = data.get("city", "")
+                region = data.get("regionName", "")
+                country = data.get("country", "")
+                return f"{city}, {region}, {country}".strip(", ")
+    except Exception as e:
+        print(f"GeoIP failed for {ip}: {e}")
+    return "Unknown Location"
+
+def _load_guest_audit_logs():
+    if os.path.exists(GUEST_AUDIT_LOG_FILE):
+        try:
+            with open(GUEST_AUDIT_LOG_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def _save_guest_audit_logs(logs):
+    atomic_write_json(GUEST_AUDIT_LOG_FILE, logs, indent=2)
 
 
 def load_guest_credentials():
@@ -397,7 +430,7 @@ def _create_device_entry(request, is_active=True):
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(request: LoginRequest):
+async def login(request: LoginRequest, http_request: Request):
     """Handle login flows:
 
     - Admin/Volunteer: provide `name` and `pin` with `is_admin=True`.
@@ -424,11 +457,32 @@ async def login(request: LoginRequest):
             if name.lower() == stored_admin_name.lower():
                 guest_name = f"{stored_admin_name} (Guest)"
 
+                # Generate Guest Session ID
+                session_id = str(uuid.uuid4())
+                client_ip = http_request.client.host
+                location = get_ip_location(client_ip)
+                now_iso = datetime.now().isoformat()
+
+                # Save to audit logs
+                logs = _load_guest_audit_logs()
+                logs.append({
+                    "session_id": session_id,
+                    "admin_name": stored_admin_name,
+                    "guest_name": guest_name,
+                    "pin_used": guest_creds.get("temp_pin"),
+                    "ip_address": client_ip,
+                    "location": location,
+                    "login_time": now_iso,
+                    "last_seen": now_iso,
+                    "violations": 0
+                })
+                _save_guest_audit_logs(logs)
+
                 # Deactivate immediately
                 guest_creds["is_active"] = False
                 save_guest_credentials(guest_creds)
 
-                print(f"✅ Guest login successful: {guest_name}")
+                print(f"✅ Guest login successful: {guest_name} | IP: {client_ip} | Loc: {location}")
                 return LoginResponse(
                     success=True,
                     name=guest_name,
@@ -437,7 +491,9 @@ async def login(request: LoginRequest):
                     is_volunteer=False,
                     is_guest=True,
                     message="Guest login successful",
+                    session_id=session_id
                 )
+
 
         # PRIORITY 1: Check dedicated credential files (NEW SYSTEM)
         admin_credentials = load_admin_credentials()
@@ -717,7 +773,54 @@ async def logout(request: LoginRequest):
     return {"success": True, "message": "Device logged out successfully"}
 
 
+class HeartbeatRequest(BaseModel):
+    session_id: str
+
+@router.post("/guest-heartbeat")
+async def guest_heartbeat(request: HeartbeatRequest):
+    """Update last_seen timestamp for guest sessions"""
+    if not request.session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+
+    logs = _load_guest_audit_logs()
+    found = False
+    for log in logs:
+        if log.get("session_id") == request.session_id:
+            log["last_seen"] = datetime.now().isoformat()
+            found = True
+            break
+    
+    if found:
+        _save_guest_audit_logs(logs)
+        return {"success": True}
+    
+    raise HTTPException(status_code=404, detail="Session not found")
+
+
+@router.post("/guest-violation")
+async def guest_violation(request: HeartbeatRequest):
+    """Increment violation count for guest sessions (screenshots, dev tools, etc.)"""
+    if not request.session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+
+    logs = _load_guest_audit_logs()
+    found = False
+    for log in logs:
+        if log.get("session_id") == request.session_id:
+            log["violations"] = log.get("violations", 0) + 1
+            found = True
+            break
+    
+    if found:
+        _save_guest_audit_logs(logs)
+        return {"success": True}
+    
+    raise HTTPException(status_code=404, detail="Session not found")
+
+
 @router.get("/health")
+
+
 async def health_check():
     return {"status": "healthy", "service": "Marvel Clue Hunt API"}
 

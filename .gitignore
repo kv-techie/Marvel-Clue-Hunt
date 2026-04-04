@@ -47,3 +47,6 @@ Game Data CSV/
 *.log
 
 test_*.py
+
+# PDF Files
+*.pdf

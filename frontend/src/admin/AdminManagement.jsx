@@ -39,8 +39,6 @@ const AdminManagement = () => {
 
   // Guest state
   const { user, isGuest } = useAuth()
-  const [guestPIN, setGuestPIN] = useState('')
-  const [guestMessage, setGuestMessage] = useState('')
 
   // Toggle PIN visibility
   const togglePinVisibility = (username) => {
@@ -68,17 +66,6 @@ const AdminManagement = () => {
   useEffect(() => {
     fetchUsersWithPins()
   }, [])
-
-  // Guest PIN Generation
-  const handleGenerateGuestPIN = async () => {
-    try {
-      const response = await generateGuestPassword(user)
-      setGuestPIN(response.pin)
-      setGuestMessage(`✅ Temporary PIN generated for ${user}`)
-    } catch (err) {
-      setGuestMessage(`❌ Error: ${err.response?.data?.detail || 'Failed to generate guest PIN'}`)
-    }
-  }
 
   // Add Admin with PIN
   const handleAddAdmin = async () => {
@@ -248,56 +235,6 @@ const AdminManagement = () => {
 
   return (
     <div>
-      {/* ==================== GUEST ACCESS ==================== */}
-      {!isGuest && (
-        <div style={{ marginBottom: '40px' }}>
-          <h2 className="admin-section-title">
-            🔑 Guest Access
-          </h2>
-          <div className="admin-form-panel">
-            <h3>Generate Temporary Access</h3>
-            <p className="admin-text-muted" style={{ marginBottom: '15px' }}>
-              Create a one-time-use PIN for guests to view the progress. They will have strictly view-only access.
-            </p>
-            <div className="admin-input-group">
-              <button 
-                className="admin-btn primary" 
-                onClick={handleGenerateGuestPIN}
-                style={{ minWidth: '200px' }}
-              >
-                Generate Guest PIN
-              </button>
-            </div>
-            {guestMessage && (
-              <div className={`admin-message ${guestMessage.includes('✅') ? 'success' : 'error'}`}>
-                {guestMessage}
-              </div>
-            )}
-            {guestPIN && (
-              <div style={{ 
-                marginTop: '15px', 
-                padding: '20px', 
-                background: 'rgba(0, 255, 0, 0.05)', 
-                border: '1px solid var(--success)', 
-                borderRadius: '12px', 
-                textAlign: 'center',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-              }}>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Share this Temporary PIN
-                </div>
-                <div style={{ fontSize: '42px', fontWeight: 'bold', letterSpacing: '8px', color: 'var(--success)', textShadow: '0 0 10px rgba(0,255,0,0.3)' }}>
-                  {guestPIN}
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '12px', fontStyle: 'italic' }}>
-                  This PIN is valid for one-time use only. It will deactivate once used for login.
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* ==================== ADMIN MANAGEMENT ==================== */}
       <div style={{ marginBottom: '40px', opacity: isGuest ? 0.7 : 1 }}>
         <h2 className="admin-section-title">
@@ -378,14 +315,14 @@ const AdminManagement = () => {
                         <div className="admin-list-subtitle">
                           <span>PIN: {getMaskedPin(admin.pin, admin.username)}</span>
                           {!isGuest && (
-                          <button
-                            onClick={() => togglePinVisibility(admin.username)}
-                            title={visiblePins[admin.username] ? 'Hide PIN' : 'Show PIN'}
-                            className={`admin-badge ${visiblePins[admin.username] ? 'success' : 'warning'}`}
-                            style={{ cursor: 'pointer', border: 'none' }}
-                          >
-                            {visiblePins[admin.username] ? '👁️ Hide' : '👁️ Show'}
-                          </button>
+                            <button
+                              onClick={() => togglePinVisibility(admin.username)}
+                              title={visiblePins[admin.username] ? 'Hide PIN' : 'Show PIN'}
+                              className={`admin-badge ${visiblePins[admin.username] ? 'success' : 'warning'}`}
+                              style={{ cursor: 'pointer', border: 'none' }}
+                            >
+                              {visiblePins[admin.username] ? '👁️ Hide' : '👁️ Show'}
+                            </button>
                           )}
                           <span style={{ marginLeft: '10px' }}>Created: {new Date(admin.created_at).toLocaleString()}</span>
                         </div>
@@ -492,14 +429,14 @@ const AdminManagement = () => {
                         <div className="admin-list-subtitle">
                           <span>PIN: {getMaskedPin(volunteer.pin, volunteer.username)}</span>
                           {!isGuest && (
-                          <button
-                            onClick={() => togglePinVisibility(volunteer.username)}
-                            title={visiblePins[volunteer.username] ? 'Hide PIN' : 'Show PIN'}
-                            className={`admin-badge ${visiblePins[volunteer.username] ? 'success' : 'warning'}`}
-                            style={{ cursor: 'pointer', border: 'none' }}
-                          >
-                            {visiblePins[volunteer.username] ? '👁️ Hide' : '👁️ Show'}
-                          </button>
+                            <button
+                              onClick={() => togglePinVisibility(volunteer.username)}
+                              title={visiblePins[volunteer.username] ? 'Hide PIN' : 'Show PIN'}
+                              className={`admin-badge ${visiblePins[volunteer.username] ? 'success' : 'warning'}`}
+                              style={{ cursor: 'pointer', border: 'none' }}
+                            >
+                              {visiblePins[volunteer.username] ? '👁️ Hide' : '👁️ Show'}
+                            </button>
                           )}
                           <span style={{ marginLeft: '10px' }}>Created: {new Date(volunteer.created_at).toLocaleString()}</span>
                         </div>

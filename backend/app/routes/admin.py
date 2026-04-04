@@ -30,8 +30,10 @@ from .common import (
     is_guest,
     load_guest_credentials,
     save_guest_credentials,
+    _load_guest_audit_logs,
 )
 from app.timer_manager import timer_manager
+
 from app.websocket_manager import manager
 
 router = APIRouter()
@@ -251,7 +253,18 @@ async def generate_guest_password(admin_name: str):
     return {"success": True, "pin": temp_pin, "admin_name": admin_name}
 
 
+@router.get("/guest-audit-logs")
+async def get_guest_audit_logs(admin_name: str = Query(...)):
+    """Get guest audit logs for Admin usage"""
+    block_guest_access(admin_name)
+    logs = _load_guest_audit_logs()
+    # Sort logs so newest (most recent login_time) are first
+    logs.sort(key=lambda x: x.get("login_time", ""), reverse=True)
+    return {"logs": logs}
+
+
 @router.post("/upload-attendance")
+
 async def upload_attendance(admin_name: str, file: UploadFile = File(...)):
     """Upload attendance CSV and allocate teams"""
     block_guest_access(admin_name)

@@ -4,11 +4,12 @@ import AdminOperations from '../admin/AdminOperations'
 import GameOperations from '../admin/GameOperations'
 import LeaderboardPage from '../admin/LeaderboardPage'
 import ElectronicsMonitoring from '../admin/ElectronicsMonitoring'
+import GuestAccessPage from '../admin/GuestAccessPage'
 import '../styles/Admin.css'
 
 const Admin = () => {
-  const { user, logout } = useAuth()
-  const [activePage, setActivePage] = useState('admin') // 'admin', 'game', 'leaderboard', 'electronics'
+  const { user, logout, isGuest } = useAuth()
+  const [activePage, setActivePage] = useState('admin') // 'admin', 'game', 'leaderboard', 'electronics', 'guest_access'
 
   return (
     <div className="admin-container">
@@ -46,14 +47,22 @@ const Admin = () => {
         >
           🏆 Leaderboard
         </button>
+        {!isGuest && (
+          <button
+            className={`nav-tab ${activePage === 'guest_access' ? 'active' : ''}`}
+            onClick={() => setActivePage('guest_access')}
+          >
+            🔑 Guest Access
+          </button>
+        )}
       </nav>
 
-      {/* Content Sections */}
       <div className="admin-content">
         {activePage === 'admin' && <AdminOperations />}
         {activePage === 'game' && <GameOperations />}
         {activePage === 'electronics' && <ElectronicsMonitoring />}
         {activePage === 'leaderboard' && <LeaderboardPage />}
+        {!isGuest && activePage === 'guest_access' && <GuestAccessPage />}
       </div>
     </div>
   )

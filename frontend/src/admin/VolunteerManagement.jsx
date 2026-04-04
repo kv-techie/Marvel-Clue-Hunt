@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { getVolunteerList, addVolunteer, removeVolunteer } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 const VolunteerManagement = () => {
+  const { isGuest } = useAuth()
   const [volunteers, setVolunteers] = useState([])
   const [loading, setLoading] = useState(true)
   const [newVolunteerName, setNewVolunteerName] = useState('')

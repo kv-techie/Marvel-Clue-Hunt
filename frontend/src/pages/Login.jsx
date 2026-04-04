@@ -61,7 +61,7 @@ const Login = () => {
         
         // For attendees, also store device_id
         const deviceInfo = isAdminLogin ? null : getDeviceInfo()
-        loginUser(userForContext, data.is_admin, data.team, data.is_volunteer, deviceInfo?.device_id, data.is_guest)
+        loginUser(userForContext, data.is_admin, data.team, data.is_volunteer, deviceInfo?.device_id, data.is_guest, data.session_id)
 
         // Navigate based on role
         if (data.is_admin) {

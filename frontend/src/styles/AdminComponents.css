@@ -402,3 +402,55 @@
   box-shadow: none !important;
   text-shadow: none !important;
 }
+
+/* ------------------ TABLE STYLING ------------------ */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 15px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.admin-table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(231, 76, 60, 0.08); /* slight primary accent hover */
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table td strong {
+  color: var(--text-primary);
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}

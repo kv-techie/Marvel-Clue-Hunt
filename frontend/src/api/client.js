@@ -121,7 +121,18 @@ export const deletePin = (role, name, adminName) =>
 export const generateGuestPassword = (adminName) => 
   api.post('/admin/generate-guest-password', null, { params: { admin_name: adminName } })
 
+export const getGuestAuditLogs = (adminName) =>
+  api.get('/admin/guest-audit-logs', { params: { admin_name: adminName } })
+
+export const sendGuestHeartbeat = (sessionId) =>
+  api.post('/guest-heartbeat', { session_id: sessionId })
+
+export const logGuestViolation = (sessionId) =>
+  api.post('/guest-violation', { session_id: sessionId })
+
+
 // Device management
+
 export const getDevices = (teamName, adminName) => api.get(`/admin/devices/${encodeURIComponent(teamName)}`, { params: { admin_name: adminName } })
 
 export const removeDevice = (teamName, deviceId, adminName) => 

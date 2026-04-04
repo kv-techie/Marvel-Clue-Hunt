@@ -1,9 +1,10 @@
 import React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import PrivacyShield from './PrivacyShield'
 
 const ProtectedRoute = ({ children, requireAdmin, requireVolunteer, requireAttendee }) => {
-  const { user, isAdmin, isVolunteer, loading } = useAuth()
+  const { user, isAdmin, isVolunteer, isGuest, loading } = useAuth()
 
   // Wait for auth state to load from localStorage
   if (loading) {
@@ -55,6 +56,11 @@ const ProtectedRoute = ({ children, requireAdmin, requireVolunteer, requireAtten
       return <Navigate to="/admin" />
     }
     return <Navigate to="/volunteer" />
+  }
+
+  // If the user is a guest, wrap the dashboard/game with the privacy shield
+  if (isGuest) {
+    return <PrivacyShield guestName={user}>{children}</PrivacyShield>
   }
 
   return children

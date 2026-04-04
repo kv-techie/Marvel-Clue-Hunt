@@ -1,0 +1,53 @@
+/* Privacy Shield Container */
+.privacy-shield-container {
+  position: relative;
+  min-height: 100vh;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: filter 0.3s ease;
+}
+
+/* Blur Overlay styles */
+.privacy-blur-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-glass-heavy);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2147483647; /* Max z-index */
+  backdrop-filter: blur(40px); /* Heavier blur */
+  animation: fadeIn 0.1s ease-out; /* Faster fade-in */
+}
+
+.privacy-message {
+  text-align: center;
+  color: var(--accent-primary);
+  padding: 3rem;
+  border: 2px solid var(--border-accent);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glow-primary), var(--shadow-elevated);
+  max-width: 400px;
+}
+
+.privacy-message h2 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  letter-spacing: 3px;
+}
+
+.privacy-message p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
