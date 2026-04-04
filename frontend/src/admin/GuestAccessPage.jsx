@@ -58,6 +58,12 @@ const GuestAccessPage = () => {
     )
   }
 
+  const ensureUTC = (dtString) => {
+    if (!dtString) return '';
+    if (dtString.endsWith('Z') || dtString.includes('+') || dtString.includes('-') && dtString.split('T')[1]?.includes('-')) return dtString;
+    return `${dtString}Z`;
+  };
+
   const handleDownloadCSV = () => {
     if (!logs || logs.length === 0) return;
 
@@ -66,8 +72,8 @@ const GuestAccessPage = () => {
     
     // Format rows
     const rows = logs.map(log => {
-      const loginTime = new Date(log.login_time);
-      const lastSeen = new Date(log.last_seen);
+      const loginTime = new Date(ensureUTC(log.login_time));
+      const lastSeen = new Date(ensureUTC(log.last_seen));
       const diffMins = Math.round((lastSeen - loginTime) / 60000);
       
       return [
@@ -179,8 +185,8 @@ const GuestAccessPage = () => {
                 </thead>
                 <tbody>
                   {logs.map((log) => {
-                    const loginTime = new Date(log.login_time)
-                    const lastSeen = new Date(log.last_seen)
+                    const loginTime = new Date(ensureUTC(log.login_time))
+                    const lastSeen = new Date(ensureUTC(log.last_seen))
                     const diffMins = Math.round((lastSeen - loginTime) / 60000)
                     const violations = log.violations || 0;
                     

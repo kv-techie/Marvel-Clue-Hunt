@@ -461,7 +461,7 @@ async def login(request: LoginRequest, http_request: Request):
                 session_id = str(uuid.uuid4())
                 client_ip = http_request.client.host
                 location = get_ip_location(client_ip)
-                now_iso = datetime.now().isoformat()
+                now_iso = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
                 # Save to audit logs
                 logs = _load_guest_audit_logs()
@@ -786,7 +786,7 @@ async def guest_heartbeat(request: HeartbeatRequest):
     found = False
     for log in logs:
         if log.get("session_id") == request.session_id:
-            log["last_seen"] = datetime.now().isoformat()
+            log["last_seen"] = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
             found = True
             break
     
