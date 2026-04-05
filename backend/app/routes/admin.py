@@ -55,12 +55,15 @@ APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_DATA_DIR = os.path.join(APP_DIR, "data")
 STATE_DATA_DIR = os.getenv("STATE_DATA_DIR", DEFAULT_DATA_DIR)
 
-# Ensure state directory exists with error handling
+# Ensure state directory exists with error handling and fallback
 try:
     os.makedirs(STATE_DATA_DIR, exist_ok=True)
     print(f"📂 Admin state data directory: {os.path.abspath(STATE_DATA_DIR)}")
 except Exception as e:
     print(f"⚠️ Warning: Could not create admin state directory {STATE_DATA_DIR}: {e}")
+    print(f"🔄 Falling back to default data directory: {DEFAULT_DATA_DIR}")
+    STATE_DATA_DIR = DEFAULT_DATA_DIR
+    os.makedirs(STATE_DATA_DIR, exist_ok=True)
 
 
 def _state_file(filename: str) -> str:
