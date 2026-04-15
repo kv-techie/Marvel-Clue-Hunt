@@ -451,34 +451,62 @@ async def login(request: LoginRequest, http_request: Request):
 
         # PRIORITY 0: Check guest credentials (NEW)
         guest_creds = load_guest_credentials()
-        if guest_creds.get("is_active") and str(request.pin) == str(
+        now_utc = datetime.now(timezone.utc)
+        
+        # Check Expiration
+        is_expired = False
+        expires_at_str = guest_creds.get("expires_at")
+        if expires_at_str:
+            expires_at = datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
+            if now_utc > expires_at:
+                is_expired = True
+
+        if guest_creds.get("is_active") and not is_expired and str(request.pin) == str(
             guest_creds.get("temp_pin")
         ):
             # Verify the requesting admin name matches if provided (case-insensitive)
             # If request.name is provided, it must match the admin who generated it
             stored_admin_name = guest_creds.get("admin_name", "")
             if name.lower() == stored_admin_name.lower():
-                guest_name = f"{stored_admin_name} (Guest)"
+                guest_tag = guest_creds.get("tag", stored_admin_name)
+                guest_name = f"{guest_tag} (Guest)"
 
-                # Generate Guest Session ID
-                session_id = str(uuid.uuid4())
+                # Use existing session_id
+                session_id = guest_creds.get("session_id", str(uuid.uuid4()))
                 client_ip = http_request.client.host
                 location = get_ip_location(client_ip)
-                now_iso = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+                now_iso = now_utc.isoformat().replace('+00:00', 'Z')
 
-                # Save to audit logs
+                # Update existing audit log
                 logs = _load_guest_audit_logs()
-                logs.append({
-                    "session_id": session_id,
-                    "admin_name": stored_admin_name,
-                    "guest_name": guest_name,
-                    "pin_used": guest_creds.get("temp_pin"),
-                    "ip_address": client_ip,
-                    "location": location,
-                    "login_time": now_iso,
-                    "last_seen": now_iso,
-                    "violations": 0
-                })
+                found_log = False
+                for log in logs:
+                    if log.get("session_id") == session_id:
+                        log["ip_address"] = client_ip
+                        log["location"] = location
+                        log["login_time"] = now_iso
+                        log["last_seen"] = now_iso
+                        log["status"] = "Used"
+                        found_log = True
+                        break
+                
+                # Fallback if log was deleted or missing session_id due to legacy code
+                if not found_log:
+                    logs.append({
+                        "session_id": session_id,
+                        "admin_name": stored_admin_name,
+                        "guest_name": guest_tag,
+                        "pin_used": guest_creds.get("temp_pin"),
+                        "generated_at": guest_creds.get("created_at"),
+                        "expires_at": guest_creds.get("expires_at"),
+                        "ip_address": client_ip,
+                        "location": location,
+                        "login_time": now_iso,
+                        "last_seen": now_iso,
+                        "violations": 0,
+                        "status": "Used"
+                    })
+                    
                 _save_guest_audit_logs(logs)
 
                 # Deactivate immediately

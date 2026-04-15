@@ -118,8 +118,8 @@ export const getPins = (adminName) => api.get('/admin/pins', { params: { admin_n
 export const deletePin = (role, name, adminName) => 
   api.delete(`/admin/pin/${encodeURIComponent(role)}/${encodeURIComponent(name)}`, { params: { admin_name: adminName } })
 
-export const generateGuestPassword = (adminName) => 
-  api.post('/admin/generate-guest-password', null, { params: { admin_name: adminName } })
+export const generateGuestPassword = (adminName, tag) => 
+  api.post('/admin/generate-guest-password', null, { params: { admin_name: adminName, tag } })
 
 export const getGuestAuditLogs = (adminName) =>
   api.get('/admin/guest-audit-logs', { params: { admin_name: adminName } })

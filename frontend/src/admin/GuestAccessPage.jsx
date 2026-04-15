@@ -8,8 +8,10 @@ const GuestAccessPage = () => {
   const { user, isGuest } = useAuth()
   const [guestPIN, setGuestPIN] = useState('')
   const [guestMessage, setGuestMessage] = useState('')
+  const [guestTag, setGuestTag] = useState('')
   const [logs, setLogs] = useState([])
   const [loadingLogs, setLoadingLogs] = useState(true)
+  const [activeTab, setActiveTab] = useState('All')
 
   const fetchLogs = async () => {
     setLoadingLogs(true)
@@ -37,10 +39,16 @@ const GuestAccessPage = () => {
   // Guest PIN Generation
 
   const handleGenerateGuestPIN = async () => {
+    if (!guestTag.trim()) {
+      setGuestMessage('❌ Please provide a name/tag for this OTP')
+      return;
+    }
     try {
-      const response = await generateGuestPassword(user)
+      const response = await generateGuestPassword(user, guestTag.trim())
       setGuestPIN(response.pin)
-      setGuestMessage(`✅ Temporary PIN generated for ${user}`)
+      setGuestMessage(`✅ Temporary PIN generated for ${guestTag.trim()}`)
+      setGuestTag('')
+      fetchLogs()
     } catch (err) {
       setGuestMessage(`❌ Error: ${err.response?.data?.detail || 'Failed to generate guest PIN'}`)
     }
@@ -65,25 +73,40 @@ const GuestAccessPage = () => {
   };
 
   const handleDownloadCSV = () => {
-    if (!logs || logs.length === 0) return;
+    const filteredLogs = logs.filter(log => activeTab === 'All' || (log.status || 'Unknown') === activeTab);
+    if (!filteredLogs || filteredLogs.length === 0) return;
 
     // Define CSV Headers
-    const headers = ["Guest Name", "Admin Name", "PIN Used", "IP Address", "Location", "Login Time", "Last Seen", "Session Duration (Mins)", "Violations"];
+    const headers = ["Guest Tag", "Admin Name", "PIN Used", "Status", "Generated At", "Expires At", "IP Address", "Location", "Login Time", "Last Seen", "Session Duration (Mins)", "Violations"];
     
     // Format rows
-    const rows = logs.map(log => {
-      const loginTime = new Date(ensureUTC(log.login_time));
-      const lastSeen = new Date(ensureUTC(log.last_seen));
-      const diffMins = Math.round((lastSeen - loginTime) / 60000);
+    const rows = filteredLogs.map(log => {
+      let loginTimeStr = 'N/A';
+      let lastSeenStr = 'N/A';
+      let diffMins = 'N/A';
+
+      if (log.login_time) {
+        const loginTime = new Date(ensureUTC(log.login_time));
+        const lastSeen = new Date(ensureUTC(log.last_seen));
+        diffMins = Math.round((lastSeen - loginTime) / 60000);
+        loginTimeStr = loginTime.toISOString();
+        lastSeenStr = lastSeen.toISOString();
+      }
+
+      const generatedAt = log.generated_at ? new Date(ensureUTC(log.generated_at)).toISOString() : 'N/A';
+      const expiresAt = log.expires_at ? new Date(ensureUTC(log.expires_at)).toISOString() : 'N/A';
       
       return [
         log.guest_name,
         log.admin_name,
         log.pin_used,
-        log.ip_address,
-        `"${log.location}"`, // Handle commas in location
-        loginTime.toISOString(),
-        lastSeen.toISOString(),
+        log.status || 'Unknown',
+        generatedAt,
+        expiresAt,
+        log.ip_address || '',
+        `"${log.location || ''}"`, // Handle commas in location
+        loginTimeStr,
+        lastSeenStr,
         diffMins,
         log.violations || 0
       ].join(",");
@@ -114,6 +137,14 @@ const GuestAccessPage = () => {
               Create a one-time-use PIN for guests to view the progress. They will have strictly view-only access.
             </p>
             <div className="admin-input-group">
+              <input
+                type="text"
+                className="admin-input"
+                placeholder="Name / Purpose of OTP (e.g. VIP Guest)"
+                value={guestTag}
+                onChange={(e) => setGuestTag(e.target.value)}
+                style={{ flex: 1 }}
+              />
               <button 
                 className="admin-btn primary" 
                 onClick={handleGenerateGuestPIN}
@@ -164,6 +195,41 @@ const GuestAccessPage = () => {
             </button>
           )}
         </div>
+
+        {/* Status Tabs */}
+        {logs.length > 0 && (
+          <div style={{ 
+            display: 'flex', 
+            gap: '12px', 
+            marginBottom: '20px',
+            paddingBottom: '16px',
+            borderBottom: '1px solid var(--border-default)'
+          }}>
+            {['All', 'Active', 'Used', 'Expired'].map(tab => (
+              <button 
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: '8px 20px',
+                  background: activeTab === tab ? 'var(--accent-secondary)' : 'var(--bg-glass)',
+                  color: activeTab === tab ? '#101010' : 'var(--text-primary)',
+                  border: `1px solid ${activeTab === tab ? 'var(--accent-secondary)' : 'var(--border-default)'}`,
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  boxShadow: activeTab === tab ? 'var(--glow-secondary)' : 'none',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="admin-form-panel">
           {loadingLogs ? (
             <p className="admin-text-muted">Loading audit logs...</p>
@@ -176,6 +242,9 @@ const GuestAccessPage = () => {
                   <tr>
                     <th>Guest Details</th>
                     <th>PIN Used</th>
+                    <th>Status</th>
+                    <th>Generated At</th>
+                    <th>Expires At</th>
                     <th>IP & Location</th>
                     <th>Login Time</th>
                     <th>Session Duration</th>
@@ -184,12 +253,27 @@ const GuestAccessPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => {
-                    const loginTime = new Date(ensureUTC(log.login_time))
-                    const lastSeen = new Date(ensureUTC(log.last_seen))
-                    const diffMins = Math.round((lastSeen - loginTime) / 60000)
+                  {logs.filter(log => activeTab === 'All' || (log.status || 'Unknown') === activeTab).map((log) => {
+                    let loginTimeRender = 'N/A';
+                    let lastSeenRender = 'N/A';
+                    let diffMinsRender = 'N/A';
+
+                    if (log.login_time) {
+                      const loginTime = new Date(ensureUTC(log.login_time))
+                      const lastSeen = new Date(ensureUTC(log.last_seen))
+                      const diffMins = Math.round((lastSeen - loginTime) / 60000)
+                      loginTimeRender = `${loginTime.toLocaleDateString()} ${loginTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                      lastSeenRender = `${lastSeen.toLocaleDateString()} ${lastSeen.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                      diffMinsRender = diffMins === 0 ? '< 1 min' : `${diffMins} min${diffMins !== 1 ? 's' : ''}`;
+                    }
+
                     const violations = log.violations || 0;
                     
+                    let statusBadgeClass = "badge badge-secondary";
+                    if (log.status === 'Active') statusBadgeClass = "badge badge-success";
+                    else if (log.status === 'Expired') statusBadgeClass = "badge badge-danger";
+                    else if (log.status === 'Used') statusBadgeClass = "badge badge-info";
+
                     return (
                       <tr key={log.session_id}>
                         <td>
@@ -197,18 +281,41 @@ const GuestAccessPage = () => {
                           <small className="admin-text-muted">Generated by: {log.admin_name}</small>
                         </td>
                         <td><span className="badge badge-warning">{log.pin_used}</span></td>
+                        <td><span className={statusBadgeClass}>{log.status || 'Unknown'}</span></td>
                         <td>
-                          {log.ip_address}<br />
-                          <small className="admin-text-muted">📍 {log.location}</small>
+                          {log.generated_at ? (
+                            <>
+                              {new Date(ensureUTC(log.generated_at)).toLocaleDateString()} <br/>
+                              <small className="admin-text-muted">{new Date(ensureUTC(log.generated_at)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                            </>
+                          ) : 'N/A'}
                         </td>
                         <td>
-                          {loginTime.toLocaleDateString()} {loginTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          {log.expires_at ? (
+                            <>
+                              {new Date(ensureUTC(log.expires_at)).toLocaleDateString()} <br/>
+                              <small className="admin-text-muted">{new Date(ensureUTC(log.expires_at)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                            </>
+                          ) : 'N/A'}
                         </td>
                         <td>
-                          {diffMins === 0 ? '< 1 min' : `${diffMins} min${diffMins !== 1 ? 's' : ''}`}
+                          {log.ip_address !== "N/A" ? (
+                            <>
+                              {log.ip_address}<br />
+                              <small className="admin-text-muted">📍 {log.location}</small>
+                            </>
+                          ) : (
+                            <span className="admin-text-muted">Waiting for login</span>
+                          )}
                         </td>
                         <td>
-                          {lastSeen.toLocaleDateString()} {lastSeen.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          {loginTimeRender}
+                        </td>
+                        <td>
+                          {diffMinsRender}
+                        </td>
+                        <td>
+                          {lastSeenRender}
                         </td>
                         <td>
                           {violations > 0 ? (

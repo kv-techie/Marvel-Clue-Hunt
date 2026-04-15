@@ -1,8 +1,9 @@
 import json
 import os
 import shutil
+import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, Query
 
@@ -31,6 +32,7 @@ from .common import (
     load_guest_credentials,
     save_guest_credentials,
     _load_guest_audit_logs,
+    _save_guest_audit_logs,
 )
 from app.timer_manager import timer_manager
 
@@ -233,36 +235,113 @@ def save_volunteer_credentials(credentials: dict):
 
 
 @router.post("/generate-guest-password")
-async def generate_guest_password(admin_name: str):
+async def generate_guest_password(admin_name: str, tag: str = Query("Guest Participant")):
     """Generate a temporary 4-6 digit password for guest login.
     Only authorized admins can call this (checked by caller).
     """
+    now_utc = datetime.now(timezone.utc)
+    tag_clean = tag.strip()
+    tag_lower = tag_clean.lower()
+    
+    # Check for existing active OTPs for this tag
+    logs = _load_guest_audit_logs()
+    
+    for log in logs:
+        # Fallback for old logs missing 'status'
+        if "status" not in log:
+            log["status"] = "Used" if log.get("login_time") else "Expired"
+            
+        if log.get("status") == "Active" and "expires_at" in log:
+            try:
+                expires_at_temp = datetime.fromisoformat(log["expires_at"].replace("Z", "+00:00"))
+                if now_utc > expires_at_temp:
+                    log["status"] = "Expired"
+            except ValueError:
+                pass
+                
+        # Check against the incoming tag
+        if log.get("guest_name", "").strip().lower() == tag_lower and log.get("status") == "Active":
+            raise HTTPException(
+                status_code=400, 
+                detail=f"An active OTP already exists for '{tag_clean}'. Please wait for it to be used or expire (5 mins)."
+            )
+
     import random
 
     # Generate random 4-6 digit PIN
     length = random.randint(4, 6)
     temp_pin = "".join([str(random.randint(0, 9)) for _ in range(length)])
 
+    now_utc = datetime.now(timezone.utc)
+    expires_at = now_utc + timedelta(minutes=5)
+    now_iso = now_utc.isoformat().replace("+00:00", "Z")
+    expires_at_iso = expires_at.isoformat().replace("+00:00", "Z")
+    session_id = str(uuid.uuid4())
+
     # Save to guest credentials
     guest_creds = {
+        "session_id": session_id,
         "admin_name": admin_name,
+        "tag": tag,
         "temp_pin": temp_pin,
         "is_active": True,
-        "created_at": datetime.now().isoformat(),
+        "created_at": now_iso,
+        "expires_at": expires_at_iso,
     }
     save_guest_credentials(guest_creds)
 
+    # Immediately reflect in Audit Log (we already have latest `logs` from the pre-check above)
+    logs.append({
+        "session_id": session_id,
+        "admin_name": admin_name,
+        "guest_name": tag,
+        "pin_used": temp_pin,
+        "generated_at": now_iso,
+        "expires_at": expires_at_iso,
+        "ip_address": "N/A",
+        "location": "N/A",
+        "login_time": "",
+        "last_seen": "",
+        "violations": 0,
+        "status": "Active"
+    })
+    _save_guest_audit_logs(logs)
+
     print(f"🔑 Generated guest PIN for {admin_name}: {temp_pin}")
     return {"success": True, "pin": temp_pin, "admin_name": admin_name}
-
 
 @router.get("/guest-audit-logs")
 async def get_guest_audit_logs(admin_name: str = Query(...)):
     """Get guest audit logs for Admin usage"""
     block_guest_access(admin_name)
     logs = _load_guest_audit_logs()
-    # Sort logs so newest (most recent login_time) are first
-    logs.sort(key=lambda x: x.get("login_time", ""), reverse=True)
+    
+    # Process expirations dynamically
+    now_utc = datetime.now(timezone.utc)
+    changed = False
+    for log in logs:
+        # Fallback for old logs missing 'status'
+        if "status" not in log:
+            if log.get("login_time"):
+                log["status"] = "Used"
+            else:
+                log["status"] = "Expired"
+            changed = True
+        
+        if log.get("status") == "Active" and "expires_at" in log:
+            try:
+                expires_at = datetime.fromisoformat(log["expires_at"].replace("Z", "+00:00"))
+                if now_utc > expires_at:
+                    log["status"] = "Expired"
+                    changed = True
+            except ValueError:
+                pass
+                
+    if changed:
+        _save_guest_audit_logs(logs)
+
+    # Sort logs so newest (most recent generation/login) are first
+    logs.sort(key=lambda x: x.get("generated_at", x.get("login_time", "")), reverse=True)
     return {"logs": logs}
 
 
