@@ -50,3 +50,12 @@ test_*.py
 
 # PDF Files
 *.pdf
+# Runtime state written by the app: PINs, team members, scores and device fingerprints. Never commit.
+backend/app/data/admin_credentials.json
+backend/app/data/volunteer_credentials.json
+backend/app/data/admin_whitelist.json
+backend/app/data/volunteer_whitelist.json
+backend/app/data/devices.json
+backend/app/data/teams.json
+backend/app/data/game_state.json
+backend/app/data/attendance.csv
